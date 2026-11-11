@@ -1288,6 +1288,22 @@ return [
     'cannot_add_product_to_itself' => 'لا يمكن إضافة المنتج المركب كمكون لنفسه.',
     'duplicate_product_items_not_allowed' => 'لا يمكن تكرار نفس المكون أكثر من مرة في قائمة مكونات المنتج.',
     'circular_dependency_detected' => 'لا يمكن إضافة المنتج (:product) لتجنب التبعية الدائرية (يدخل هذا المنتج في تركيبه مسبقاً).',
+
+    // ===========================================
+    // Bulk Request Approval & Rejection
+    // ===========================================
+    'bulk_approve' => 'اعتماد المحددة',
+    'bulk_reject' => 'رفض المحددة',
+    'bulk_approve_heading' => 'اعتماد الطلبات المحددة',
+    'bulk_reject_heading' => 'رفض الطلبات المحددة',
+    'bulk_approve_confirmation' => 'هل أنت متأكد من رغبتك في اعتماد جميع الطلبات المحددة؟',
+    'bulk_reject_confirmation' => 'هل أنت متأكد من رغبتك في رفض جميع الطلبات المحددة؟',
+    'bulk_approved_success' => 'تم اعتماد :count طلب(طلبات) بنجاح.',
+    'bulk_rejected_success' => 'تم رفض :count طلب(طلبات) بنجاح.',
+    'cannot_approve_own_request' => 'لا يمكنك اعتماد طلبك الخاص رقم #:id.',
+    'cannot_reject_own_request' => 'لا يمكنك رفض طلبك الخاص رقم #:id.',
+    'no_pending_requests_selected' => 'لا توجد طلبات معلقة (Pending) من بين الطلبات المحددة.',
+    'bulk_action_some_failed' => 'تعذر معالجة بعض الطلبات',
 ];
 
 

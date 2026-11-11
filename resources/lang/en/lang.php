@@ -1307,6 +1307,22 @@ return [
     'cannot_add_product_to_itself' => 'Cannot add the composite product as a component of itself.',
     'duplicate_product_items_not_allowed' => 'Duplicate component items are not allowed in the product items list.',
     'circular_dependency_detected' => 'Cannot add product (:product) because it creates a circular dependency.',
+
+    // ===========================================
+    // Bulk Request Approval & Rejection
+    // ===========================================
+    'bulk_approve' => 'Approve Selected',
+    'bulk_reject' => 'Reject Selected',
+    'bulk_approve_heading' => 'Approve Selected Requests',
+    'bulk_reject_heading' => 'Reject Selected Requests',
+    'bulk_approve_confirmation' => 'Are you sure you want to approve all selected requests?',
+    'bulk_reject_confirmation' => 'Are you sure you want to reject all selected requests?',
+    'bulk_approved_success' => ':count request(s) approved successfully.',
+    'bulk_rejected_success' => ':count request(s) rejected successfully.',
+    'cannot_approve_own_request' => 'You cannot approve your own request #:id.',
+    'cannot_reject_own_request' => 'You cannot reject your own request #:id.',
+    'no_pending_requests_selected' => 'No pending requests found among the selected items.',
+    'bulk_action_some_failed' => 'Some requests could not be processed',
 ];
 
 

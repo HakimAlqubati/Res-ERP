@@ -598,6 +598,8 @@ class EmployeeApplicationTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    EmployeeApplicationResource::bulkApproveAction(),
+                    EmployeeApplicationResource::bulkRejectAction(),
                     ForceDeleteBulkAction::make()
                         ->before(function ($records) {
                             foreach ($records as $record) {

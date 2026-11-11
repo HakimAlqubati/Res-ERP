@@ -23,6 +23,7 @@ use App\Models\EmployeeMealRequest;
 use DateTime;
 use Exception;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -46,6 +47,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1439,6 +1441,158 @@ class EmployeeApplicationResource extends Resource
             })
             ->modalSubmitAction(false)
             ->modalCancelAction(false);
+    }
+
+    public static function bulkApproveAction(): BulkAction
+    {
+        return BulkAction::make('bulkApprove')
+            ->label(__('lang.bulk_approve'))
+            ->icon('heroicon-o-check-circle')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalHeading(__('lang.bulk_approve_heading'))
+            ->modalDescription(__('lang.bulk_approve_confirmation'))
+            ->modalSubmitActionLabel(__('lang.approve'))
+            ->deselectRecordsAfterCompletion()
+            ->visible(function () {
+                if (isSuperAdmin() || isSystemManager()) {
+                    return true;
+                }
+                if (isstuff() || isHR()) {
+                    return false;
+                }
+                return true;
+            })
+            ->action(function (Collection $records) {
+                $service = app(\App\Services\HR\Applications\EmployeeApplicationService::class);
+                $userId = auth()->id();
+                $currentEmployeeId = auth()->user()->employee?->id ?? null;
+
+                $approvedCount = 0;
+                $skippedCount = 0;
+                $failedErrors = [];
+
+                foreach ($records as $record) {
+                    if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    if ($currentEmployeeId && (int) $record->employee_id === (int) $currentEmployeeId) {
+                        $skippedCount++;
+                        $failedErrors[] = __('lang.cannot_approve_own_request', ['id' => $record->id]);
+                        continue;
+                    }
+
+                    try {
+                        $service->approveApplication($record->id, $userId);
+                        $approvedCount++;
+                    } catch (\Throwable $e) {
+                        $empName = $record->employee?->name ?? "#{$record->id}";
+                        $failedErrors[] = "{$empName}: " . $e->getMessage();
+                    }
+                }
+
+                if ($approvedCount > 0) {
+                    Notification::make()
+                        ->title(__('lang.bulk_approved_success', ['count' => $approvedCount]))
+                        ->success()
+                        ->send();
+                }
+
+                if (! empty($failedErrors)) {
+                    Notification::make()
+                        ->title(__('lang.bulk_action_some_failed'))
+                        ->body(implode("\n", array_slice($failedErrors, 0, 5)))
+                        ->warning()
+                        ->send();
+                } elseif ($approvedCount === 0 && $skippedCount > 0) {
+                    Notification::make()
+                        ->title(__('lang.no_pending_requests_selected'))
+                        ->warning()
+                        ->send();
+                }
+            });
+    }
+
+    public static function bulkRejectAction(): BulkAction
+    {
+        return BulkAction::make('bulkReject')
+            ->label(__('lang.bulk_reject'))
+            ->icon('heroicon-o-x-circle')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading(__('lang.bulk_reject_heading'))
+            ->modalDescription(__('lang.bulk_reject_confirmation'))
+            ->modalSubmitActionLabel(__('lang.reject'))
+            ->deselectRecordsAfterCompletion()
+            ->visible(function () {
+                if (isSuperAdmin() || isSystemManager()) {
+                    return true;
+                }
+                if (isstuff() || isHR()) {
+                    return false;
+                }
+                return true;
+            })
+            ->schema([
+                Textarea::make('rejected_reason')
+                    ->label(__('lang.rejected_reason'))
+                    ->placeholder(__('lang.rejection_reason_placeholder'))
+                    ->required()
+                    ->rows(3),
+            ])
+            ->action(function (Collection $records, array $data) {
+                $service = app(\App\Services\HR\Applications\EmployeeApplicationService::class);
+                $userId = auth()->id();
+                $currentEmployeeId = auth()->user()->employee?->id ?? null;
+                $reason = $data['rejected_reason'] ?? '';
+
+                $rejectedCount = 0;
+                $skippedCount = 0;
+                $failedErrors = [];
+
+                foreach ($records as $record) {
+                    if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    if ($currentEmployeeId && (int) $record->employee_id === (int) $currentEmployeeId) {
+                        $skippedCount++;
+                        $failedErrors[] = __('lang.cannot_reject_own_request', ['id' => $record->id]);
+                        continue;
+                    }
+
+                    try {
+                        $service->rejectApplication($record->id, $userId, $reason);
+                        $rejectedCount++;
+                    } catch (\Throwable $e) {
+                        $empName = $record->employee?->name ?? "#{$record->id}";
+                        $failedErrors[] = "{$empName}: " . $e->getMessage();
+                    }
+                }
+
+                if ($rejectedCount > 0) {
+                    Notification::make()
+                        ->title(__('lang.bulk_rejected_success', ['count' => $rejectedCount]))
+                        ->success()
+                        ->send();
+                }
+
+                if (! empty($failedErrors)) {
+                    Notification::make()
+                        ->title(__('lang.bulk_action_some_failed'))
+                        ->body(implode("\n", array_slice($failedErrors, 0, 5)))
+                        ->warning()
+                        ->send();
+                } elseif ($rejectedCount === 0 && $skippedCount > 0) {
+                    Notification::make()
+                        ->title(__('lang.no_pending_requests_selected'))
+                        ->warning()
+                        ->send();
+                }
+            });
     }
 
     public static function leaveRequestForm($set, $get)
