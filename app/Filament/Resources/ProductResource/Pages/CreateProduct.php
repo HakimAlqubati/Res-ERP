@@ -30,6 +30,19 @@ class CreateProduct extends CreateRecord
                 $this->halt();
             }
         }
+
+        $productItems = $this->data['productItems'] ?? [];
+        if (!empty($productItems)) {
+            $error = \App\Filament\Resources\ProductResource\Support\ProductResourceActions::validateProductItems($productItems, null);
+            if ($error) {
+                Notification::make()
+                    ->title($error)
+                    ->danger()
+                    ->send();
+
+                $this->halt();
+            }
+        }
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

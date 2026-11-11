@@ -1281,6 +1281,13 @@ return [
     'create_stocktake' => 'إنشاء الجرد',
     'jump_to_page' => 'الانتقال إلى صفحة',
     'go' => 'انتقال',
+
+    // ===========================================
+    // Composite / Manufacturing Product Validations
+    // ===========================================
+    'cannot_add_product_to_itself' => 'لا يمكن إضافة المنتج المركب كمكون لنفسه.',
+    'duplicate_product_items_not_allowed' => 'لا يمكن تكرار نفس المكون أكثر من مرة في قائمة مكونات المنتج.',
+    'circular_dependency_detected' => 'لا يمكن إضافة المنتج (:product) لتجنب التبعية الدائرية (يدخل هذا المنتج في تركيبه مسبقاً).',
 ];
 
 

@@ -360,4 +360,71 @@ final class ProductResourceActions
 
         return $isUsed;
     }
+
+    /**
+     * Get the ID of the product currently being edited (if any).
+     */
+    public static function getCurrentProductId($livewire = null, $record = null): ?int
+    {
+        if ($record instanceof Product && $record->id) {
+            return (int) $record->id;
+        }
+
+        if ($record instanceof ProductItem && $record->parent_product_id) {
+            return (int) $record->parent_product_id;
+        }
+
+        if ($livewire && method_exists($livewire, 'getRecord')) {
+            $rec = $livewire->getRecord();
+            if ($rec instanceof Product && $rec->id) {
+                return (int) $rec->id;
+            }
+        }
+
+        if ($livewire && isset($livewire->record) && $livewire->record instanceof Product && $livewire->record->id) {
+            return (int) $livewire->record->id;
+        }
+
+        if ($livewire && method_exists($livewire, 'form')) {
+            $rec = $livewire->form?->getRecord();
+            if ($rec instanceof Product && $rec->id) {
+                return (int) $rec->id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Validate product items for self-reference or duplicate rows.
+     *
+     * @param array $productItems
+     * @param int|null $currentProductId
+     * @return string|null Error message or null if valid
+     */
+    public static function validateProductItems(array $productItems, ?int $currentProductId = null): ?string
+    {
+        $productIds = [];
+
+        foreach ($productItems as $item) {
+            $pId = isset($item['product_id']) ? (int) $item['product_id'] : null;
+            if (! $pId) {
+                continue;
+            }
+
+            // Direct self-reference check: prevent product from being added to itself
+            if ($currentProductId && $pId === (int) $currentProductId) {
+                return __('lang.cannot_add_product_to_itself');
+            }
+
+            $productIds[] = $pId;
+        }
+
+        // Duplicate items in repeater check
+        if (count($productIds) !== count(array_unique($productIds))) {
+            return __('lang.duplicate_product_items_not_allowed');
+        }
+
+        return null;
+    }
 }

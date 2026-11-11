@@ -33,6 +33,9 @@ class ProductItemsImport implements ToCollection
                         if (!$row[0] || !$row[1] || !$row[2]) {
                             throw new Exception("Missing required fields in row #" . ($index + 1));
                         }
+                        if ($this->parentProductId && (int) $row[0] === (int) $this->parentProductId) {
+                            throw new Exception(__('lang.cannot_add_product_to_itself'));
+                        }
                         $unitPrice = getUnitPrice($row[0], $row[1]);
                         if(!$unitPrice) {
                             throw new Exception("Unit price not found for product ID: " . $row[0] . " and unit ID: " . $row[1]);

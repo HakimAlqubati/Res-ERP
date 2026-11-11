@@ -219,16 +219,23 @@ class ProductsSchema
                                         ->label(__('lang.product'))
                                         ->searchable()
                                         ->required()
-                                        // ->disabledOn('edit')
-                                        ->options(function () {
+                                        ->distinct()
+                                        ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                        ->options(function ($livewire = null, $record = null) {
+                                            $currentProductId = PRA::getCurrentProductId($livewire, $record);
+
                                             return Product::where('active', 1)
+                                                ->when($currentProductId, fn($q) => $q->where('id', '!=', $currentProductId))
                                                 ->get()
                                                 ->mapWithKeys(fn($product) => [
                                                     $product->id => "{$product->code} - {$product->name}",
                                                 ]);
                                         })
-                                        ->getSearchResultsUsing(function (string $search): array {
+                                        ->getSearchResultsUsing(function (string $search, $livewire = null, $record = null): array {
+                                            $currentProductId = PRA::getCurrentProductId($livewire, $record);
+
                                             return Product::where('active', 1)
+                                                ->when($currentProductId, fn($q) => $q->where('id', '!=', $currentProductId))
                                                 ->where(function ($query) use ($search) {
                                                     $query->where('name', 'like', "%{$search}%")
                                                         ->orWhere('code', 'like', "%{$search}%");
@@ -240,6 +247,24 @@ class ProductsSchema
                                                 ])
                                                 ->toArray();
                                         })
+                                        ->disableOptionWhen(function (string $value, $livewire = null, $record = null): bool {
+                                            $currentProductId = PRA::getCurrentProductId($livewire, $record);
+                                            return $currentProductId ? ((int) $value === (int) $currentProductId) : false;
+                                        })
+                                        ->rules([
+                                            function ($livewire = null, $record = null) {
+                                                return function (string $attribute, $value, Closure $fail) use ($livewire, $record) {
+                                                    if (! $value) {
+                                                        return;
+                                                    }
+
+                                                    $currentProductId = PRA::getCurrentProductId($livewire, $record);
+                                                    if ($currentProductId && (int) $value === (int) $currentProductId) {
+                                                        $fail(__('lang.cannot_add_product_to_itself'));
+                                                    }
+                                                };
+                                            },
+                                        ])
                                         ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                         ->reactive()
                                         // ->afterStateUpdated(function ($set, $state) {

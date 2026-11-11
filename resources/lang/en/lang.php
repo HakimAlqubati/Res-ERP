@@ -1300,6 +1300,13 @@ return [
     'create_stocktake' => 'Create Stocktake',
     'jump_to_page' => 'Jump to Page',
     'go' => 'Go',
+
+    // ===========================================
+    // Composite / Manufacturing Product Validations
+    // ===========================================
+    'cannot_add_product_to_itself' => 'Cannot add the composite product as a component of itself.',
+    'duplicate_product_items_not_allowed' => 'Duplicate component items are not allowed in the product items list.',
+    'circular_dependency_detected' => 'Cannot add product (:product) because it creates a circular dependency.',
 ];
 
 

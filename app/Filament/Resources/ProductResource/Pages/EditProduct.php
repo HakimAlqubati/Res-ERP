@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ProductResource\Pages;
 
+use Filament\Notifications\Notification;
+use App\Filament\Resources\ProductResource\Support\ProductResourceActions;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
@@ -42,6 +44,22 @@ class EditProduct extends EditRecord
             ]);
         }
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function beforeSave(): void
+    {
+        $productItems = $this->data['productItems'] ?? [];
+        if (! empty($productItems)) {
+            $error = ProductResourceActions::validateProductItems($productItems, $this->record->id);
+            if ($error) {
+                Notification::make()
+                    ->title($error)
+                    ->danger()
+                    ->send();
+
+                $this->halt();
+            }
+        }
     }
 
     protected function afterSave(): void

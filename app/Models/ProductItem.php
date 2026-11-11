@@ -33,6 +33,17 @@ class ProductItem extends Model implements Auditable
         'quantity_after_waste',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (ProductItem $productItem) {
+            if ($productItem->parent_product_id && (int) $productItem->parent_product_id === (int) $productItem->product_id) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'product_id' => [__('lang.cannot_add_product_to_itself')],
+                ]);
+            }
+        });
+    }
+
     /**
      * Define the relationship to the Product model.
      */
