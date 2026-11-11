@@ -4,7 +4,6 @@ namespace App\Modules\HR\ApprovalPolicies\Services;
 
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
 use App\Modules\HR\ApprovalPolicies\DTOs\ApprovalApprover;
-use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalStep;
 use Illuminate\Database\Eloquent\Model;
@@ -19,21 +18,7 @@ class ApprovalStepCreator
     {
         $rows = $approvers
             ->values()
-            ->map(fn (ApprovalApprover $approver, int $index) => [
-                'approvable_type' => $record::class,
-                'approvable_id' => $record->getKey(),
-                'approval_policy_id' => $policy->id,
-                'step_order' => $index + 1,
-                'approver_employee_id' => $approver->employeeId,
-                'approver_user_id' => $approver->userId,
-                'approver_role_id' => $approver->roleId,
-                'status' => $approver->isSkipped
-                    ? ApprovalStepStatus::SKIPPED
-                    : ApprovalStepStatus::PENDING,
-                'can_be_skipped' => (bool) $policy->allow_skip_steps,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ])
+            ->map(fn (ApprovalApprover $approver, int $index) => $approver->toStepAttributes($record, $policy, $index + 1))
             ->all();
 
         ApprovalStep::query()->insert($rows);

@@ -77,9 +77,7 @@ class EmployeeApplicationObserver
      */
     public function created(EmployeeApplicationV2 $app): void
     {
-        if (app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($app)) {
-            app(ApprovalWorkflowService::class)->createFor($app);
-        }
+        $app->initializeApprovalWorkflowIfRequired();
 
         try {
             $employee = $app->employee()->with(['manager.user'])->first();

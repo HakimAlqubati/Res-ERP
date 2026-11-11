@@ -13,9 +13,7 @@ class ApprovalPolicyResolver
     {
         $policy = ApprovalPolicy::query()
             ->matchingRecord($record)
-            ->orderByRaw('CASE WHEN branch_ids IS NULL OR JSON_LENGTH(branch_ids) = 0 THEN 1 ELSE 0 END')
-            ->orderByRaw('CASE WHEN application_type_id IS NULL THEN 1 ELSE 0 END')
-            ->latest('id')
+            ->orderedBySpecificity()
             ->first();
 
         if (! $policy) {

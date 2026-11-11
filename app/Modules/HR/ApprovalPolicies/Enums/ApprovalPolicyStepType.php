@@ -20,4 +20,18 @@ final class ApprovalPolicyStepType
             self::CUSTOM_ROLE,
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        return [
+            self::DIRECT_MANAGER => __('Direct Manager'),
+            self::BRANCH_MANAGER => __('Branch Manager'),
+            self::MANAGER_LEVEL => __('Manager Chain Level'),
+            self::CUSTOM_USER => __('Custom User'),
+            self::CUSTOM_ROLE => __('Custom Role'),
+        ];
+    }
 }

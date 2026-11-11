@@ -74,28 +74,7 @@ class ApprovalWorkflowService
             return;
         }
 
-        // 1. Reset role-based steps back to pending and clear the previous acting user/employee
-        $record->approvalSteps()
-            ->whereNotNull('approver_role_id')
-            ->update([
-                'status' => ApprovalStepStatus::PENDING,
-                'approver_user_id' => null,
-                'approver_employee_id' => null,
-                'approved_at' => null,
-                'rejected_at' => null,
-                'notes' => null,
-            ]);
-
-        // 2. Reset user-based steps back to pending while keeping their assigned approver_user_id & approver_employee_id
-        $record->approvalSteps()
-            ->whereNull('approver_role_id')
-            ->whereNotNull('approver_user_id')
-            ->update([
-                'status' => ApprovalStepStatus::PENDING,
-                'approved_at' => null,
-                'rejected_at' => null,
-                'notes' => null,
-            ]);
+        $record->approvalSteps()->resetForRollback();
 
         $record->unsetRelation('approvalSteps');
         $record->unsetRelation('currentApprovalStep');
@@ -183,27 +162,15 @@ class ApprovalWorkflowService
                 throw new AuthorizationException($this->notCurrentApproverMessage($pendingSteps->first()));
             }
 
-            // If a higher-level approver bypassed preceding skippable pending steps, mark them as skipped
             if ($pendingSteps->first()->step_order < $step->step_order) {
                 ApprovalStep::query()
-                    ->where('approvable_type', $record::class)
-                    ->where('approvable_id', $record->getKey())
-                    ->where('status', ApprovalStepStatus::PENDING)
-                    ->where('step_order', '<', $step->step_order)
-                    ->update([
-                        'status' => ApprovalStepStatus::SKIPPED,
-                        'notes' => "Skipped: Approved by step #{$step->step_order} ({$user->name})",
-                        'updated_at' => now(),
-                    ]);
+                    ->forApprovable($record)
+                    ->pending()
+                    ->preceding($step->step_order)
+                    ->markAsSkipped("Skipped: Approved by step #{$step->step_order} ({$user->name})");
             }
 
-            $step->update([
-                'status' => ApprovalStepStatus::APPROVED,
-                'approver_user_id' => $user->id,
-                'approver_employee_id' => $step->approver_employee_id ?? $this->resolveUserEmployeeId($user),
-                'approved_at' => now(),
-                'notes' => $notes,
-            ]);
+            $step->markAsApproved($user->id, $this->resolveUserEmployeeId($user), $notes);
 
             if (! $this->hasPendingSteps($record)) {
                 $handler = $this->finalApprovalHandlerResolver->resolve($record);
@@ -238,23 +205,13 @@ class ApprovalWorkflowService
                 throw new AuthorizationException($this->notCurrentApproverMessage($pendingSteps->first()));
             }
 
-            $step->update([
-                'status' => ApprovalStepStatus::REJECTED,
-                'approver_user_id' => $user->id,
-                'approver_employee_id' => $step->approver_employee_id ?? $this->resolveUserEmployeeId($user),
-                'rejected_at' => now(),
-                'notes' => $notes,
-            ]);
+            $step->markAsRejected($user->id, $this->resolveUserEmployeeId($user), $notes);
 
             // Mark any remaining pending steps (preceding or subsequent) as skipped so no step stays pending after rejection
             ApprovalStep::query()
-                ->where('approvable_type', $record::class)
-                ->where('approvable_id', $record->getKey())
-                ->where('status', ApprovalStepStatus::PENDING)
-                ->update([
-                    'status' => ApprovalStepStatus::SKIPPED,
-                    'updated_at' => now(),
-                ]);
+                ->forApprovable($record)
+                ->pending()
+                ->markAsSkipped();
 
             $this->rejectionHandlerResolver->resolve($record)?->handle($record, $user, $notes);
 
@@ -275,8 +232,8 @@ class ApprovalWorkflowService
         }
 
         return $record->approvalSteps()
-            ->where('status', ApprovalStepStatus::PENDING)
-            ->orderBy('step_order')
+            ->pending()
+            ->inOrder()
             ->get();
     }
 
@@ -286,11 +243,10 @@ class ApprovalWorkflowService
     private function pendingStepsForUpdate(Model&ApprovableRecord $record): Collection
     {
         return ApprovalStep::query()
-            ->with(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name'])
-            ->where('approvable_type', $record::class)
-            ->where('approvable_id', $record->getKey())
-            ->where('status', ApprovalStepStatus::PENDING)
-            ->orderBy('step_order')
+            ->withApproverSummary()
+            ->forApprovable($record)
+            ->pending()
+            ->inOrder()
             ->lockForUpdate()
             ->get();
     }
@@ -330,9 +286,8 @@ class ApprovalWorkflowService
     private function hasPendingSteps(Model&ApprovableRecord $record): bool
     {
         return ApprovalStep::query()
-            ->where('approvable_type', $record::class)
-            ->where('approvable_id', $record->getKey())
-            ->where('status', ApprovalStepStatus::PENDING)
+            ->forApprovable($record)
+            ->pending()
             ->exists();
     }
 
@@ -353,12 +308,7 @@ class ApprovalWorkflowService
 
     private function notCurrentApproverMessage(ApprovalStep $step): string
     {
-        $step->loadMissing(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name']);
-
-        $approverName = $step->approverEmployee?->name
-            ?: $step->approverUser?->name
-            ?: ($step->approverRole?->name ? "any {$step->approverRole->name}" : null)
-            ?: "User #{$step->approver_user_id}";
+        $approverName = $step->approverDisplayName(rolePrefix: 'any');
 
         return "Waiting for {$approverName} to approve step #{$step->step_order}.";
     }

@@ -2,11 +2,8 @@
 
 namespace App\Modules\HR\ApprovalPolicies\Rules;
 
-use App\Models\AdvanceWage;
-use App\Models\EmployeeApplicationV2;
-use App\Models\EmployeeOvertime;
-use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
+use App\Modules\HR\ApprovalPolicies\Support\ApprovalSubjectRegistry;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -29,15 +26,9 @@ class PolicyNotInUse implements ValidationRule
             return;
         }
 
-        $restrictedModels = [
-            EmployeeApplicationV2::class,
-            EmployeeOvertime::class,
-            AdvanceWage::class,
-        ];
-
         $isInUse = $policy->steps()
-            ->whereIn('approvable_type', $restrictedModels)
-            ->where('status', ApprovalStepStatus::PENDING)
+            ->forApprovableTypes(ApprovalSubjectRegistry::restrictedModels())
+            ->pending()
             ->exists();
 
         if ($isInUse) {

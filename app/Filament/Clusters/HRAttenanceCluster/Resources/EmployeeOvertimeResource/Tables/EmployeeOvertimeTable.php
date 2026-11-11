@@ -227,14 +227,14 @@ class EmployeeOvertimeTable
                             return 'heroicon-o-x-mark';
                         }
                     })
-                    ->action(function (Model $record) {
+                    ->action(function (EmployeeOvertime $record) {
                         try {
                             DB::transaction(function () use ($record) {
                                 if ($record->status === EmployeeOvertime::STATUS_REJECTED) {
                                     $record->update(['status' => EmployeeOvertime::STATUS_PENDING, 'rejected_by' => null, 'rejected_at' => null]);
-                                    app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->resetStepsOnRollback($record);
-                                } elseif (app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)) {
-                                    app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->reject($record, auth()->user());
+                                    $record->resetApprovalWorkflowOnRollback();
+                                } elseif ($record->requiresApprovalWorkflow()) {
+                                    $record->rejectViaWorkflow(auth()->user());
                                 } else {
                                     $record->update(['status' => EmployeeOvertime::STATUS_REJECTED, 'rejected_by' => auth()->id(), 'rejected_at' => now()]);
                                 }
@@ -244,21 +244,17 @@ class EmployeeOvertimeTable
                             Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
                         }
                     })
-                    ->hidden(function ($record) {
+                    ->hidden(function (EmployeeOvertime $record) {
                         if ($record->status == EmployeeOvertime::STATUS_APPROVED) {
                             return true;
                         }
                         if ($record->status == EmployeeOvertime::STATUS_PENDING) {
                             $user = auth()->user();
-                            if (! $user) {
+                            if (! $user || $record->isSelfApprovalBy($user)) {
                                 return true;
                             }
-                            $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
-                            if ($workflowService->isSelfApproval($record, $user)) {
-                                return true;
-                            }
-                            if (app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)) {
-                                return ! $workflowService->canUserApprove($record, $user);
+                            if ($record->requiresApprovalWorkflow()) {
+                                return ! $record->canBeApprovedBy($user);
                             }
                         }
                         if (isSuperAdmin()) {
@@ -291,21 +287,17 @@ class EmployeeOvertimeTable
                     ->button()
                     ->requiresConfirmation()
                     ->size(Size::Small)
-                    ->hidden(function ($record) {
+                    ->hidden(function (EmployeeOvertime $record) {
                         if ($record->status == EmployeeOvertime::STATUS_REJECTED) {
                             return true;
                         }
                         if ($record->status == EmployeeOvertime::STATUS_PENDING) {
                             $user = auth()->user();
-                            if (! $user) {
+                            if (! $user || $record->isSelfApprovalBy($user)) {
                                 return true;
                             }
-                            $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
-                            if ($workflowService->isSelfApproval($record, $user)) {
-                                return true;
-                            }
-                            if (app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)) {
-                                return ! $workflowService->canUserApprove($record, $user);
+                            if ($record->requiresApprovalWorkflow()) {
+                                return ! $record->canBeApprovedBy($user);
                             }
                         }
                         if (isSuperAdmin() || isBranchManager() || isSystemManager() || isHR()) {
@@ -313,14 +305,14 @@ class EmployeeOvertimeTable
                         }
                         return true;
                     })
-                    ->action(function (Model $record) {
+                    ->action(function (EmployeeOvertime $record) {
                         try {
                             DB::transaction(function () use ($record) {
                                 if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
                                     $record->update(['status' => EmployeeOvertime::STATUS_PENDING, 'approved_by' => null, 'approved_at' => null]);
-                                    app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->resetStepsOnRollback($record);
-                                } elseif (app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)) {
-                                    app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->approve($record, auth()->user());
+                                    $record->resetApprovalWorkflowOnRollback();
+                                } elseif ($record->requiresApprovalWorkflow()) {
+                                    $record->approveViaWorkflow(auth()->user());
                                 } else {
                                     $record->update(['status' => EmployeeOvertime::STATUS_APPROVED, 'approved_by' => auth()->user()->id, 'approved_at' => now()]);
                                 }
@@ -364,13 +356,11 @@ class EmployeeOvertimeTable
                         ->action(function (Collection $records) {
                             try {
                                 DB::transaction(function () use ($records) {
-                                    $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
-                                    $requirementChecker = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class);
                                     $user = auth()->user();
 
-                                    $records->each(function ($record) use ($workflowService, $requirementChecker, $user) {
-                                        if ($requirementChecker->requiresWorkflow($record)) {
-                                            $workflowService->approve($record, $user);
+                                    $records->each(function (EmployeeOvertime $record) use ($user) {
+                                        if ($record->requiresApprovalWorkflow()) {
+                                            $record->approveViaWorkflow($user);
                                         } else {
                                             $record->update(['status' => EmployeeOvertime::STATUS_APPROVED, 'approved_by' => $user->id, 'approved_at' => now()]);
                                         }
@@ -393,10 +383,9 @@ class EmployeeOvertimeTable
                         ->action(function (Collection $records) {
                             try {
                                 DB::transaction(function () use ($records) {
-                                    $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
-                                    $records->each(function ($record) use ($workflowService) {
+                                    $records->each(function (EmployeeOvertime $record) {
                                         $record->update(['status' => EmployeeOvertime::STATUS_PENDING, 'approved_by' => null, 'approved_at' => null]);
-                                        $workflowService->resetStepsOnRollback($record);
+                                        $record->resetApprovalWorkflowOnRollback();
                                     });
                                 });
                                 Notification::make()->title(__('Done'))->success()->send();
@@ -416,10 +405,9 @@ class EmployeeOvertimeTable
                         ->action(function (Collection $records) {
                             try {
                                 DB::transaction(function () use ($records) {
-                                    $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
-                                    $records->each(function ($record) use ($workflowService) {
+                                    $records->each(function (EmployeeOvertime $record) {
                                         $record->update(['status' => EmployeeOvertime::STATUS_PENDING, 'rejected_by' => null, 'rejected_at' => null]);
-                                        $workflowService->resetStepsOnRollback($record);
+                                        $record->resetApprovalWorkflowOnRollback();
                                     });
                                 });
                                 Notification::make()->title(__('Done'))->success()->send();

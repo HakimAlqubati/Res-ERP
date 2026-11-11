@@ -21,6 +21,7 @@ use App\Modules\HR\ApprovalPolicies\Rules\UniqueApprovalPolicy;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalPolicyResolver;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
+use App\Modules\HR\ApprovalPolicies\Support\ApprovalSubjectRegistry;
 use App\Services\HR\Applications\EmployeeApplicationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -705,5 +706,76 @@ class ApprovalWorkflowFixesTest extends TestCase
         $stepsAfterRollback = $app->approvalSteps()->orderBy('step_order')->get();
         $this->assertSame(ApprovalStepStatus::PENDING, $stepsAfterRollback[0]->status);
         $this->assertSame(ApprovalStepStatus::PENDING, $stepsAfterRollback[1]->status);
+    }
+
+    /**
+     * Architecture & Refactoring Verification:
+     * Tests Custom Eloquent Builders (ApprovalPolicyBuilder, ApprovalStepBuilder),
+     * ApprovalSubjectRegistry, and HasApprovalWorkflow fluent domain methods.
+     */
+    public function test_custom_builders_scopes_and_fluent_workflow_trait_methods(): void
+    {
+        $branch = $this->createTestBranch('Branch Builders Test');
+        [$managerUser, $managerEmp] = $this->createTestUserAndEmployee('Manager Builder Test', $branch->id);
+        [$empUser, $employee] = $this->createTestUserAndEmployee('Employee Builder Test', $branch->id, $managerEmp->id);
+
+        // 1. Test ApprovalSubjectRegistry encoding/decoding
+        $encoded = ApprovalSubjectRegistry::encodeCombinedSubject(
+            EmployeeApplicationV2::class,
+            EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST
+        );
+        $this->assertSame(EmployeeApplicationV2::class . ':1', $encoded);
+        $this->assertSame(
+            [EmployeeApplicationV2::class, EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+            ApprovalSubjectRegistry::decodeCombinedSubject($encoded)
+        );
+        $this->assertSame(
+            [EmployeeApplicationV2::class, null],
+            ApprovalSubjectRegistry::decodeCombinedSubject(EmployeeApplicationV2::class . ':all')
+        );
+
+        // 2. Test ApprovalPolicyBuilder scopes
+        $policy = ApprovalPolicy::query()->create([
+            'name' => 'Builder Scoped Policy',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::DIRECT_MANAGER,
+            'active' => true,
+            'allow_skip_steps' => false,
+        ]);
+
+        $this->assertTrue(
+            ApprovalPolicy::query()
+                ->active()
+                ->forSubject(EmployeeApplicationV2::class, EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
+                ->forBranch($branch->id)
+                ->whereKey($policy->id)
+                ->exists()
+        );
+
+        // 3. Test HasApprovalWorkflow fluent methods & ApprovalStepBuilder scopes
+        $app = $this->createLeaveApplication($employee, $empUser);
+
+        $this->assertTrue($app->requiresApprovalWorkflow());
+        $this->assertTrue($app->isSelfApprovalBy($empUser));
+        $this->assertFalse($app->canBeApprovedBy($empUser));
+        $this->assertTrue($app->canBeApprovedBy($managerUser));
+
+        $step = $app->approvalSteps()->pending()->inOrder()->first();
+        $this->assertNotNull($step);
+        $this->assertTrue($step->isPending());
+        $this->assertSame('Manager Builder Test', $step->approverDisplayName());
+
+        // Approve via fluent trait method
+        $app->approveViaWorkflow($managerUser, 'Approved via fluent trait');
+        $this->assertSame(EmployeeApplicationV2::STATUS_APPROVED, $app->fresh()->status);
+        $this->assertTrue($step->fresh()->isApproved());
+        $this->assertFalse($app->fresh()->requiresApprovalWorkflow());
+
+        // Reset via fluent trait method
+        $app->resetApprovalWorkflowOnRollback();
+        $this->assertTrue($step->fresh()->isPending());
+        $this->assertTrue($app->fresh()->requiresApprovalWorkflow());
     }
 }

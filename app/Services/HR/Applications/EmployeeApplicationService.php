@@ -338,17 +338,16 @@ class EmployeeApplicationService
     {
         $record = EmployeeApplicationV2::findOrFail($id);
         $user = User::findOrFail($userId);
-        $workflowService = app(ApprovalWorkflowService::class);
 
-        if ($workflowService->isSelfApproval($record, $user)) {
+        if ($record->isSelfApprovalBy($user)) {
             throw new \Illuminate\Auth\Access\AuthorizationException(__('You cannot approve or reject your own request.'));
         }
 
         if (
             ! app(ApprovalWorkflowGuard::class)->isBypassed()
-            && app(ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)
+            && $record->requiresApprovalWorkflow()
         ) {
-            return $workflowService->approve($record, $user);
+            return $record->approveViaWorkflow($user);
         }
 
         // DB::transaction ensures that the status update AND all observer
@@ -483,7 +482,7 @@ class EmployeeApplicationService
             ]);
 
             // Reset approval workflow steps back to pending so the request re-enters the approval track
-            app(ApprovalWorkflowService::class)->resetStepsOnRollback($record);
+            $record->resetApprovalWorkflowOnRollback();
 
             return $record;
         });
@@ -493,17 +492,16 @@ class EmployeeApplicationService
     {
         $record = EmployeeApplicationV2::with('mealRequest')->findOrFail($id);
         $user = User::findOrFail($userId);
-        $workflowService = app(ApprovalWorkflowService::class);
 
-        if ($workflowService->isSelfApproval($record, $user)) {
+        if ($record->isSelfApprovalBy($user)) {
             throw new \Illuminate\Auth\Access\AuthorizationException(__('You cannot approve or reject your own request.'));
         }
 
         if (
             ! app(ApprovalWorkflowGuard::class)->isBypassed()
-            && app(ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)
+            && $record->requiresApprovalWorkflow()
         ) {
-            return $workflowService->reject($record, $user, $reason);
+            return $record->rejectViaWorkflow($user, $reason);
         }
 
         return DB::transaction(function () use ($record, $userId, $reason) {

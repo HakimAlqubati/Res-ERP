@@ -4,11 +4,16 @@ namespace App\Modules\HR\ApprovalPolicies\Models;
 
 use App\Models\Employee;
 use App\Models\User;
+use App\Modules\HR\ApprovalPolicies\Builders\ApprovalStepBuilder;
+use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\Permission\Models\Role;
 
+/**
+ * @method static ApprovalStepBuilder query()
+ */
 class ApprovalStep extends Model
 {
     protected $table = 'hr_approval_steps';
@@ -39,6 +44,11 @@ class ApprovalStep extends Model
         'rejected_at' => 'datetime',
     ];
 
+    public function newEloquentBuilder($query): ApprovalStepBuilder
+    {
+        return new ApprovalStepBuilder($query);
+    }
+
     public function approvable(): MorphTo
     {
         return $this->morphTo();
@@ -62,5 +72,76 @@ class ApprovalStep extends Model
     public function approverRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'approver_role_id');
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === ApprovalStepStatus::PENDING;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === ApprovalStepStatus::APPROVED;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === ApprovalStepStatus::REJECTED;
+    }
+
+    public function isSkipped(): bool
+    {
+        return $this->status === ApprovalStepStatus::SKIPPED;
+    }
+
+    public function markAsApproved(int $userId, ?int $employeeId = null, ?string $notes = null): bool
+    {
+        return $this->update([
+            'status' => ApprovalStepStatus::APPROVED,
+            'approver_user_id' => $userId,
+            'approver_employee_id' => $this->approver_employee_id ?? $employeeId,
+            'approved_at' => now(),
+            'notes' => $notes,
+        ]);
+    }
+
+    public function markAsRejected(int $userId, ?int $employeeId = null, ?string $notes = null): bool
+    {
+        return $this->update([
+            'status' => ApprovalStepStatus::REJECTED,
+            'approver_user_id' => $userId,
+            'approver_employee_id' => $this->approver_employee_id ?? $employeeId,
+            'rejected_at' => now(),
+            'notes' => $notes,
+        ]);
+    }
+
+    public function approverDisplayName(
+        bool $includeRoleContext = false,
+        string $rolePrefix = 'Any',
+        string $fallback = 'Unknown'
+    ): string {
+        $this->loadMissing(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name']);
+
+        $personName = $this->approverEmployee?->name ?: $this->approverUser?->name;
+        $roleName = $this->approverRole?->name;
+
+        if ($includeRoleContext && $personName && $roleName) {
+            return "{$personName} ({$roleName})";
+        }
+
+        if ($personName) {
+            return $personName;
+        }
+
+        if ($roleName) {
+            return "{$rolePrefix} {$roleName}";
+        }
+
+        if ($this->isSkipped()) {
+            return 'Skipped (No Manager)';
+        }
+
+        return $this->approver_user_id ? "User #{$this->approver_user_id}" : $fallback;
     }
 }

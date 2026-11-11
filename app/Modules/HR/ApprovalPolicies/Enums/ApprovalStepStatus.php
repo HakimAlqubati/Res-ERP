@@ -17,4 +17,14 @@ final class ApprovalStepStatus
             self::SKIPPED,
         ];
     }
+
+    public static function badgeColor(?string $status): string
+    {
+        return match ($status) {
+            self::PENDING => 'warning',
+            self::APPROVED => 'success',
+            self::REJECTED => 'danger',
+            default => 'gray',
+        };
+    }
 }

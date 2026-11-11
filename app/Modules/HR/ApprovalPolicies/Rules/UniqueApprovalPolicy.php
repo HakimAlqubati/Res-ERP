@@ -24,7 +24,7 @@ class UniqueApprovalPolicy implements ValidationRule
         $this->applicationTypeId = ($applicationTypeId !== null && $applicationTypeId !== '' && $applicationTypeId !== 'all')
             ? (int) $applicationTypeId
             : null;
-        $this->branchIds = is_array($branchIds) ? $branchIds : [];
+        $this->branchIds = ApprovalPolicy::normalizeBranchIds($branchIds) ?? [];
     }
 
     /**
@@ -39,12 +39,7 @@ class UniqueApprovalPolicy implements ValidationRule
         }
 
         $query = ApprovalPolicy::query()
-            ->where('approvable_type', $this->approvableType)
-            ->when(
-                $this->applicationTypeId !== null,
-                fn ($q) => $q->where('application_type_id', $this->applicationTypeId),
-                fn ($q) => $q->whereNull('application_type_id')
-            );
+            ->forSubject($this->approvableType, $this->applicationTypeId, includeWildcardType: false);
 
         if ($this->ignoreId) {
             $query->whereKeyNot($this->ignoreId);
@@ -56,15 +51,13 @@ class UniqueApprovalPolicy implements ValidationRule
             return;
         }
 
-        $currentBranches = array_values(array_unique(array_filter(array_map('intval', $this->branchIds))));
-
         foreach ($duplicates as $duplicate) {
-            $duplicateBranches = array_values(array_unique(array_filter(array_map('intval', (array) $duplicate->branch_ids))));
+            $duplicateBranches = ApprovalPolicy::normalizeBranchIds($duplicate->branch_ids) ?? [];
 
-            $isBothGlobal = empty($currentBranches) && empty($duplicateBranches);
-            $hasBranchOverlap = ! empty($currentBranches)
+            $isBothGlobal = empty($this->branchIds) && empty($duplicateBranches);
+            $hasBranchOverlap = ! empty($this->branchIds)
                 && ! empty($duplicateBranches)
-                && ! empty(array_intersect($currentBranches, $duplicateBranches));
+                && ! empty(array_intersect($this->branchIds, $duplicateBranches));
 
             if ($isBothGlobal || $hasBranchOverlap) {
                 $fail(__('An approval policy for the same subject and branch(es) already exists.'));

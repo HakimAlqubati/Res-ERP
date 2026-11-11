@@ -29,9 +29,7 @@ class ApprovalWorkflowRequirementChecker
                     return $record->approvalSteps->contains('status', ApprovalStepStatus::PENDING);
                 }
             } elseif ($record->approvalSteps()->exists()) {
-                return $record->approvalSteps()
-                    ->where('status', ApprovalStepStatus::PENDING)
-                    ->exists();
+                return $record->approvalSteps()->pending()->exists();
             }
         }
 

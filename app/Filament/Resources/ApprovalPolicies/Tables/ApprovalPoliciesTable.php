@@ -2,11 +2,9 @@
 
 namespace App\Filament\Resources\ApprovalPolicies\Tables;
 
-use App\Models\AdvanceWage;
+use App\Models\Branch;
 use App\Models\EmployeeApplicationV2;
-use App\Models\EmployeeOvertime;
-use App\Modules\HR\ApprovalPolicies\Enums\ApprovalMode;
-use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
+use App\Modules\HR\ApprovalPolicies\Support\ApprovalSubjectRegistry;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -15,7 +13,6 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -32,7 +29,7 @@ class ApprovalPoliciesTable
             ->recordTitleAttribute('name')
             ->striped()
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn(Builder $query) => $query->withCount('policySteps'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount('policySteps'))
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -43,17 +40,12 @@ class ApprovalPoliciesTable
                 TextColumn::make('approvable_type')
                     ->label(__('Subject'))
                     ->badge()
-                    ->formatStateUsing(fn(?string $state): string => self::approvableTypeLabel($state))
-                    ->color(fn(?string $state): string => match ($state) {
-                        EmployeeApplicationV2::class => 'info',
-                        EmployeeOvertime::class => 'warning',
-                        AdvanceWage::class => 'success',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (?string $state): string => ApprovalSubjectRegistry::subjectTypeLabel($state))
+                    ->color(fn (?string $state): string => ApprovalSubjectRegistry::subjectBadgeColor($state)),
 
                 TextColumn::make('application_type_id')
                     ->label(__('Request Type'))
-                    ->formatStateUsing(fn($state): string => $state
+                    ->formatStateUsing(fn ($state): string => $state
                         ? (EmployeeApplicationV2::APPLICATION_TYPE_NAMES[(int) $state] ?? (string) $state)
                         : __('All'))
                     ->placeholder(__('All')),
@@ -61,12 +53,16 @@ class ApprovalPoliciesTable
                 TextColumn::make('branch_ids')
                     ->label(__('Branches'))
                     ->formatStateUsing(function ($state) {
-                        if (empty($state)) return __('Global');
+                        if (empty($state)) {
+                            return __('Global');
+                        }
+
                         static $branchNames = null;
                         if ($branchNames === null) {
-                            $branchNames = \App\Models\Branch::pluck('name', 'id')->toArray();
+                            $branchNames = Branch::pluck('name', 'id')->toArray();
                         }
-                        return collect($state)->map(fn($id) => $branchNames[$id] ?? $id)->join(', ');
+
+                        return collect($state)->map(fn ($id) => $branchNames[$id] ?? $id)->join(', ');
                     })
                     ->badge()
                     ->wrap()
@@ -76,17 +72,18 @@ class ApprovalPoliciesTable
                     ->label(__('Route Steps'))
                     ->alignCenter()
                     ->sortable()
-                    ->toggleable()
-                    ,
+                    ->toggleable(),
 
                 ToggleColumn::make('active')
                     ->label(__('Active'))
                     ->sortable()
                     ->toggleable(),
+
                 ToggleColumn::make('allow_skip_steps')
                     ->label(__('Allow Skipping Steps'))
                     ->sortable()
                     ->toggleable(),
+
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
                     ->dateTime('Y-m-d H:i')
@@ -96,7 +93,7 @@ class ApprovalPoliciesTable
             ->filters([
                 SelectFilter::make('approvable_type')
                     ->label(__('Subject'))
-                    ->options(self::approvableTypeOptions()),
+                    ->options(ApprovalSubjectRegistry::subjectTypeOptions()),
 
                 SelectFilter::make('application_type_id')
                     ->label(__('Employee Request Type'))
@@ -104,9 +101,12 @@ class ApprovalPoliciesTable
 
                 SelectFilter::make('branch_ids')
                     ->label(__('Branch'))
-                    ->options(fn() => \App\Models\Branch::pluck('name', 'id')->toArray())
+                    ->options(fn () => Branch::pluck('name', 'id')->toArray())
                     ->query(function (Builder $query, array $data) {
-                        if (empty($data['value'])) return $query;
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
                         return $query->whereJsonContains('branch_ids', (int) $data['value']);
                     })
                     ->searchable()
@@ -114,6 +114,7 @@ class ApprovalPoliciesTable
 
                 TernaryFilter::make('active')
                     ->label(__('Active')),
+
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -129,19 +130,5 @@ class ApprovalPoliciesTable
                     RestoreBulkAction::make(),
                 ]),
             ]);
-    }
-
-    private static function approvableTypeOptions(): array
-    {
-        return [
-            EmployeeApplicationV2::class => __('Employee Reqests'),
-            EmployeeOvertime::class => __('Employee Overtime'),
-            AdvanceWage::class => __('Advance Wages'),
-        ];
-    }
-
-    private static function approvableTypeLabel(?string $state): string
-    {
-        return self::approvableTypeOptions()[$state] ?? class_basename((string) $state);
     }
 }

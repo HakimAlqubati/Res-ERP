@@ -181,9 +181,7 @@ class EmployeeOvertimeObserver
      */
     public function created(EmployeeOvertime $employeeOvertime): void
     {
-        if (app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($employeeOvertime)) {
-            app(ApprovalWorkflowService::class)->createFor($employeeOvertime);
-        }
+        $employeeOvertime->initializeApprovalWorkflowIfRequired();
     }
 
     /**

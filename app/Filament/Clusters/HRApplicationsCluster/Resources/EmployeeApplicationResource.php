@@ -172,14 +172,12 @@ class EmployeeApplicationResource extends Resource
             return false;
         }
 
-        $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
-        if ($workflowService->isSelfApproval($record, $user)) {
+        if ($record->isSelfApprovalBy($user)) {
             return false;
         }
 
-        $requirementChecker = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class);
-        if ($requirementChecker->requiresWorkflow($record)) {
-            return $workflowService->canUserApprove($record, $user);
+        if ($record->requiresApprovalWorkflow()) {
+            return $record->canBeApprovedBy($user);
         }
 
         if (isStuff() || isHR()) {
@@ -799,26 +797,10 @@ class EmployeeApplicationResource extends Resource
                                     ->color('info'),
                                 \Filament\Infolists\Components\TextEntry::make('status')
                                     ->badge()
-                                    ->color(fn (string $state): string => match ($state) {
-                                        \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::PENDING => 'warning',
-                                        \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::APPROVED => 'success',
-                                        \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::REJECTED => 'danger',
-                                        default => 'gray',
-                                    }),
+                                    ->color(fn (string $state): string => \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::badgeColor($state)),
                                 \Filament\Infolists\Components\TextEntry::make('approverName')
                                     ->label('Required Approver')
-                                    ->state(function ($record) {
-                                        $personName = $record->approverEmployee?->name ?: $record->approverUser?->name;
-                                        $roleName = $record->approverRole?->name;
-
-                                        if ($personName && $roleName) {
-                                            return "{$personName} ({$roleName})";
-                                        }
-
-                                        return $personName
-                                            ?: ($roleName ? "Any {$roleName}" : null)
-                                            ?: ($record->status === \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::SKIPPED ? 'Skipped (No Manager)' : 'Unknown');
-                                    }),
+                                    ->state(fn ($record) => $record->approverDisplayName(includeRoleContext: true)),
                                 \Filament\Infolists\Components\TextEntry::make('updated_at')
                                     ->label('Action Date')
                                     ->dateTime()

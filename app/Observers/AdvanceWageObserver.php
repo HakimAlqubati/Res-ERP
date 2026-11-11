@@ -73,9 +73,7 @@ class AdvanceWageObserver
      */
     public function created(AdvanceWage $advanceWage): void
     {
-        if (app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($advanceWage)) {
-            app(ApprovalWorkflowService::class)->createFor($advanceWage);
-        }
+        $advanceWage->initializeApprovalWorkflowIfRequired();
 
         $this->syncToFinancial($advanceWage);
     }

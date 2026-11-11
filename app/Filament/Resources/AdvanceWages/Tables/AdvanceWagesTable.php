@@ -110,12 +110,12 @@ class AdvanceWagesTable
                         try {
                             if (
                                 $record->status === AdvanceWage::STATUS_PENDING
-                                && app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)
+                                && $record->requiresApprovalWorkflow()
                             ) {
-                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->reject($record, auth()->user());
+                                $record->rejectViaWorkflow(auth()->user());
                             } else {
                                 $record->cancel();
-                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->resetStepsOnRollback($record);
+                                $record->resetApprovalWorkflowOnRollback();
                             }
 
                             Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
@@ -140,11 +140,11 @@ class AdvanceWagesTable
                     ->action(function (AdvanceWage $record): void {
                         try {
                             if ($record->status === AdvanceWage::STATUS_CANCELLED) {
-                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->resetStepsOnRollback($record);
+                                $record->resetApprovalWorkflowOnRollback();
                             }
 
-                            if (app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)) {
-                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->approve($record, auth()->user());
+                            if ($record->requiresApprovalWorkflow()) {
+                                $record->approveViaWorkflow(auth()->user());
                             } else {
                                 $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
                             }

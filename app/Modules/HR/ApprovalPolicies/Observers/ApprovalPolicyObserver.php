@@ -2,7 +2,6 @@
 
 namespace App\Modules\HR\ApprovalPolicies\Observers;
 
-use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
 use App\Modules\HR\ApprovalPolicies\Rules\PolicyNotInUse;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
@@ -19,7 +18,7 @@ class ApprovalPolicyObserver
 
         if ($approvalPolicy->wasChanged('allow_skip_steps')) {
             $approvalPolicy->steps()
-                ->where('status', ApprovalStepStatus::PENDING)
+                ->pending()
                 ->update([
                     'can_be_skipped' => (bool) $approvalPolicy->allow_skip_steps,
                 ]);

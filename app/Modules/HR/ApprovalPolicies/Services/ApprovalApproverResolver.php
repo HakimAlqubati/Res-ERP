@@ -32,16 +32,8 @@ class ApprovalApproverResolver
         };
 
         $approvers = $approvers
-            ->filter(fn (ApprovalApprover $approver) => $approver->isSkipped || $approver->userId || $approver->roleId)
-            ->unique(function (ApprovalApprover $approver) {
-                if ($approver->isSkipped) {
-                    return 'skipped:' . spl_object_id($approver);
-                }
-
-                return $approver->roleId
-                    ? "role:{$approver->roleId}"
-                    : "user:{$approver->userId}";
-            })
+            ->filter(fn (ApprovalApprover $approver) => $approver->isValid())
+            ->unique(fn (ApprovalApprover $approver) => $approver->uniqueKey())
             ->values();
 
         if ($approvers->isEmpty()) {
@@ -59,7 +51,7 @@ class ApprovalApproverResolver
             return collect([ApprovalApprover::skipped()]);
         }
 
-        return collect([new ApprovalApprover((int) $manager->user_id, (int) $manager->id)]);
+        return collect([ApprovalApprover::forUser((int) $manager->user_id, (int) $manager->id)]);
     }
 
     private function branchManager(Model&ApprovableRecord $record): Collection
@@ -82,7 +74,7 @@ class ApprovalApproverResolver
             return $this->directManager($record);
         }
 
-        return collect([new ApprovalApprover((int) $managerUserId)]);
+        return collect([ApprovalApprover::forUser((int) $managerUserId)]);
     }
 
     private function managerChain(Model&ApprovableRecord $record, ?int $levels): Collection
@@ -113,7 +105,7 @@ class ApprovalApproverResolver
             }
 
             if ($manager->user_id && ! $this->isApplicantSelf($record, (int) $manager->user_id, (int) $manager->id)) {
-                $chain->push(new ApprovalApprover((int) $manager->user_id, (int) $manager->id));
+                $chain->push(ApprovalApprover::forUser((int) $manager->user_id, (int) $manager->id));
             }
 
             if ($levels && $chain->count() >= $levels) {
@@ -146,7 +138,7 @@ class ApprovalApproverResolver
 
         return $userIds
             ->filter(fn (int $userId) => $existingUserIds->has($userId))
-            ->map(fn (int $userId) => new ApprovalApprover($userId))
+            ->map(fn (int $userId) => ApprovalApprover::forUser($userId))
             ->values();
     }
 
@@ -167,10 +159,10 @@ class ApprovalApproverResolver
             ApprovalPolicyStepType::BRANCH_MANAGER => $this->branchManager($record)->first(),
             ApprovalPolicyStepType::MANAGER_LEVEL => $this->managerAtLevel($record, $step->manager_level),
             ApprovalPolicyStepType::CUSTOM_USER => $step->approver_user_id
-                ? new ApprovalApprover((int) $step->approver_user_id)
+                ? ApprovalApprover::forUser((int) $step->approver_user_id)
                 : null,
             ApprovalPolicyStepType::CUSTOM_ROLE => $step->approver_role_id
-                ? new ApprovalApprover(null, null, (int) $step->approver_role_id)
+                ? ApprovalApprover::forRole((int) $step->approver_role_id)
                 : null,
             default => null,
         };
