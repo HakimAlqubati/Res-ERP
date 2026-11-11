@@ -2,7 +2,7 @@
     $records = isset($this) && method_exists($this, 'getTableRecords') ? $this->getTableRecords() : null;
     $payrollNetMap = $records ? $records->pluck('total_net', 'id')->toArray() : [];
     $allTotal = (float) (isset($this) && method_exists($this, 'getFilteredTableQuery') ? ($this->getFilteredTableQuery()?->sum('total_net') ?? 0) : 0);
-    $currency = function_exists('settingWithDefault') ? settingWithDefault('currency_symbol', 'RM') : 'RM';
+    $currency = function_exists('getDefaultCurrency') ? getDefaultCurrency() : (function_exists('settingWithDefault') ? settingWithDefault('currency_symbol', 'RM') : 'RM');
 @endphp
 
 <div

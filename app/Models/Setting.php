@@ -32,7 +32,24 @@ class Setting extends Model  implements Auditable
     {
         $setting = static::where('key', $key)->first();
 
-        return ($setting && $setting->value !== null && $setting->value !== '') ? $setting->value : $default;
+        if ($setting && $setting->value !== null && $setting->value !== '') {
+            return $setting->value;
+        }
+
+        // Support fallback between 'currency' and 'currency_symbol'
+        if ($key === 'currency') {
+            $fallback = static::where('key', 'currency_symbol')->first();
+            if ($fallback && $fallback->value !== null && $fallback->value !== '') {
+                return $fallback->value;
+            }
+        } elseif ($key === 'currency_symbol') {
+            $fallback = static::where('key', 'currency')->first();
+            if ($fallback && $fallback->value !== null && $fallback->value !== '') {
+                return $fallback->value;
+            }
+        }
+
+        return $default;
     }
 
     /**

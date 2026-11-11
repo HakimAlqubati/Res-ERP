@@ -55,8 +55,8 @@ if (!function_exists('getName')) {
 if (!function_exists('formatMoney')) {
     function formatMoney($amount)
     {
-        $currency = settingWithDefault('currency_symbol', 'RM');
-        return $currency . ' ' .  number_format($amount, 2);
+        $currency = getDefaultCurrency();
+        return $currency . ' ' .  number_format((float) $amount, 2);
     }
 }
 
@@ -280,7 +280,15 @@ if (!function_exists('getDefaultStore')) {
 if (!function_exists('getDefaultCurrency')) {
     function getDefaultCurrency()
     {
-        return settingWithDefault('currency_symbol', 'RM');
+        $currency = settingWithDefault('currency_symbol');
+        if (!empty($currency)) {
+            return $currency;
+        }
+        $currency = settingWithDefault('currency');
+        if (!empty($currency)) {
+            return $currency;
+        }
+        return 'RM';
     }
 }
 
@@ -544,9 +552,9 @@ if (!function_exists('getMonthArrayWithIntKeys')) {
  * to get setting by key field
  */
 if (!function_exists('setting')) {
-    function setting($key)
+    function setting($key, $default = null)
     {
-        return Setting::getSetting($key);
+        return Setting::getSetting($key, $default);
     }
 }
 if (!function_exists('settingWithDefault')) {
@@ -1129,9 +1137,9 @@ if (!function_exists('defaultManufacturingStore')) {
 }
 
 if (!function_exists('formatMoneyWithCurrency')) {
-    function formatMoneyWithCurrency($amount, $currency = 'RM')
+    function formatMoneyWithCurrency($amount, $currency = null)
     {
-        $currencySymbol = $currency ?? settingWithDefault('currency_symbol', 'RM');
+        $currencySymbol = !empty($currency) ? $currency : getDefaultCurrency();
         return $currencySymbol . ' ' . number_format((float) $amount, 2, '.', ',');
     }
 }

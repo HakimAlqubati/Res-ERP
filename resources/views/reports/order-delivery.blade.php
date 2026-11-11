@@ -49,9 +49,9 @@
                     <tr>
                         <th>#</th>
                         <th>Reseller</th>
-                        <th>DO</th>
-                        <th>Invoiced</th>
-                        <th>Balance</th>
+                        <th>DO ({{ getDefaultCurrency() }})</th>
+                        <th>Invoiced ({{ getDefaultCurrency() }})</th>
+                        <th>Balance ({{ getDefaultCurrency() }})</th>
                     </tr>
                 </thead>
                 <tbody>

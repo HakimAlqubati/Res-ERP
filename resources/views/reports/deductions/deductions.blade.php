@@ -113,7 +113,7 @@
                 <thead>
                     <tr>
                         <th>Deduction Name</th>
-                        <th>Deduction Amount</th>
+                        <th>Deduction Amount ({{ getDefaultCurrency() }})</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -140,7 +140,7 @@
                 <thead>
                     <tr>
                         <th>Deduction Name</th>
-                        <th>Total Deduction Amount</th>
+                        <th>Total Deduction Amount ({{ getDefaultCurrency() }})</th>
                     </tr>
                 </thead>
                 <tbody>

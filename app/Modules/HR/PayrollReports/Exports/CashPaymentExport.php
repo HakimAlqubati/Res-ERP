@@ -48,7 +48,7 @@ class CashPaymentExport implements FromCollection, WithMapping, WithHeadings, Sh
         return [
             'Employee No',
             'Employee Name',
-            "Net Salary (RM)",
+            "Net Salary (" . getDefaultCurrency() . ")",
             'Description',
             'Signature / Acknowledgment',
         ];

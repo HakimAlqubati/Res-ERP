@@ -47,8 +47,8 @@
                 <thead>
                     <tr>
                         <th>Description</th>
-                        <th>Earnings ({{ setting('currency', 'RM') }})</th>
-                        <th>Deductions ({{ setting('currency', 'RM') }})</th>
+                        <th>Earnings ({{ getDefaultCurrency() }})</th>
+                        <th>Deductions ({{ getDefaultCurrency() }})</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -97,7 +97,7 @@
                 <tr>
                     <td style="width: 50%">
                         <div class="net-salary">
-                            <p>Net Salary ({{ setting('currency', 'RM') }}): {{ number_format($data->details[0]['net_salary'], 2) }}</p>
+                            <p>Net Salary ({{ getDefaultCurrency() }}): {{ number_format($data->details[0]['net_salary'], 2) }}</p>
                         </div>
                     </td>
                     <td>

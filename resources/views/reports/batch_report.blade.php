@@ -83,8 +83,8 @@
                                 <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Total Out (Base)</th>
                                 <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Remaining (Base)</th>
                                 <!-- Financials & Status -->
-                                <th scope="col" class="px-6 py-3 font-semibold border-l">Base Unit Price</th>
-                                <th scope="col" class="px-6 py-3 font-semibold text-green-600">Remaining Total Price</th>
+                                <th scope="col" class="px-6 py-3 font-semibold border-l">Base Unit Price ({{ getDefaultCurrency() }})</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-green-600">Remaining Total Price ({{ getDefaultCurrency() }})</th>
                                 <th scope="col" class="px-6 py-3 font-semibold text-center">Current Batch</th>
                             </tr>
                         </thead>

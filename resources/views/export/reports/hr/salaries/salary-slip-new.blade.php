@@ -308,7 +308,7 @@
             <div class="grid">
                 <!-- Left: Earnings -->
                 <div class="card">
-                    <header><h3>Earnings ({{ setting('currency', 'RM') }})</h3></header>
+                    <header><h3>Earnings ({{ getDefaultCurrency() }})</h3></header>
                     <table class="table">
                         <thead>
                         <tr>
@@ -361,7 +361,7 @@
 
                 <!-- Right: Deductions -->
                 <div class="card">
-                    <header><h3>Deductions ({{ setting('currency', 'RM') }})</h3></header>
+                    <header><h3>Deductions ({{ getDefaultCurrency() }})</h3></header>
                     <table class="table">
                         <thead>
                         <tr>
@@ -398,7 +398,7 @@
         <section class="footer">
             <div class="net-card">
                 <div class="net">
-                    <label>Net Salary ({{ setting('currency', 'RM') }})</label>
+                    <label>Net Salary ({{ getDefaultCurrency() }})</label>
                     <div class="value mono">{{ number_format((float) $data->details[0]['net_salary'], 2) }}</div>
                 </div>
                 <div class="signature">

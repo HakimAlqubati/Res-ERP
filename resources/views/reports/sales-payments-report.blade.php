@@ -48,9 +48,9 @@
                     <tr>
                         <th>#</th>
                         <th>Branch Name</th>
-                        <th>Sales</th>
-                        <th>Payments</th>
-                        <th>Balance</th>
+                        <th>Sales ({{ getDefaultCurrency() }})</th>
+                        <th>Payments ({{ getDefaultCurrency() }})</th>
+                        <th>Balance ({{ getDefaultCurrency() }})</th>
                     </tr>
                 </thead>
                 <tbody>

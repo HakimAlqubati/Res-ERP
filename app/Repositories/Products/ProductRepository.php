@@ -24,7 +24,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function __construct(Product $model)
     {
         $this->model    = $model;
-        $this->currency = 'RM';
+        $this->currency = getDefaultCurrency();
     }
 
     public function index($request)
