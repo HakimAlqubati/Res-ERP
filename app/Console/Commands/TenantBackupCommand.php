@@ -29,7 +29,7 @@ class TenantBackupCommand extends Command
     public function handle(): int
     {
         AppLog::write('tenant:backup started at ' . now());
-        $tenants = CustomTenantModel::where('active', 1)->get();
+        $tenants = CustomTenantModel::forDailyBackup()->get();
 
         foreach ($tenants as $tenant) {
             try {
