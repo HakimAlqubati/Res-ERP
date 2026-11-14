@@ -68,7 +68,10 @@ class StockCostReportResource extends Resource
                     ->searchable()
                     ->placeholder('Choose')
                     ->options(
-                        Store::active()->pluck('name', 'id')->toArray()
+                        fn () => Store::active()
+                            ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                            ->pluck('name', 'id')
+                            ->toArray()
                     ),
                 SelectFilter::make('returnable_type')
                     ->label('Out Type')

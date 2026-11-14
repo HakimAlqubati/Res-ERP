@@ -23,6 +23,9 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         $movementType = $this->getTable()->getFilters()['movement_type']->getState()['value'] ?? null;
         $unitId = $this->getTable()->getFilters()['unit_id']->getState()['value'] ?? null;
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $transactionableType = $this->getTable()->getFilters()['transactionable_type']->getState()['value'] ?? null;
 
         $product = !empty($productId) ? Product::with([

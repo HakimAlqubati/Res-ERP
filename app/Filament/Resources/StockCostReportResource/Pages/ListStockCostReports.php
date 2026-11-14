@@ -22,6 +22,9 @@ class ListStockCostReports extends ListRecords
     protected function getViewData(): array
     {
         $storeId        = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $fromDate       = $this->getTable()->getFilters()['date']->getState()['from_date'] ?? null;
         $toDate         = $this->getTable()->getFilters()['date']->getState()['to_date'] ?? null;
         $returnableTypes = $this->getTable()->getFilters()['returnable_type']->getState()['values'] ?? [];

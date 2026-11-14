@@ -19,6 +19,9 @@ class ListStockSupplyOrderReports extends ListRecords
     protected function getViewData(): array
     {
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $enddate = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
 

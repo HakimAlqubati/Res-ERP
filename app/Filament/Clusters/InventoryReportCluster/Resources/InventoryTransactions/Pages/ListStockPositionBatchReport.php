@@ -24,6 +24,9 @@ class ListStockPositionBatchReport extends ListRecords
     protected function getViewData(): array
     {
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $productIds = $this->getTable()->getFilters()['product_ids']->getState()['values'] ?? [];
         $isCurrentBatch = $this->getTable()->getFilters()['current_batch']->getState()['value'] ?? null;

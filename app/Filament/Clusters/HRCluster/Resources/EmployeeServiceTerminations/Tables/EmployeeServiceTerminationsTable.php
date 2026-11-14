@@ -81,7 +81,7 @@ class EmployeeServiceTerminationsTable
                     ->label(__('lang.approve'))
                     ->icon('heroicon-o-clipboard-document-check')
                     ->color('success')
-                    ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING)
+                    ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING && (isSuperAdmin() || isSystemManager() || isHR() || isFinanceManager() || isOwner()))
                     ->form(fn (EmployeeServiceTermination $record) => [
                         DatePicker::make('termination_date')
                             ->label(__('lang.termination_date'))
@@ -123,7 +123,7 @@ class EmployeeServiceTerminationsTable
                     ->label(__('lang.reject'))
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
-                    ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING)
+                    ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING && (isSuperAdmin() || isSystemManager() || isHR() || isFinanceManager() || isOwner()))
                     ->form([
                         Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason')),
                     ])

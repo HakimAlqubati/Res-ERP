@@ -26,6 +26,9 @@ class ListInventorySummaryReport extends ListRecords
         $productIds = array_filter($productIds);
 
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $onlyAvailable = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'] ?? false;
 

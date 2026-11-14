@@ -94,10 +94,19 @@ class EmployeeServiceTerminationResource extends Resource
     {
         return 'warning';
     }
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->forBranchManager()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
-          ->forBranchManager()
+            ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

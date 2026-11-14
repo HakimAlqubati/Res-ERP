@@ -20,7 +20,11 @@ class InventoryTransactionsTable
                     ->label(__('lang.store'))
                     ->searchable()
                     ->options(
-                        Store::active()->get()->pluck('name', 'id')->toArray()
+                        fn () => Store::active()
+                            ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                            ->get()
+                            ->pluck('name', 'id')
+                            ->toArray()
                     )
                     ->placeholder('Select Store')
                     ->query(fn (Builder $q) => $q),

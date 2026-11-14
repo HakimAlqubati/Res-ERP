@@ -84,7 +84,11 @@ class InventoryTransactionTruckingReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(
-                        Store::active()->get()->pluck('name', 'id')->toArray()
+                        fn () => Store::active()
+                            ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                            ->get()
+                            ->pluck('name', 'id')
+                            ->toArray()
                     ),
                 SelectFilter::make('transactionable_type')
                     ->label('Transaction Type')

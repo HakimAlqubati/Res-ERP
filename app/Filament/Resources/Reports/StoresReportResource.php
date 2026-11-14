@@ -57,7 +57,10 @@ class StoresReportResource extends Resource
                 ->label(__('lang.store'))
                 ->query(function (Builder $q, $data) {
                     return $q;
-                })->options(Store::active()->get()->pluck('name', 'id')),
+                })->options(fn () => Store::active()
+                    ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                    ->get()
+                    ->pluck('name', 'id')),
             Filter::make('date')
                 ->schema([
                     DatePicker::make('start_date')

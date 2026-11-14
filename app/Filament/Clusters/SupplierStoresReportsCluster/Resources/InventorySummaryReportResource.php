@@ -87,9 +87,13 @@ class InventorySummaryReportResource extends Resource
                     ->placeholder('Select Store')
                     ->label(__('lang.store'))
                     ->searchable()
-                    ->default(fn() => request()->get('store_id'))
+                    ->default(fn() => isBranchManagerOnly() ? auth()->user()?->branch?->store_id : request()->get('store_id'))
                     ->query(fn(Builder $q, $data) => $q)
-                    ->options(Store::active()->get()->pluck('name', 'id')->toArray()),
+                    ->options(fn () => Store::active()
+                        ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                        ->get()
+                        ->pluck('name', 'id')
+                        ->toArray()),
 
                 Filter::make('show_extra_fields')
                     ->label('Show Extra')

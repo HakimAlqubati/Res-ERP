@@ -66,7 +66,10 @@ class StockAdjustmentSummaryReportResource extends Resource
 
                 SelectFilter::make('store_id')
                     ->label('Store')
-                    ->options(Store::active()->pluck('name', 'id')->toArray())
+                    ->options(fn () => Store::active()
+                        ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                        ->pluck('name', 'id')
+                        ->toArray())
                     ->searchable()
                     ->preload()
                     ->placeholder('All Stores'),

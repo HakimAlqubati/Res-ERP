@@ -101,7 +101,11 @@ class StockAdjustmentReportResource extends Resource
                 SelectFilter::make('store_id')->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
                     ->options(
-                        Store::active()->get()->pluck('name', 'id')->toArray()
+                        fn () => Store::active()
+                            ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                            ->get()
+                            ->pluck('name', 'id')
+                            ->toArray()
                     ),
                 Filter::make('adjustment_date_range')
                     ->label('Adjustment Date')
@@ -213,7 +217,9 @@ class StockAdjustmentReportResource extends Resource
                 'created_by',
                 'adjustment_date',
                 'store_id',
-            )->orderBy('id', 'desc');
+            )
+            ->when(isBranchManagerOnly(), fn ($q) => $q->where('store_id', auth()->user()?->branch?->store_id))
+            ->orderBy('id', 'desc');
 
         return $query;
     }
