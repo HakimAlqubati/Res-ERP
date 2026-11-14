@@ -71,6 +71,7 @@ class PenaltyDeductionResource extends Resource
                         $id = $get('employee_id');
 
                         return Employee::query()
+                            ->forBranchManager()
                             ->where(function ($query) use ($id) {
                                 $query->where('active', 1);
                                 if ($id) {
@@ -86,6 +87,7 @@ class PenaltyDeductionResource extends Resource
                         $id = $get('employee_id');
 
                         return Employee::query()
+                            ->forBranchManager()
                             ->where(function ($query) use ($id) {
                                 $query->where('active', 1);
                                 if ($id) {
@@ -220,7 +222,7 @@ class PenaltyDeductionResource extends Resource
                 SelectFilter::make('employee_id')
                     ->label(__('Employee'))
                     ->searchable()
-                    ->options(Employee::pluck('name', 'id')),
+                    ->options(fn () => Employee::forBranchManager()->pluck('name', 'id')),
                 SelectFilter::make('deduction_id')
                     ->label(__('Deduction'))
                     ->searchable()
@@ -245,7 +247,7 @@ class PenaltyDeductionResource extends Resource
                     ->requiresConfirmation()->button()
                     ->color('success')
                     ->icon('heroicon-o-check')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->action(function ($record) {
 
                         try {
@@ -263,7 +265,7 @@ class PenaltyDeductionResource extends Resource
                     ->requiresConfirmation()
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => $record->status === 'pending' && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->schema([
                         DateTimePicker::make('rejected_at')
                             ->label('Rejected At')
@@ -311,9 +313,14 @@ class PenaltyDeductionResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->forBranchManager();
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return (string) static::getEloquentQuery()->count();
     }
 
     public static function canViewAny(): bool

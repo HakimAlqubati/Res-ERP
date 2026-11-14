@@ -76,6 +76,7 @@ class EmployeeAttednaceReportResource extends Resource
                         return Employee::query()
                             ->select('id', 'name', 'employee_no')
                             // ->where('active', 1)
+                            ->forBranchManager()
                             ->when($search, fn($q) => $q->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%")
@@ -86,7 +87,7 @@ class EmployeeAttednaceReportResource extends Resource
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
                     ->getOptionLabelUsing(function ($value): ?string {
-                        $employee = Employee::select('id', 'name')->find($value);
+                        $employee = Employee::select('id', 'name')->forBranchManager()->find($value);
                         return $employee ? "{$employee->name} - {$employee->id}" : null;
                     })
 

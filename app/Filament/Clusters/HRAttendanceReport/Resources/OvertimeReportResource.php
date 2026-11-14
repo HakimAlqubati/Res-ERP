@@ -55,7 +55,8 @@ class OvertimeReportResource extends Resource
                 SelectFilter::make('branch_id')
                     ->label(__('lang.branch'))
                     ->placeholder(__('lang.choose'))
-                    ->options(Branch::active()->forBranchManager('id')->get()->pluck('name', 'id')->toArray())
+                    ->options(fn () => Branch::active()->forBranchManager('id')->get()->pluck('name', 'id')->toArray())
+                    ->default(fn () => isBranchManagerOnly() ? auth()->user()?->branch_id : null)
                     ->searchable(),
 
                 SelectFilter::make('employee_id')
@@ -73,6 +74,7 @@ class OvertimeReportResource extends Resource
                     ->getSearchResultsUsing(function ($search = null) {
                         return Employee::query()
                             ->select('id', 'name', 'employee_no')
+                            ->forBranchManager()
                             ->when($search, fn($q) => $q->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%")

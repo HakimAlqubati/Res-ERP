@@ -31,8 +31,15 @@ class ListPrePayrollDeductionReports extends ListRecords
 
         // استنتاج الفرع من الموظف إذا لم يُحدد صراحةً
         if ($employeeId && empty($branchIds)) {
-            $employee = \App\Models\Employee::find($employeeId);
+            $employee = \App\Models\Employee::forBranchManager()->find($employeeId);
+            if (! $employee) {
+                $employeeId = null;
+            }
             $branchIds = $employee && $employee->branch_id ? [$employee->branch_id] : [];
+        }
+
+        if (isBranchManagerOnly()) {
+            $branchIds = auth()->user()?->branch_id ? [auth()->user()->branch_id] : [];
         }
 
         $periodState = $filters['period']->getState();

@@ -58,9 +58,15 @@ class AdvanceWageResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->forBranchManager();
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
+            ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

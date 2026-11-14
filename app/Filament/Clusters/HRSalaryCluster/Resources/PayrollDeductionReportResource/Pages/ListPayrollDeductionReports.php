@@ -28,8 +28,15 @@ class ListPayrollDeductionReports extends ListRecords
         
         // Infer branch from employee if grouped by employee and none selected
         if ($employeeId && empty($branchIds)) {
-            $employee = \App\Models\Employee::find($employeeId);
+            $employee = \App\Models\Employee::forBranchManager()->find($employeeId);
+            if (! $employee) {
+                $employeeId = null;
+            }
             $branchIds = $employee && $employee->branch_id ? [$employee->branch_id] : [];
+        }
+
+        if (isBranchManagerOnly()) {
+            $branchIds = auth()->user()?->branch_id ? [auth()->user()->branch_id] : [];
         }
 
         $dateRange = $filters['date_range']->getState();

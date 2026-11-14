@@ -79,12 +79,49 @@ class UserDeviceResource extends Resource
     }
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getEloquentQuery()->count();
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->forBranchManager();
     }
 
     public static function canViewAny(): bool
     {
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isHR()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;

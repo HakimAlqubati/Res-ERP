@@ -539,4 +539,13 @@ class ResellerSaleResource extends Resource
     {
         return false;
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isFinanceManager() || isAccountant()) {
+            return true;
+        }
+
+        return false;
+    }
 }

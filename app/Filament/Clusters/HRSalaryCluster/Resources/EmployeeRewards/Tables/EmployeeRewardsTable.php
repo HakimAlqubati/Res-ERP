@@ -101,7 +101,7 @@ class EmployeeRewardsTable
                         'rejected' => 'Rejected',
                     ]),
                 SelectFilter::make('employee_id')
-                    ->relationship('employee', 'name')->label(__('lang.employee'))
+                    ->relationship('employee', 'name', fn (\Illuminate\Database\Eloquent\Builder $query) => $query->forBranchManager())->label(__('lang.employee'))
                     ->searchable()
                     ->preload(),
                 ],FiltersLayout::Modal)
@@ -115,7 +115,7 @@ class EmployeeRewardsTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn($record) => $record->status === EmployeeReward::STATUS_PENDING)
+                    ->visible(fn($record) => $record->status === EmployeeReward::STATUS_PENDING && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->action(function ($record) {
                         try {
                             DB::beginTransaction();
@@ -138,7 +138,7 @@ class EmployeeRewardsTable
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn($record) => $record->status === EmployeeReward::STATUS_PENDING)
+                    ->visible(fn($record) => $record->status === EmployeeReward::STATUS_PENDING && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->form([
                         Textarea::make('rejected_reason')
                             ->label('Rejection Reason')

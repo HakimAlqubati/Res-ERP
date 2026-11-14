@@ -11,4 +11,13 @@ class SupplierCluster extends Cluster
     {
         return __('lang.supplier_supplier_invoice');
     }
+
+    public static function canAccess(): bool
+    {
+        if (isBranchManagerOnly()) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
 }

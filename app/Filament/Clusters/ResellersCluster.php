@@ -11,4 +11,13 @@ class ResellersCluster extends Cluster
     {
         return __('menu.resellers');
     }
+
+    public static function canAccess(): bool
+    {
+        if (isBranchManagerOnly()) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
 }

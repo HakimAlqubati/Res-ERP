@@ -17,6 +17,9 @@ class ListOvertimeReports extends ListRecords
         $filters = $this->getTable()->getFilters();
         
         $branchId   = $filters['branch_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $branchId = auth()->user()?->branch_id;
+        }
         $employeeId = $filters['employee_id']->getState()['value'] ?? null;
         $dateFrom   = $filters['date_range']->getState()['date_from'] ?? null;
         $dateTo     = $filters['date_range']->getState()['date_to'] ?? null;
@@ -30,7 +33,10 @@ class ListOvertimeReports extends ListRecords
 
         $employee = null;
         if ($employeeId) {
-            $employee = \App\Models\Employee::find($employeeId);
+            $employee = \App\Models\Employee::forBranchManager()->find($employeeId);
+            if (! $employee) {
+                $employeeId = null;
+            }
         }
 
         $filter = new OvertimeReportFilter(

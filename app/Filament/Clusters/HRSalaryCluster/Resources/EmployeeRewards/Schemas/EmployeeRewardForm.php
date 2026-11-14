@@ -68,7 +68,7 @@ class EmployeeRewardForm
 
                     Select::make('employee_id')
                         ->label(__('Employee'))
-                        ->relationship('employee', 'name')
+                        ->relationship('employee', 'name', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->forBranchManager())
                         ->searchable()
                         ->preload()
                         ->live()

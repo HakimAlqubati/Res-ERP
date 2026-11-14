@@ -156,7 +156,7 @@ class PurchaseInvoiceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor() || isAccountant() || isHR()) {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isAccountant() || isFinanceManager() || isHR()) {
             return true;
         }
 

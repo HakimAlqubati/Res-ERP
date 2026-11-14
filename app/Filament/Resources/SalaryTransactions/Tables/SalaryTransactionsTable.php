@@ -137,7 +137,7 @@ class SalaryTransactionsTable
                 // تصفية حسب الموظف
                 SelectFilter::make('employee_id')
                     ->label(__('Employee'))
-                    ->relationship('employee', 'name', fn (Builder $query) => $query->active()->orderBy('name'))
+                    ->relationship('employee', 'name', fn (Builder $query) => $query->active()->forBranchManager()->orderBy('name'))
                     ->getOptionLabelFromRecordUsing(fn (Employee $record) => "{$record->id} - {$record->name}")
                     ->searchable(['id', 'name'])
                     ->preload(),

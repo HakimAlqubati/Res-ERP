@@ -19,6 +19,10 @@ class ListEmployeeAbsentReports extends ListRecords
             ?? current($this->getTable()->getFilter('branch_id')->getState() ?: [])
             ?? null;
 
+        if (isBranchManagerOnly()) {
+            $branchId = auth()->user()?->branch_id;
+        }
+
         $dateFilterState = $this->getTable()->getFilters()['date_range']?->getState() ?? [];
         $type = $dateFilterState['type'] ?? 'range';
 

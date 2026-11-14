@@ -61,4 +61,13 @@ class OrderDeliveryReportResource extends Resource
     {
         return static::getModel()::query()->forBranchManager();
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isFinanceManager() || isAccountant()) {
+            return true;
+        }
+
+        return false;
+    }
 }

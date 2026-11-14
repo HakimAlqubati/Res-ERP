@@ -71,11 +71,13 @@ class PrePayrollDeductionReportResource extends Resource
                         Select::make('employee_id')
                             ->label(__('lang.employee'))
                             ->options(fn () => Employee::where('active', 1)
+                                ->forBranchManager()
                                 ->limit(5)
                                 ->get()
                                 ->mapWithKeys(fn ($e) => [$e->id => "{$e->name} - {$e->id}"])
                                 ->all())
                             ->getSearchResultsUsing(fn (string $search) => Employee::where('active', 1)
+                                ->forBranchManager()
                                 ->where(fn ($q) => $q
                                     ->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%"))
@@ -83,7 +85,7 @@ class PrePayrollDeductionReportResource extends Resource
                                 ->get()
                                 ->mapWithKeys(fn ($e) => [$e->id => "{$e->name} - {$e->id}"])
                                 ->all())
-                            ->getOptionLabelUsing(fn ($value) => ($e = Employee::find($value))
+                            ->getOptionLabelUsing(fn ($value) => ($e = Employee::forBranchManager()->find($value))
                                 ? "{$e->name} - {$e->id}"
                                 : null)
                             ->searchable()

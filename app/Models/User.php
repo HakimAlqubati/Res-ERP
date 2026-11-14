@@ -367,6 +367,17 @@ class User extends Authenticatable implements FilamentUser, Auditable
         }
         return false;
     }
+
+    public function isBranchManagerOnly(): bool
+    {
+        return $this->isBranchManager()
+            && ! $this->isSuperAdmin()
+            && ! $this->isSystemManager()
+            && ! $this->isFinanceManager()
+            && ! $this->isHR()
+            && ! $this->isAccountant()
+            && ! $this->isOwner();
+    }
     public function isFinanceManager()
     {
         return in_array(16, $this->roles->pluck('id')->toArray());

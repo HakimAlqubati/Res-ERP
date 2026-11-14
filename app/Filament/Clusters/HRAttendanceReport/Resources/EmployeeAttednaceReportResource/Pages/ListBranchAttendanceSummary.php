@@ -20,6 +20,10 @@ class ListBranchAttendanceSummary extends ListRecords
             ?? current($this->getTable()->getFilter('branch_id')->getState() ?: [])
             ?? null;
 
+        if (isBranchManagerOnly()) {
+            $branchId = auth()->user()?->branch_id;
+        }
+
         $monthState = $this->getTable()->getFilters()['month']->getState()['value'] ?? null;
 
         // The month filter value is in "Month Year" format, e.g. "March 2026"

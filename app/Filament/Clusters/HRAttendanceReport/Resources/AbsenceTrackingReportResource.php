@@ -53,11 +53,12 @@ class AbsenceTrackingReportResource extends Resource
                 // Define table columns here
             ])->deferFilters(false)
             ->filters([
-                SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
+                SelectFilter::make('branch_id')->label('Branch')->options(fn () => Branch::where('active', 1)
+                    ->forBranchManager('id')
                     ->select('name', 'id')
                     ->get()->pluck('name', 'id'))
                     ->default(function () {
-                        if (isBranchManager()) {
+                        if (isBranchManagerOnly()) {
                             return auth()->user()?->branch_id;
                         }
                     })

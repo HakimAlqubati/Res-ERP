@@ -32,6 +32,15 @@ if (!function_exists('isBranchManager')) {
         return false;
     }
 }
+if (!function_exists('isBranchManagerOnly')) {
+    function isBranchManagerOnly(): bool
+    {
+        if (auth()->check()) {
+            return auth()->user()->isBranchManagerOnly();
+        }
+        return false;
+    }
+}
 if (!function_exists('isSuperVisor')) {
     function isSuperVisor()
     {

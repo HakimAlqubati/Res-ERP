@@ -140,12 +140,26 @@ class PayrollResource extends Resource
 
     public static function getRecordSubNavigation(Page $page): array
     {
-        return $page->generateNavigationItems([
+        $items = [
             Pages\ListPayrolls::class,
-            Pages\CreatePayroll::class,
-            Pages\ViewPayroll::class,
-            // Pages\EditPayroll::class,
-        ]);
+        ];
+
+        if (static::canCreate()) {
+            $items[] = Pages\CreatePayroll::class;
+        }
+
+        $items[] = Pages\ViewPayroll::class;
+
+        return $page->generateNavigationItems($items);
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isAccountant() || isOwner()) {
+            return true;
+        }
+
+        return false;
     }
 
     public static function getEloquentQuery(): Builder
