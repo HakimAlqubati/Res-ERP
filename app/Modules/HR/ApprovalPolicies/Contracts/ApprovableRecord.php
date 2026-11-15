@@ -11,4 +11,14 @@ interface ApprovableRecord
     public function approvalBranchId(): ?int;
 
     public function approvalApplicationTypeId(): ?int;
+
+    /**
+     * @return list<string>
+     */
+    public function approvalApprovedStatuses(): array;
+
+    /**
+     * @return list<string>
+     */
+    public function approvalRejectedStatuses(): array;
 }

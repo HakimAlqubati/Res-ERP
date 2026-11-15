@@ -28,11 +28,29 @@ trait BranchScope
         }
 
         if (auth()->check() && isBranchManager()) {
-            return $query->where($branchColumn, auth()->user()->branch_id);
+            $branchId = auth()->user()->branch_id;
+
+            if ($this instanceof \App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord) {
+                return $query->where(function (Builder $q) use ($branchColumn, $branchId) {
+                    $q->where($branchColumn, $branchId)
+                        ->orWhere(fn (Builder $sub) => $sub->whereAssignedApprover(auth()->user()));
+                });
+            }
+
+            return $query->where($branchColumn, $branchId);
         }
 
         if (auth()->check() && isStuff() && in_array($employeeColumn, $this->getFillable())) {
-            return $query->where($employeeColumn, auth()->user()?->employee?->id);
+            $employeeId = auth()->user()?->employee?->id;
+
+            if ($this instanceof \App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord) {
+                return $query->where(function (Builder $q) use ($employeeColumn, $employeeId) {
+                    $q->where($employeeColumn, $employeeId)
+                        ->orWhere(fn (Builder $sub) => $sub->whereAssignedApprover(auth()->user()));
+                });
+            }
+
+            return $query->where($employeeColumn, $employeeId);
         }
 
         return $query;
@@ -74,7 +92,16 @@ trait BranchScope
             return $query;
         }
         if (auth()->check() && (isStuff() || isStoreManager()) ) {
-            return $query->where($employeeColumn, auth()->user()->employee->id);
+            $employeeId = auth()->user()?->employee?->id;
+
+            if ($this instanceof \App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord) {
+                return $query->where(function (Builder $q) use ($employeeColumn, $employeeId) {
+                    $q->where($employeeColumn, $employeeId)
+                        ->orWhere(fn (Builder $sub) => $sub->whereAssignedApprover(auth()->user()));
+                });
+            }
+
+            return $query->where($employeeColumn, $employeeId);
         }
 
         return $query;

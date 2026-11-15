@@ -155,6 +155,11 @@ class EmployeeApplicationResource extends Resource
         if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager() || isHR()) {
             return true;
         }
+
+        if (auth()->check() && \App\Modules\HR\ApprovalPolicies\Models\ApprovalStep::userHasAssignedSteps(auth()->user(), static::$model)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -2012,25 +2017,59 @@ class EmployeeApplicationResource extends Resource
 
     public static function mealRequestForm($set, $get)
     {
+        $employeeId = $get('employee_id') ?? $get('../employee_id');
+        $defaultBranchId = null;
+
+        if ($employeeId) {
+            $defaultBranchId = Employee::query()
+                ->withoutGlobalScopes()
+                ->whereKey($employeeId)
+                ->value('branch_id');
+        }
+
+        $defaultBranchId ??= auth()->user()?->branch_id;
+
+        if ($get('mealRequest.date') === null) {
+            $set('mealRequest.date', $get('application_date') ?: now()->toDateString());
+        }
+
+        if ($defaultBranchId && $get('mealRequest.branch_id') === null) {
+            $set('mealRequest.branch_id', $defaultBranchId);
+        }
+
         return [
             Fieldset::make('mealRequest')->label('')
                 ->relationship('mealRequest')
-                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) use ($defaultBranchId) {
+                    $empId = $get('employee_id') ?? $get('../employee_id');
                     $data['application_type_id']   = EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST;
                     $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST];
-                    $data['employee_id']           = $get('employee_id');
+                    $data['employee_id']           = $empId;
+                    $data['branch_id']             = $data['branch_id']
+                        ?? $get('mealRequest.branch_id')
+                        ?? $get('branch_id')
+                        ?? ($empId ? Employee::query()->withoutGlobalScopes()->whereKey($empId)->value('branch_id') : null)
+                        ?? $defaultBranchId;
+                    $data['date']                  = $data['date'] ?? $get('application_date') ?? now()->toDateString();
                     $data['created_by']            = auth()->id();
                     return $data;
                 })
                 ->saveRelationshipsUsing(function (\Illuminate\Database\Eloquent\Model $record, array $state): void {
+                    $branchId = $state['branch_id']
+                        ?? $record->branch_id
+                        ?? ($record->employee_id
+                            ? Employee::query()->withoutGlobalScopes()->whereKey($record->employee_id)->value('branch_id')
+                            : null)
+                        ?? auth()->user()?->branch_id;
+
                     $payload = [
                         'application_id'        => $record->id,
                         'employee_id'           => $record->employee_id,
-                        'branch_id'             => $state['branch_id'],
+                        'branch_id'             => $branchId,
                         'meal_details'          => $state['meal_details'] ?? null,
                         'cost'                  => $state['cost'] ?? 0,
                         'notes'                 => $state['notes'] ?? $record->notes ?? null,
-                        'date'                  => $state['date'] ?? null,
+                        'date'                  => $state['date'] ?? $record->application_date ?? now()->toDateString(),
                         'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST,
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST],
                         'created_by'            => auth()->id(),
@@ -2043,23 +2082,24 @@ class EmployeeApplicationResource extends Resource
                     Grid::make()->columns(3)->columnSpanFull()->schema([
                         DatePicker::make('date')
                             ->label(__('lang.date'))
-                            ->default(now())
+                            ->default(fn (Get $get) => $get('../../application_date') ?? now()->toDateString())
                             ->required(),
-
 
                         Select::make('branch_id')
                             ->label(__('lang.branch'))
-                            ->options(Branch::where('type', Branch::TYPE_BRANCH)
-                            ->active()
-                            ->pluck('name', 'id'))
-                        ->required()
-                        ->searchable()
-                        // ->live()
-                        // ->afterStateUpdated(function ($set, $state) {
-                        //     // Sync back to the parent application's branch_id if necessary
-                        //     $set('../../branch_id', $state);
-                        // })
-                        ,
+                            ->options(fn () => Branch::query()
+                                ->withoutGlobalScopes()
+                                ->where('type', Branch::TYPE_BRANCH)
+                                ->active()
+                                ->pluck('name', 'id'))
+                            ->default($defaultBranchId)
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($set, $state) {
+                                $set('../../branch_id', $state);
+                            }),
 
                         TextInput::make('cost')
                             ->label(__('lang.cost'))

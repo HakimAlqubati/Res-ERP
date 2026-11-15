@@ -257,6 +257,10 @@ class EmployeeOvertimeTable
                             if ($record->requiresApprovalWorkflow()) {
                                 return ! $record->canBeApprovedBy($user);
                             }
+                            if (isSuperAdmin() || isBranchManager() || isSystemManager() || isHR()) {
+                                return false;
+                            }
+                            return true;
                         }
                         if (isSuperAdmin()) {
                             return false;
@@ -264,7 +268,6 @@ class EmployeeOvertimeTable
                         return true;
                     }),
                 Action::make('Approve')
-                    ->databaseTransaction()
                     ->label(function ($record) {
                         if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
                             return 'Revoke approved';

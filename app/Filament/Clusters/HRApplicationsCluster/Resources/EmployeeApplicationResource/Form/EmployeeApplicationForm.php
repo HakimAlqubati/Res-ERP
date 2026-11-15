@@ -28,10 +28,18 @@ class EmployeeApplicationForm
                         ->searchable()
                         ->required()
                         ->live()
-                        // ->afterStateUpdated(function ($get, $set, $state) {
-                        //     $employee = Employee::find($state);
-                        //     $set('basic_salary', $employee?->salary);
-                        // })
+                        ->afterStateUpdated(function ($get, $set, $state) {
+                            if ($state) {
+                                $branchId = Employee::query()
+                                    ->withoutGlobalScopes()
+                                    ->whereKey($state)
+                                    ->value('branch_id');
+
+                                if ($branchId && ! $get('mealRequest.branch_id')) {
+                                    $set('mealRequest.branch_id', $branchId);
+                                }
+                            }
+                        })
                         ->disabled(function () {
                             if (isStuff()) {
                                 return true;
@@ -88,6 +96,7 @@ class EmployeeApplicationForm
                             $set('missedCheckoutRequest.detail_date', $get('application_date'));
                             $set('leaveRequest.detail_to_date', $get('application_date'));
                             $set('leaveRequest.detail_days_count', 1);
+                            $set('mealRequest.date', $get('application_date'));
                         })
                         ->required()
                         ,
@@ -130,6 +139,19 @@ class EmployeeApplicationForm
                             $set('missedCheckoutRequest.detail_date', $get('application_date'));
                             $set('missedCheckinRequest.time', now()->toTimeString());
                             $set('missedCheckoutRequest.detail_time', now()->toTimeString());
+                            $set('mealRequest.date', $get('application_date') ?: now()->toDateString());
+
+                            if (! $get('mealRequest.branch_id')) {
+                                $empId = $get('employee_id');
+                                $branchId = $empId
+                                    ? Employee::query()->withoutGlobalScopes()->whereKey($empId)->value('branch_id')
+                                    : null;
+                                $branchId ??= auth()->user()?->branch_id;
+
+                                if ($branchId) {
+                                    $set('mealRequest.branch_id', $branchId);
+                                }
+                            }
                         }),
                 ]),
                 Fieldset::make('')->columnSpanFull()

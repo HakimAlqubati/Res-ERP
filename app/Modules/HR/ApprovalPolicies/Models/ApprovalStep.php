@@ -16,6 +16,13 @@ use Spatie\Permission\Models\Role;
  */
 class ApprovalStep extends Model
 {
+    /**
+     * Request-scoped cache for checking if a user has any assigned steps.
+     *
+     * @var array<string, bool>
+     */
+    private static array $assignedStepsCache = [];
+
     protected $table = 'hr_approval_steps';
 
     protected $fillable = [
@@ -47,6 +54,32 @@ class ApprovalStep extends Model
     public function newEloquentBuilder($query): ApprovalStepBuilder
     {
         return new ApprovalStepBuilder($query);
+    }
+
+    public static function clearAssignedStepsCache(): void
+    {
+        self::$assignedStepsCache = [];
+    }
+
+    public static function userHasAssignedSteps(?User $user, ?string $approvableType = null): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $cacheKey = $user->id . ':' . ($approvableType ?? '*');
+
+        if (! array_key_exists($cacheKey, self::$assignedStepsCache)) {
+            $query = self::query()->assignedToUser($user);
+
+            if ($approvableType) {
+                $query->where('approvable_type', $approvableType);
+            }
+
+            self::$assignedStepsCache[$cacheKey] = $query->exists();
+        }
+
+        return self::$assignedStepsCache[$cacheKey];
     }
 
     public function approvable(): MorphTo

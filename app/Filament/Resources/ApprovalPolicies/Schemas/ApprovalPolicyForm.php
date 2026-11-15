@@ -97,8 +97,27 @@ class ApprovalPolicyForm
                                 Grid::make(2)
                                     ->columnSpanFull()
                                     ->schema([
-                                        Hidden::make('approvable_type'),
-                                        Hidden::make('application_type_id'),
+                                        Hidden::make('approvable_type')
+                                            ->dehydrateStateUsing(function ($state, Get $get): ?string {
+                                                if ($state) {
+                                                    return (string) $state;
+                                                }
+                                                [$type] = ApprovalSubjectRegistry::decodeCombinedSubject(
+                                                    $get('approval_subject_combined')
+                                                );
+                                                return $type;
+                                            }),
+                                        Hidden::make('application_type_id')
+                                            ->dehydrateStateUsing(function ($state, Get $get): ?int {
+                                                $combined = $get('approval_subject_combined');
+                                                if ($combined) {
+                                                    [, $appId] = ApprovalSubjectRegistry::decodeCombinedSubject($combined);
+                                                    return $appId;
+                                                }
+                                                return ($state !== null && $state !== '' && $state !== 'all')
+                                                    ? (int) $state
+                                                    : null;
+                                            }),
 
                                         Select::make('approval_subject_combined')
                                             ->label(__('Approval Subject'))

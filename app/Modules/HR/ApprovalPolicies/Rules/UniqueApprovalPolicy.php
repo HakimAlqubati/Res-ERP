@@ -39,7 +39,7 @@ class UniqueApprovalPolicy implements ValidationRule
         }
 
         $query = ApprovalPolicy::query()
-            ->forSubject($this->approvableType, $this->applicationTypeId, includeWildcardType: false);
+            ->forConflictingSubject($this->approvableType, $this->applicationTypeId);
 
         if ($this->ignoreId) {
             $query->whereKeyNot($this->ignoreId);
@@ -54,12 +54,12 @@ class UniqueApprovalPolicy implements ValidationRule
         foreach ($duplicates as $duplicate) {
             $duplicateBranches = ApprovalPolicy::normalizeBranchIds($duplicate->branch_ids) ?? [];
 
-            $isBothGlobal = empty($this->branchIds) && empty($duplicateBranches);
+            $isEitherGlobal = empty($this->branchIds) || empty($duplicateBranches);
             $hasBranchOverlap = ! empty($this->branchIds)
                 && ! empty($duplicateBranches)
                 && ! empty(array_intersect($this->branchIds, $duplicateBranches));
 
-            if ($isBothGlobal || $hasBranchOverlap) {
+            if ($isEitherGlobal || $hasBranchOverlap) {
                 $fail(__('An approval policy for the same subject and branch(es) already exists.'));
                 return;
             }

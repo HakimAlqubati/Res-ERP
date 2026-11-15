@@ -250,11 +250,15 @@ class OvertimeService
                 $overtimes = EmployeeOvertime::whereIn('id', $ids)->get();
 
                 foreach ($overtimes as $overtime) {
-                    $overtime->update([
-                        'status'      => EmployeeOvertime::STATUS_APPROVED,
-                        'approved_by' => auth()->id(),
-                        'approved_at' => now(),
-                    ]);
+                    if ($overtime->requiresApprovalWorkflow() && auth()->user()) {
+                        $overtime->approveViaWorkflow(auth()->user());
+                    } else {
+                        $overtime->update([
+                            'status'      => EmployeeOvertime::STATUS_APPROVED,
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now(),
+                        ]);
+                    }
                 }
 
                 return $overtimes;
@@ -289,6 +293,7 @@ class OvertimeService
                         'approved_by' => null,
                         'approved_at' => null,
                     ]);
+                    $overtime->resetApprovalWorkflowOnRollback();
                 }
 
                 return $overtimes;
@@ -318,11 +323,15 @@ class OvertimeService
                     throw new \Exception("No pending overtime found.");
                 }
                 foreach ($overtimes as $overtime) {
-                    $overtime->update([
-                        'status'      => EmployeeOvertime::STATUS_REJECTED,
-                        'rejected_by' => auth()->id(),
-                        'rejected_at' => now(),
-                    ]);
+                    if ($overtime->requiresApprovalWorkflow() && auth()->user()) {
+                        $overtime->rejectViaWorkflow(auth()->user());
+                    } else {
+                        $overtime->update([
+                            'status'      => EmployeeOvertime::STATUS_REJECTED,
+                            'rejected_by' => auth()->id(),
+                            'rejected_at' => now(),
+                        ]);
+                    }
                 }
 
                 return $overtimes;

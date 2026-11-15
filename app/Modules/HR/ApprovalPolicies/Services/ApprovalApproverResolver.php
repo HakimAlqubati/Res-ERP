@@ -45,7 +45,10 @@ class ApprovalApproverResolver
 
     private function directManager(Model&ApprovableRecord $record): Collection
     {
-        $manager = $record->approvalEmployee()?->manager;
+        $employee = $record->approvalEmployee();
+        $manager = $employee?->manager_id
+            ? Employee::query()->withoutGlobalScopes()->find($employee->manager_id)
+            : $employee?->manager;
 
         if (! $manager?->user_id || $this->isApplicantSelf($record, (int) $manager->user_id, (int) $manager->id)) {
             return collect([ApprovalApprover::skipped()]);
@@ -63,6 +66,7 @@ class ApprovalApproverResolver
         }
 
         $managerUserId = Branch::query()
+            ->withoutGlobalScopes()
             ->whereKey($branchId)
             ->value('manager_id');
 
@@ -97,6 +101,7 @@ class ApprovalApproverResolver
             $visited[$managerId] = true;
 
             $manager = Employee::query()
+                ->withoutGlobalScopes()
                 ->select(['id', 'manager_id', 'user_id'])
                 ->find($managerId);
 

@@ -80,7 +80,11 @@ class EmployeeOvertimeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-
+            ->with([
+                'approvalSteps.approverUser:id,name',
+                'approvalSteps.approverEmployee:id,name',
+                'approvalSteps.approverRole:id,name',
+            ])
             ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,

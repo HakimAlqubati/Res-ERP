@@ -2,8 +2,10 @@
 
 namespace App\Modules\HR\ApprovalPolicies\Builders;
 
+use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalStep;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -76,6 +78,19 @@ class ApprovalStepBuilder extends Builder
         return $this
             ->whereNull('approver_role_id')
             ->whereNotNull('approver_user_id');
+    }
+
+    public function assignedToUser(User $user): self
+    {
+        $roleIds = app(ApprovalWorkflowService::class)->getRoleIdsForUser($user);
+
+        return $this->where(function (self $q) use ($user, $roleIds) {
+            $q->where('approver_user_id', (int) $user->id);
+
+            if (! empty($roleIds)) {
+                $q->orWhereIn('approver_role_id', $roleIds);
+            }
+        });
     }
 
     public function markAsSkipped(?string $notes = null): int

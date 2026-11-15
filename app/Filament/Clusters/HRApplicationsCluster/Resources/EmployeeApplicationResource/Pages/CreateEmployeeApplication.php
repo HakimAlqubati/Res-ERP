@@ -120,6 +120,35 @@ class CreateEmployeeApplication extends CreateRecord
     }
 
 
+    protected function beforeValidate(): void
+    {
+        if (isStuff() && empty($this->data['employee_id'])) {
+            $this->data['employee_id'] = auth()->user()?->employee?->id;
+        }
+
+        if (
+            isset($this->data['application_type_id'])
+            && (int) $this->data['application_type_id'] === EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+        ) {
+            $this->data['mealRequest'] ??= [];
+
+            if (empty($this->data['mealRequest']['date'])) {
+                $this->data['mealRequest']['date'] = $this->data['application_date'] ?? now()->toDateString();
+            }
+
+            if (empty($this->data['mealRequest']['branch_id'])) {
+                $empId = $this->data['employee_id'] ?? null;
+                $branchId = $this->data['branch_id']
+                    ?? ($empId ? Employee::query()->withoutGlobalScopes()->whereKey($empId)->value('branch_id') : null)
+                    ?? auth()->user()?->branch_id;
+
+                if ($branchId) {
+                    $this->data['mealRequest']['branch_id'] = $branchId;
+                }
+            }
+        }
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
 
@@ -130,7 +159,9 @@ class CreateEmployeeApplication extends CreateRecord
 
         $employee = Employee::find($data['employee_id']);
         
-        if ($employee && $employee->branch()->exists()) {   
+        if (! empty($this->data['mealRequest']['branch_id'])) {
+            $data['branch_id'] = $this->data['mealRequest']['branch_id'];
+        } elseif ($employee && $employee->branch()->exists()) {   
             $data['branch_id'] = $employee->branch->id;
         } elseif (auth()->user()->branch_id) {
             $data['branch_id'] = auth()->user()->branch_id;

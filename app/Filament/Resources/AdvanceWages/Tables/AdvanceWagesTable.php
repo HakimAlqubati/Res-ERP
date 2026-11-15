@@ -102,21 +102,31 @@ class AdvanceWagesTable
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn(AdvanceWage $record) => in_array(
-                        $record->status,
-                        [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]
-                    ) && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
+                    ->visible(function (AdvanceWage $record): bool {
+                        if (! in_array($record->status, [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED])) {
+                            return false;
+                        }
+
+                        $user = auth()->user();
+                        if (! $user || $record->isSelfApprovalBy($user)) {
+                            return false;
+                        }
+
+                        if ($record->status === AdvanceWage::STATUS_PENDING && $record->requiresApprovalWorkflow()) {
+                            return $record->canBeApprovedBy($user)
+                                || isSuperAdmin()
+                                || isSystemManager()
+                                || isBranchManager()
+                                || isFinanceManager()
+                                || isHR()
+                                || isOwner();
+                        }
+
+                        return isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR() || isOwner();
+                    })
                     ->action(function (AdvanceWage $record): void {
                         try {
-                            if (
-                                $record->status === AdvanceWage::STATUS_PENDING
-                                && $record->requiresApprovalWorkflow()
-                            ) {
-                                $record->rejectViaWorkflow(auth()->user());
-                            } else {
-                                $record->cancel();
-                                $record->resetApprovalWorkflowOnRollback();
-                            }
+                            app(\App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class)->cancel($record);
 
                             Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
                         } catch (\Throwable $e) {
@@ -133,21 +143,31 @@ class AdvanceWagesTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn(AdvanceWage $record) => in_array(
-                        $record->status,
-                        [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED]
-                    ) && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
+                    ->visible(function (AdvanceWage $record): bool {
+                        if (! in_array($record->status, [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED])) {
+                            return false;
+                        }
+
+                        $user = auth()->user();
+                        if (! $user || $record->isSelfApprovalBy($user)) {
+                            return false;
+                        }
+
+                        if ($record->status === AdvanceWage::STATUS_PENDING && $record->requiresApprovalWorkflow()) {
+                            return $record->canBeApprovedBy($user)
+                                || isSuperAdmin()
+                                || isSystemManager()
+                                || isBranchManager()
+                                || isFinanceManager()
+                                || isHR()
+                                || isOwner();
+                        }
+
+                        return isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR() || isOwner();
+                    })
                     ->action(function (AdvanceWage $record): void {
                         try {
-                            if ($record->status === AdvanceWage::STATUS_CANCELLED) {
-                                $record->resetApprovalWorkflowOnRollback();
-                            }
-
-                            if ($record->requiresApprovalWorkflow()) {
-                                $record->approveViaWorkflow(auth()->user());
-                            } else {
-                                $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
-                            }
+                            app(\App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class)->approve($record);
 
                             Notification::make()->success()->title(__('Advance wage approved.'))->send();
                         } catch (\Throwable $e) {

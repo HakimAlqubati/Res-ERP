@@ -60,7 +60,13 @@ class AdvanceWageResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->forBranchManager();
+        return parent::getEloquentQuery()
+            ->with([
+                'approvalSteps.approverUser:id,name',
+                'approvalSteps.approverEmployee:id,name',
+                'approvalSteps.approverRole:id,name',
+            ])
+            ->forBranchManager();
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
@@ -74,7 +80,11 @@ class AdvanceWageResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) {
+            return true;
+        }
+
+        if (auth()->check() && \App\Modules\HR\ApprovalPolicies\Models\ApprovalStep::userHasAssignedSteps(auth()->user(), static::$model)) {
             return true;
         }
 
@@ -83,10 +93,6 @@ class AdvanceWageResource extends Resource
     
     public static function shouldRegisterNavigation(): bool
     {
-           if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
-            return true;
-        }
-
-        return false;
+        return static::canViewAny();
     }
 }

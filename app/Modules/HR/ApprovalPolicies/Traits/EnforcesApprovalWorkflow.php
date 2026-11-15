@@ -28,7 +28,7 @@ trait EnforcesApprovalWorkflow
             return;
         }
 
-        if (! self::isFinalApprovalMutation($record)) {
+        if (! self::isFinalApprovalMutation($record) && ! self::isRejectionMutation($record)) {
             return;
         }
 
@@ -56,6 +56,39 @@ trait EnforcesApprovalWorkflow
         }
 
         foreach (['approved_by', 'approved_at'] as $column) {
+            if (($record->isDirty($column) || ! $record->exists) && filled($record->getAttribute($column))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function isRejectionMutation(Model $record): bool
+    {
+        $statusColumn = method_exists($record, 'approvalStatusColumn')
+            ? $record->approvalStatusColumn()
+            : 'status';
+
+        $approvedStatuses = method_exists($record, 'approvalApprovedStatuses')
+            ? $record->approvalApprovedStatuses()
+            : ['approved'];
+
+        if ($record->exists && $statusColumn && in_array($record->getOriginal($statusColumn), $approvedStatuses, true)) {
+            return false;
+        }
+
+        $rejectedStatuses = method_exists($record, 'approvalRejectedStatuses')
+            ? $record->approvalRejectedStatuses()
+            : ['rejected'];
+
+        if ($statusColumn && ($record->isDirty($statusColumn) || ! $record->exists)) {
+            if (in_array($record->getAttribute($statusColumn), $rejectedStatuses, true)) {
+                return true;
+            }
+        }
+
+        foreach (['rejected_by', 'rejected_at'] as $column) {
             if (($record->isDirty($column) || ! $record->exists) && filled($record->getAttribute($column))) {
                 return true;
             }

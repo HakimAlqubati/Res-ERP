@@ -3,10 +3,13 @@
 namespace App\Modules\HR\ApprovalPolicies\Models;
 
 use App\Models\User;
+use App\Modules\HR\ApprovalPolicies\Observers\ApprovalPolicyStepObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Permission\Models\Role;
 
+#[ObservedBy([ApprovalPolicyStepObserver::class])]
 class ApprovalPolicyStep extends Model
 {
     protected $table = 'hr_approval_policy_steps';

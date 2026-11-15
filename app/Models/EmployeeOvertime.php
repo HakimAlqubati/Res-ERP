@@ -103,12 +103,27 @@ class EmployeeOvertime extends Model implements Auditable, ApprovableRecord
 
     public function approvalEmployee(): ?Employee
     {
-        return $this->employee;
+        if ($this->relationLoaded('employee')) {
+            $loaded = $this->getRelation('employee');
+            if ($loaded && array_key_exists('manager_id', $loaded->getAttributes())) {
+                return $loaded;
+            }
+        }
+
+        return $this->employee_id
+            ? Employee::withoutGlobalScopes()->find($this->employee_id)
+            : null;
     }
 
     public function approvalBranchId(): ?int
     {
-        return $this->branch_id;
+        if ($this->branch_id) {
+            return (int) $this->branch_id;
+        }
+
+        $branchId = $this->approvalEmployee()?->branch_id;
+
+        return $branchId ? (int) $branchId : null;
     }
 
     public function approvalApplicationTypeId(): ?int
@@ -119,6 +134,11 @@ class EmployeeOvertime extends Model implements Auditable, ApprovableRecord
     public function approvalApprovedStatuses(): array
     {
         return [self::STATUS_APPROVED];
+    }
+
+    public function approvalRejectedStatuses(): array
+    {
+        return [self::STATUS_REJECTED];
     }
 
     // Relationship with the User model (for approval)

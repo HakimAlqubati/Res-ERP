@@ -241,13 +241,29 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn(AdvanceWage $record) => in_array(
-                        $record->status,
-                        [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]
-                    ))
+                    ->visible(function (AdvanceWage $record): bool {
+                        if (! in_array($record->status, [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED])) {
+                            return false;
+                        }
+
+                        $user = auth()->user();
+                        if (! $user || $record->isSelfApprovalBy($user)) {
+                            return false;
+                        }
+
+                        if ($record->status === AdvanceWage::STATUS_PENDING && $record->requiresApprovalWorkflow()) {
+                            return $record->canBeApprovedBy($user);
+                        }
+
+                        return isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR() || isOwner();
+                    })
                     ->action(function (AdvanceWage $record): void {
-                        $record->cancel();
-                        Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
+                        try {
+                            app(\App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class)->cancel($record);
+                            Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->danger()->title(__('Error'))->body($e->getMessage())->send();
+                        }
                     })
                     ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,
@@ -259,13 +275,29 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn(AdvanceWage $record) => in_array(
-                        $record->status,
-                        [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED]
-                    ))
+                    ->visible(function (AdvanceWage $record): bool {
+                        if (! in_array($record->status, [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED])) {
+                            return false;
+                        }
+
+                        $user = auth()->user();
+                        if (! $user || $record->isSelfApprovalBy($user)) {
+                            return false;
+                        }
+
+                        if ($record->status === AdvanceWage::STATUS_PENDING && $record->requiresApprovalWorkflow()) {
+                            return $record->canBeApprovedBy($user);
+                        }
+
+                        return isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR() || isOwner();
+                    })
                     ->action(function (AdvanceWage $record): void {
-                        $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
-                        Notification::make()->success()->title(__('Advance wage approved.'))->send();
+                        try {
+                            app(\App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class)->approve($record);
+                            Notification::make()->success()->title(__('Advance wage approved.'))->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->danger()->title(__('Error'))->body($e->getMessage())->send();
+                        }
                     })
                     ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,

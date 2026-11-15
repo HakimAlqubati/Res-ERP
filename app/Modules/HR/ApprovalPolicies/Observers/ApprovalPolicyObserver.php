@@ -4,7 +4,9 @@ namespace App\Modules\HR\ApprovalPolicies\Observers;
 
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
 use App\Modules\HR\ApprovalPolicies\Rules\PolicyNotInUse;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalPolicySyncService;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
 use Illuminate\Validation\ValidationException;
 
 class ApprovalPolicyObserver
@@ -14,15 +16,7 @@ class ApprovalPolicyObserver
      */
     public function saved(ApprovalPolicy $approvalPolicy): void
     {
-        ApprovalWorkflowRequirementChecker::clearCache();
-
-        if ($approvalPolicy->wasChanged('allow_skip_steps')) {
-            $approvalPolicy->steps()
-                ->pending()
-                ->update([
-                    'can_be_skipped' => (bool) $approvalPolicy->allow_skip_steps,
-                ]);
-        }
+        app(ApprovalPolicySyncService::class)->syncOnPolicySaved($approvalPolicy);
     }
 
     /**
@@ -39,6 +33,7 @@ class ApprovalPolicyObserver
     public function deleted(ApprovalPolicy $approvalPolicy): void
     {
         ApprovalWorkflowRequirementChecker::clearCache();
+        ApprovalWorkflowService::clearCache();
     }
 
     /**
@@ -46,7 +41,7 @@ class ApprovalPolicyObserver
      */
     public function restored(ApprovalPolicy $approvalPolicy): void
     {
-        ApprovalWorkflowRequirementChecker::clearCache();
+        app(ApprovalPolicySyncService::class)->syncOnPolicySaved($approvalPolicy);
     }
 
     /**

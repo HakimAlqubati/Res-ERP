@@ -41,6 +41,15 @@ class ApprovalWorkflowService
     {
         self::$userRoleIdsCache = [];
         self::$userEmployeeIdCache = [];
+        ApprovalStep::clearAssignedStepsCache();
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function getRoleIdsForUser(User $user): array
+    {
+        return $this->resolveUserRoleIds($user);
     }
 
     public function createFor(Model&ApprovableRecord $record, bool $replaceExisting = false): void

@@ -36,6 +36,32 @@ class ApprovalPolicyBuilder extends Builder
             );
     }
 
+    /**
+     * Scope policies that conflict with the given subject when validating uniqueness:
+     * - For EmployeeApplicationV2 with null applicationTypeId ("All Employee Requests"),
+     *   it conflicts with ANY policy for EmployeeApplicationV2 (wildcard or specific type).
+     * - For EmployeeApplicationV2 with a specific applicationTypeId,
+     *   it conflicts with policies for that specific type OR wildcard ("All Employee Requests").
+     * - For other subjects (Overtime, AdvanceWage), it conflicts with policies of the same approvableType.
+     */
+    public function forConflictingSubject(
+        string $approvableType,
+        ?int $applicationTypeId = null
+    ): self {
+        return $this
+            ->where('approvable_type', $approvableType)
+            ->when(
+                $approvableType === \App\Models\EmployeeApplicationV2::class,
+                fn (self $q) => $applicationTypeId !== null
+                    ? $q->where(function (self $sub) use ($applicationTypeId) {
+                        $sub->where('application_type_id', $applicationTypeId)
+                            ->orWhereNull('application_type_id');
+                    })
+                    : $q,
+                fn (self $q) => $q->whereNull('application_type_id')
+            );
+    }
+
     public function forBranch(?int $branchId): self
     {
         return $this->when(

@@ -84,7 +84,13 @@ class AdvanceWageObserver
     public function updating(AdvanceWage $advanceWage): void
     {
         $this->guardPeriod($advanceWage);
-        AdvanceWageLimitRule::check($advanceWage);
+
+        if (
+            $advanceWage->status !== AdvanceWage::STATUS_CANCELLED
+            && $advanceWage->isDirty(['amount', 'employee_id', 'year', 'month'])
+        ) {
+            AdvanceWageLimitRule::check($advanceWage);
+        }
     }
 
     /**

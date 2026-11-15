@@ -86,6 +86,15 @@ class AdvanceWageService implements AdvanceWageServiceInterface
             throw new InvalidArgumentException(__('Only pending or cancelled advance wages can be approved.'));
         }
 
+        if ($advanceWage->status === AdvanceWage::STATUS_CANCELLED) {
+            $advanceWage->update(['status' => AdvanceWage::STATUS_PENDING]);
+            $advanceWage->resetApprovalWorkflowOnRollback();
+        }
+
+        if ($advanceWage->requiresApprovalWorkflow() && auth()->user()) {
+            return $advanceWage->approveViaWorkflow(auth()->user());
+        }
+
         $advanceWage->update([
             'status'      => AdvanceWage::STATUS_SETTLED,
             'approved_by' => auth()->id(),
@@ -103,7 +112,17 @@ class AdvanceWageService implements AdvanceWageServiceInterface
             throw new InvalidArgumentException(__('Only pending or settled advance wages can be cancelled.'));
         }
 
+        if (
+            $advanceWage->status === AdvanceWage::STATUS_PENDING
+            && $advanceWage->requiresApprovalWorkflow()
+            && auth()->user()
+        ) {
+            return $advanceWage->rejectViaWorkflow(auth()->user());
+        }
+
         $advanceWage->cancel();
+        $advanceWage->resetApprovalWorkflowOnRollback();
+
         return $advanceWage;
     }
 

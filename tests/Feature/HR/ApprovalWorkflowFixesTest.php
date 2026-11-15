@@ -40,9 +40,13 @@ class ApprovalWorkflowFixesTest extends TestCase
         ApprovalWorkflowRequirementChecker::clearCache();
         ApprovalWorkflowService::clearCache();
 
-        // Isolate test policies by deactivating pre-existing policies for EmployeeApplicationV2 inside the transaction
+        // Isolate test policies by deactivating pre-existing policies inside the transaction
         ApprovalPolicy::query()
-            ->where('approvable_type', EmployeeApplicationV2::class)
+            ->whereIn('approvable_type', [
+                EmployeeApplicationV2::class,
+                \App\Models\EmployeeOvertime::class,
+                \App\Models\AdvanceWage::class,
+            ])
             ->update(['active' => false]);
     }
 
@@ -777,5 +781,437 @@ class ApprovalWorkflowFixesTest extends TestCase
         $app->resetApprovalWorkflowOnRollback();
         $this->assertTrue($step->fresh()->isPending());
         $this->assertTrue($app->fresh()->requiresApprovalWorkflow());
+    }
+
+    /**
+     * Phase 4 - QA Observation #1:
+     * Overtime & Advance Wages properly apply Approval Policy when approved by the assigned manager
+     * (including via OvertimeService / AdvanceWageService and when policy is created/updated after pending records exist).
+     */
+    public function test_phase4_observation_1_overtime_and_advance_wages_apply_approval_policy_for_manager(): void
+    {
+        $branch = $this->createTestBranch('Branch Phase4 Obs 1');
+        [$managerUser, $managerEmp] = $this->createTestUserAndEmployee('Direct Manager P4O1', $branch->id);
+        [$empUser, $employee] = $this->createTestUserAndEmployee('Employee P4O1', $branch->id, $managerEmp->id);
+
+        // 1. Create pending Overtime BEFORE policy exists
+        $this->actingAs($empUser);
+        $overtime = \App\Models\EmployeeOvertime::withoutEvents(fn () => \App\Models\EmployeeOvertime::query()->create([
+            'employee_id' => $employee->id,
+            'branch_id' => $branch->id,
+            'date' => '2099-02-10',
+            'hours' => 3,
+            'type' => \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY,
+            'status' => \App\Models\EmployeeOvertime::STATUS_PENDING,
+            'created_by' => $empUser->id,
+        ]));
+
+        // 2. Create ApprovalPolicy for EmployeeOvertime -> Observer automatically syncs pending Overtime steps
+        $overtimePolicy = ApprovalPolicy::query()->create([
+            'name' => 'Overtime Direct Manager Policy',
+            'approvable_type' => \App\Models\EmployeeOvertime::class,
+            'application_type_id' => null,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::CONFIGURED_STEPS,
+            'active' => true,
+        ]);
+        $overtimePolicy->policySteps()->create([
+            'step_order' => 1,
+            'approver_type' => ApprovalPolicyStepType::DIRECT_MANAGER,
+        ]);
+
+        $this->assertTrue($overtime->fresh()->requiresApprovalWorkflow());
+        $this->assertTrue($overtime->fresh()->canBeApprovedBy($managerUser));
+
+        // Manager approves via OvertimeService -> routes through workflow cleanly without throwing
+        $this->actingAs($managerUser);
+        app(\App\Modules\HR\Overtime\OvertimeService::class)->approve([$overtime->id]);
+
+        $this->assertSame(\App\Models\EmployeeOvertime::STATUS_APPROVED, $overtime->fresh()->status);
+        $this->assertSame(
+            ApprovalStepStatus::APPROVED,
+            $overtime->approvalSteps()->first()->status
+        );
+
+        // 3. Create ApprovalPolicy for AdvanceWage and test AdvanceWageService::approve as manager
+        $advanceWagePolicy = ApprovalPolicy::query()->create([
+            'name' => 'Advance Wage Direct Manager Policy',
+            'approvable_type' => \App\Models\AdvanceWage::class,
+            'application_type_id' => null,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::CONFIGURED_STEPS,
+            'active' => true,
+        ]);
+        $advanceWagePolicy->policySteps()->create([
+            'step_order' => 1,
+            'approver_type' => ApprovalPolicyStepType::DIRECT_MANAGER,
+        ]);
+
+        $advanceWage = \App\Models\AdvanceWage::withoutEvents(fn () => \App\Models\AdvanceWage::query()->create([
+            'employee_id' => $employee->id,
+            'branch_id' => $branch->id,
+            'date' => '2099-02-15',
+            'year' => 2099,
+            'month' => 2,
+            'amount' => 500,
+            'payment_method' => \App\Models\AdvanceWage::PAYMENT_METHOD_CASH,
+            'status' => \App\Models\AdvanceWage::STATUS_PENDING,
+            'reason' => 'Urgent expense',
+            'created_by' => $empUser->id,
+        ]));
+        $advanceWage->initializeApprovalWorkflowIfRequired();
+
+        $this->assertTrue($advanceWage->fresh()->requiresApprovalWorkflow());
+        $this->assertTrue($advanceWage->fresh()->canBeApprovedBy($managerUser));
+
+        $this->actingAs($managerUser);
+        app(\App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class)->approve($advanceWage->fresh());
+
+        $this->assertSame(\App\Models\AdvanceWage::STATUS_SETTLED, $advanceWage->fresh()->status);
+        $this->assertSame(
+            ApprovalStepStatus::APPROVED,
+            $advanceWage->approvalSteps()->first()->status
+        );
+    }
+
+    /**
+     * Phase 4 - QA Observations #2 & #3:
+     * Prevents conflicting policies between "All Employee Requests" and individual request types,
+     * and between "All branches" and individual branches (in both directions).
+     */
+    public function test_phase4_observations_2_and_3_blocks_conflicting_all_requests_and_all_branches_policies(): void
+    {
+        $branchA = $this->createTestBranch('Branch A P4O2');
+        $branchB = $this->createTestBranch('Branch B P4O2');
+
+        // Create a specific Leave Request policy for Branch A
+        $specificPolicy = ApprovalPolicy::query()->create([
+            'name' => 'Leave Request Branch A',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            'branch_ids' => [$branchA->id],
+            'mode' => ApprovalMode::DIRECT_MANAGER,
+            'active' => true,
+        ]);
+
+        // Observation #2a: Adding "All Employee Requests" (application_type_id = null) for Branch A must FAIL
+        $allRequestsSameBranchRule = new UniqueApprovalPolicy(
+            ignoreId: null,
+            approvableType: EmployeeApplicationV2::class,
+            applicationTypeId: null,
+            branchIds: [$branchA->id]
+        );
+        $this->assertTrue(
+            Validator::make(['name' => 'All Emp Requests Branch A'], ['name' => [$allRequestsSameBranchRule]])->fails()
+        );
+
+        // Observation #2b: Adding "All Employee Requests" for Branch B (non-overlapping branch) must PASS
+        $allRequestsOtherBranchRule = new UniqueApprovalPolicy(
+            ignoreId: null,
+            approvableType: EmployeeApplicationV2::class,
+            applicationTypeId: null,
+            branchIds: [$branchB->id]
+        );
+        $this->assertFalse(
+            Validator::make(['name' => 'All Emp Requests Branch B'], ['name' => [$allRequestsOtherBranchRule]])->fails()
+        );
+
+        // Observation #3a: Adding Leave Request for "All branches" (branch_ids = []) while Branch A has one must FAIL
+        $allBranchesRule = new UniqueApprovalPolicy(
+            ignoreId: null,
+            approvableType: EmployeeApplicationV2::class,
+            applicationTypeId: EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            branchIds: []
+        );
+        $this->assertTrue(
+            Validator::make(['name' => 'Leave Request All Branches'], ['name' => [$allBranchesRule]])->fails()
+        );
+
+        // Now replace with an "All Employee Requests" + "All Branches" global policy
+        $specificPolicy->delete();
+
+        ApprovalPolicy::query()->create([
+            'name' => 'Global All Requests Policy',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => null,
+            'branch_ids' => null,
+            'mode' => ApprovalMode::DIRECT_MANAGER,
+            'active' => true,
+        ]);
+
+        // Observation #2c & #3b: Adding a specific Advance Request policy for Branch A must FAIL
+        $specificUnderGlobalRule = new UniqueApprovalPolicy(
+            ignoreId: null,
+            approvableType: EmployeeApplicationV2::class,
+            applicationTypeId: EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST,
+            branchIds: [$branchA->id]
+        );
+        $this->assertTrue(
+            Validator::make(['name' => 'Advance Request Branch A'], ['name' => [$specificUnderGlobalRule]])->fails()
+        );
+    }
+
+    /**
+     * Phase 4 - QA Observation #4:
+     * Reordering Route Steps (swapping step_order values sequentially as Filament Repeater does)
+     * succeeds without Duplicate entry SQL error and syncs pending ApprovalStep records.
+     */
+    public function test_phase4_observation_4_allows_reordering_route_steps_without_unique_constraint_collision(): void
+    {
+        $branch = $this->createTestBranch('Branch P4O4');
+        [$user1, $emp1] = $this->createTestUserAndEmployee('Approver One P4O4', $branch->id);
+        [$user2, $emp2] = $this->createTestUserAndEmployee('Approver Two P4O4', $branch->id);
+        [$applicantUser, $applicantEmp] = $this->createTestUserAndEmployee('Applicant P4O4', $branch->id, $emp1->id);
+
+        $policy = ApprovalPolicy::query()->create([
+            'name' => 'Reorderable Steps Policy',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::CONFIGURED_STEPS,
+            'active' => true,
+        ]);
+
+        $stepA = $policy->policySteps()->create([
+            'step_order' => 1,
+            'approver_type' => ApprovalPolicyStepType::CUSTOM_USER,
+            'approver_user_id' => $user1->id,
+        ]);
+        $stepB = $policy->policySteps()->create([
+            'step_order' => 2,
+            'approver_type' => ApprovalPolicyStepType::CUSTOM_USER,
+            'approver_user_id' => $user2->id,
+        ]);
+
+        $app = $this->createLeaveApplication($applicantEmp, $applicantUser);
+        $this->assertSame($user1->id, $app->currentApprovalStep->approver_user_id);
+
+        // Simulate Filament Repeater sequential update during arrow swap:
+        // First update stepA to step_order = 2 (while stepB is still step_order = 2), then stepB to step_order = 1
+        $stepA->update(['step_order' => 2]);
+        $stepB->update(['step_order' => 1]);
+
+        $orderedPolicySteps = $policy->policySteps()->orderBy('step_order')->get();
+        $this->assertSame($user2->id, $orderedPolicySteps[0]->approver_user_id);
+        $this->assertSame($user1->id, $orderedPolicySteps[1]->approver_user_id);
+
+        // Pending application steps were automatically resynced so Approver Two is now Step #1
+        $app->unsetRelation('approvalSteps');
+        $app->unsetRelation('currentApprovalStep');
+        $this->assertSame($user2->id, $app->currentApprovalStep->approver_user_id);
+        $this->assertTrue($app->canBeApprovedBy($user2));
+    }
+
+    /**
+     * Phase 4 - QA Observation #5:
+     * When Approver Type is Custom User (choosing a regular staff employee or a branch manager from another branch),
+     * logging into their account shows the assigned requests in the table queries and grants resource visibility.
+     */
+    public function test_phase4_observation_5_custom_user_approver_sees_assigned_requests_for_staff_and_branch_manager(): void
+    {
+        $branchA = $this->createTestBranch('Branch A P4O5');
+        $branchB = $this->createTestBranch('Branch B P4O5');
+
+        [$applicantUser, $applicantEmp] = $this->createTestUserAndEmployee('Applicant Branch A', $branchA->id);
+        [$staffApproverUser, $staffApproverEmp] = $this->createTestUserAndEmployee('Regular Staff Approver', $branchA->id);
+        [$branchBManagerUser, $branchBManagerEmp] = $this->createTestUserAndEmployee('Branch B Manager Approver', $branchB->id);
+
+        // Assign Role 8 (Staff / isStuff) to staffApproverUser and Role 7 (Branch Manager) to branchBManagerUser
+        $staffRole = Role::query()->firstOrCreate(['id' => 8], ['name' => 'Staff', 'guard_name' => 'web']);
+        $branchManagerRole = Role::query()->firstOrCreate(['id' => 7], ['name' => 'Branch Manager', 'guard_name' => 'web']);
+
+        $staffApproverUser->assignRole($staffRole);
+        $branchBManagerUser->assignRole($branchManagerRole);
+        ApprovalWorkflowService::clearCache();
+
+        $policy = ApprovalPolicy::query()->create([
+            'name' => 'Custom User Visibility Policy',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            'branch_ids' => [$branchA->id],
+            'mode' => ApprovalMode::CONFIGURED_STEPS,
+            'active' => true,
+        ]);
+
+        $policy->policySteps()->createMany([
+            [
+                'step_order' => 1,
+                'approver_type' => ApprovalPolicyStepType::CUSTOM_USER,
+                'approver_user_id' => $staffApproverUser->id,
+            ],
+            [
+                'step_order' => 2,
+                'approver_type' => ApprovalPolicyStepType::CUSTOM_USER,
+                'approver_user_id' => $branchBManagerUser->id,
+            ],
+        ]);
+
+        $app = $this->createLeaveApplication($applicantEmp, $applicantUser);
+
+        // 1. Logged in as Regular Staff Approver (isStuff() == true): sees Applicant's request in forBranchManager()
+        $this->actingAs($staffApproverUser);
+        $this->assertTrue((bool) isStuff());
+        $this->assertTrue(EmployeeApplicationResource::canViewAny());
+        $this->assertTrue(
+            EmployeeApplicationV2::query()->forBranchManager()->whereKey($app->id)->exists()
+        );
+        $this->assertTrue($app->canBeApprovedBy($staffApproverUser));
+
+        // 2. Logged in as Branch B Manager (isBranchManager() == true, branch_id = Branch B): sees Branch A request in forBranchManager()
+        $this->actingAs($branchBManagerUser);
+        $this->assertTrue((bool) isBranchManager());
+        $this->assertTrue(
+            EmployeeApplicationV2::query()->forBranchManager()->whereKey($app->id)->exists()
+        );
+    }
+
+    /**
+     * Phase 4 - QA Observation #6:
+     * Creating an Expense advance (APPLICATION_TYPE_MEAL_REQUEST = 5) properly resolves and persists branch_id
+     * without failing with "The branch field is required."
+     */
+    public function test_phase4_observation_6_expense_advance_meal_request_persists_branch_id_cleanly(): void
+    {
+        $branch = $this->createTestBranch('Branch P4O6');
+        $branch->update(['type' => Branch::TYPE_BRANCH, 'active' => true]);
+        [$empUser, $employee] = $this->createTestUserAndEmployee('Employee P4O6', $branch->id);
+
+        $this->actingAs($empUser);
+
+        $page = new class extends \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages\CreateEmployeeApplication {
+            public function runBeforeValidate(array $data): array
+            {
+                $this->data = $data;
+                $this->beforeValidate();
+                return $this->data;
+            }
+
+            public function runMutateBeforeCreate(array $data): array
+            {
+                $this->data = $data;
+                return $this->mutateFormDataBeforeCreate($data);
+            }
+        };
+
+        $initialData = [
+            'employee_id' => $employee->id,
+            'application_date' => '2099-03-01',
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST,
+            'notes' => 'Team dinner expense advance',
+            'mealRequest' => [
+                'cost' => 150,
+                'meal_details' => 'Dinner for 3 staff members',
+            ],
+        ];
+
+        $validatedState = $page->runBeforeValidate($initialData);
+        $this->assertSame($branch->id, $validatedState['mealRequest']['branch_id']);
+        $this->assertSame('2099-03-01', $validatedState['mealRequest']['date']);
+
+        $mutatedData = $page->runMutateBeforeCreate($validatedState);
+        $this->assertSame($branch->id, $mutatedData['branch_id']);
+    }
+
+    /**
+     * Phase 4 - QA Observation #7:
+     * Rejecting a request when the current step is not assigned to the user returns a clear explanatory message
+     * across EmployeeApplicationController (API), OvertimeService, AdvanceWageService, and direct model updates.
+     */
+    public function test_phase4_observation_7_rejection_by_non_assigned_user_returns_explanatory_message(): void
+    {
+        $branch = $this->createTestBranch('Branch P4O7');
+        [$managerUser, $managerEmp] = $this->createTestUserAndEmployee('Assigned Manager P4O7', $branch->id);
+        [$otherUser, $otherEmp] = $this->createTestUserAndEmployee('Unassigned User P4O7', $branch->id);
+        [$empUser, $employee] = $this->createTestUserAndEmployee('Employee P4O7', $branch->id, $managerEmp->id);
+
+        ApprovalPolicy::query()->create([
+            'name' => 'All Subjects Direct Manager Policy',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::DIRECT_MANAGER,
+            'active' => true,
+        ]);
+
+        $app = $this->createLeaveApplication($employee, $empUser);
+
+        // 1. API EmployeeApplicationController::reject returns the exact explanatory message in JSON 'message'
+        $this->actingAs($otherUser);
+        $request = \Illuminate\Http\Request::create("/api/hr/applications/{$app->id}/reject", 'POST', [
+            'reason' => 'Not my step rejection',
+        ]);
+        $request->setUserResolver(fn () => $otherUser);
+
+        $controller = app(\App\Http\Controllers\Api\HR\EmployeeApplicationController::class);
+        $response = $controller->reject($app->id, $request, app(EmployeeApplicationService::class));
+        $payload = $response->getData(true);
+
+        $this->assertFalse($payload['success']);
+        $this->assertStringContainsString('Waiting for Assigned Manager P4O7 to approve step #1', $payload['message']);
+
+        // 2. Direct model update to STATUS_REJECTED is blocked by EnforcesApprovalWorkflow with explanatory message
+        try {
+            $app->update(['status' => EmployeeApplicationV2::STATUS_REJECTED]);
+            $this->fail('Direct rejection mutation should have been blocked by EnforcesApprovalWorkflow.');
+        } catch (AuthorizationException $e) {
+            $this->assertStringContainsString('Assigned Manager P4O7', $e->getMessage());
+        }
+
+        // 3. OvertimeService::reject & AdvanceWageService::cancel by non-assigned user throw explanatory message
+        ApprovalPolicy::query()->create([
+            'name' => 'Overtime Direct Manager Policy P4O7',
+            'approvable_type' => \App\Models\EmployeeOvertime::class,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::DIRECT_MANAGER,
+            'active' => true,
+        ]);
+        ApprovalPolicy::query()->create([
+            'name' => 'AdvanceWage Direct Manager Policy P4O7',
+            'approvable_type' => \App\Models\AdvanceWage::class,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::DIRECT_MANAGER,
+            'active' => true,
+        ]);
+
+        $overtime = \App\Models\EmployeeOvertime::withoutEvents(fn () => \App\Models\EmployeeOvertime::query()->create([
+            'employee_id' => $employee->id,
+            'branch_id' => $branch->id,
+            'date' => '2099-03-10',
+            'hours' => 2,
+            'type' => \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY,
+            'status' => \App\Models\EmployeeOvertime::STATUS_PENDING,
+            'created_by' => $empUser->id,
+        ]));
+        $overtime->initializeApprovalWorkflowIfRequired();
+
+        $advanceWage = \App\Models\AdvanceWage::withoutEvents(fn () => \App\Models\AdvanceWage::query()->create([
+            'employee_id' => $employee->id,
+            'branch_id' => $branch->id,
+            'date' => '2099-03-10',
+            'year' => 2099,
+            'month' => 3,
+            'amount' => 300,
+            'payment_method' => \App\Models\AdvanceWage::PAYMENT_METHOD_CASH,
+            'status' => \App\Models\AdvanceWage::STATUS_PENDING,
+            'reason' => 'Test reject message',
+            'created_by' => $empUser->id,
+        ]));
+        $advanceWage->initializeApprovalWorkflowIfRequired();
+
+        $this->actingAs($otherUser);
+
+        try {
+            app(\App\Modules\HR\Overtime\OvertimeService::class)->reject([$overtime->id]);
+            $this->fail('OvertimeService::reject by non-assigned user should have thrown an exception.');
+        } catch (\Throwable $e) {
+            $this->assertStringContainsString('Waiting for Assigned Manager P4O7 to approve step #1', $e->getMessage());
+        }
+
+        try {
+            app(\App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class)->cancel($advanceWage);
+            $this->fail('AdvanceWageService::cancel by non-assigned user should have thrown an exception.');
+        } catch (\Throwable $e) {
+            $this->assertStringContainsString('Waiting for Assigned Manager P4O7 to approve step #1', $e->getMessage());
+        }
     }
 }
