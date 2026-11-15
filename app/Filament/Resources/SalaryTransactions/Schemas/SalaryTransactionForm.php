@@ -23,6 +23,7 @@ class SalaryTransactionForm
                         Select::make('employee_id')->disabledOn('edit')
                             ->label(__('lang.employee'))
                             ->options(fn() => \App\Models\Employee::active()
+                                ->forBranchManager()
                                 ->orderBy('name')
                                 ->pluck('name', 'id'))
                             ->searchable()

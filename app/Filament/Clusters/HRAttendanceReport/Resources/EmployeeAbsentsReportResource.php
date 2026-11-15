@@ -61,11 +61,12 @@ class EmployeeAbsentsReportResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')
                     ->placeholder('Select Branch')
-                    ->label(__('lang.branch'))->options(Branch::where('active', 1)
+                    ->label(__('lang.branch'))->options(fn () => Branch::where('active', 1)
+                        ->forBranchManager('id')
                         ->select('name', 'id')
                         ->get()->pluck('name', 'id'))
                     ->default(function () {
-                        if (isBranchManager()) {
+                        if (isBranchManagerOnly()) {
                             return auth()->user()?->branch_id;
                         }
                     })

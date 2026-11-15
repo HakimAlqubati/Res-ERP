@@ -377,6 +377,14 @@ class ProductsSchema
                                         ->default('0.00')
                                         ->numeric()
                                         ->step('0.01')
+                                        ->default(1)
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
+                                        ->dehydrated()
+                                        ->required()->minValue(0.000000001),
+                                    TextInput::make('total_price')->default(0)
+                                        ->type('text')
                                         ->readOnly()
                                         ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
                                         ->afterStateHydrated(function ($component, $state) {

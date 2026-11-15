@@ -566,6 +566,14 @@ if (!function_exists('settingWithDefault')) {
     }
 }
 
+if (!function_exists('isInTransitOrderEnabled')) {
+    function isInTransitOrderEnabled(): bool
+    {
+        return (bool) settingWithDefault('enable_in_transit_order_status', false);
+    }
+}
+
+
 /**
  * Get the system configured date format from settings.
  */

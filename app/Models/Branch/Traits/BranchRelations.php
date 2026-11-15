@@ -3,6 +3,7 @@
 namespace App\Models\Branch\Traits;
 
 use App\Models\BranchArea;
+use App\Models\BranchCategoryMarkup;
 use App\Models\Category;
 use App\Models\Equipment;
 use App\Models\Location;
@@ -51,6 +52,11 @@ trait BranchRelations
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'branch_category', 'branch_id', 'category_id');
+    }
+
+    public function categoryMarkups()
+    {
+        return $this->hasMany(BranchCategoryMarkup::class, 'branch_id');
     }
 
     public function manufacturingCategories()

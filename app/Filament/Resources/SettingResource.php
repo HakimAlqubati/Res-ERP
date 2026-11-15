@@ -563,7 +563,9 @@ class SettingResource extends Resource
                                             //     ->native(false)
                                             //     ->required(),
                                             TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
-                                            Grid::make()->columns(2)->schema([
+                                            Grid::make()
+                                            ->columnSpanFull()
+                                            ->columns(2)->schema([
                                                 // Toggle::make('completed_order_if_not_qty')->inline(false)
                                                 //     ->label(__('system_settings.completed_order_if_not_qty'))
                                                 //     // ->onIcon('heroicon-s-lightning-bolt')
@@ -582,7 +584,15 @@ class SettingResource extends Resource
                                                     ->inline(false)
                                                     ->label('Auto-create order if stock is unavailable')
                                                     ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
-                                                    ->default(false),
+                                                    ->default(false)
+                                                    ->hidden()
+                                                    ,
+                                                Toggle::make('enable_in_transit_order_status')
+                                                    ->inline(false)
+                                                    ->label(__('system_settings.enable_in_transit_order_status'))
+                                                    ->helperText(__('system_settings.in_transit_order_status_helper'))
+                                                    ->default(false), 
+                                                    
                                             ]),
 
                                             Fieldset::make('Toggle Dashboard Sections')->columnSpanFull()->columns(2)->schema([
@@ -638,6 +648,20 @@ class SettingResource extends Resource
                                                 ->options(ProductUnitsSortDirection::options())
                                                 ->default(ProductUnitsSortDirection::DEFAULT)
                                                 ->required(),
+                                        ]),
+                                    ]),
+                                    Tab::make('Inventory Reports Settings')
+                                    ->visible(fn() => isSuperAdmin() || isSystemManager())
+                                    ->columnSpanFull()->schema([
+                                        Grid::make()->columnSpanFull()->columns(2)->schema([
+                                            Select::make('inventory_reports_roles')
+                                                ->multiple()
+                                                ->label('Roles Allowed to View Inventory Reports')
+                                                ->options(Role::pluck('name', 'id')->toArray())
+                                                ->searchable()
+                                                ->preload()
+                                                ->helperText('Select the roles that are allowed to access and view the Inventory Reports page.')
+                                                ->default([1, 3,5,7]),
                                         ]),
                                     ]),
                                 ]),

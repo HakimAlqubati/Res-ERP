@@ -137,6 +137,68 @@ class Store extends Model implements Auditable
         };
     }
 
+    /**
+     * المخازن المسموح للمستخدم برؤيتها (مصدر واحد للحقيقة يُستخدم في المخازن والجرودات وغيرها).
+     *
+     * القواعد:
+     * 1) استثناء المخزن الرئيسي (default_store) دائماً.
+     * 2) مدير الفرع: يرى فقط المخزن المرتبط بفرعه.
+     * 3) المستخدم المرتبط بفروع إضافية من نوع تصنيعي: يرى مخازن تلك الفروع.
+     * 4) أمين المخزن الرئيسي: لا يُعرض له شيء.
+     * - السوبر أدمن ومدير النظام: كل المخازن (عدا الرئيسي).
+     * - أي مستخدم آخر: لا شيء.
+     *
+     * Usage:
+     *   Store::visibleTo()->pluck('name', 'id');
+     *   StockInventory::whereIn('store_id', Store::visibleTo()->select('id'));
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user = null): Builder
+    {
+        $user ??= auth()->user();
+
+        // (1) استثناء المخزن الرئيسي دائماً
+        $query->where(function (Builder $q) {
+            $q->where('stores.default_store', false)->orWhereNull('stores.default_store');
+        });
+
+        // بدون مستخدم أو أمين المخزن الرئيسي (4) => لا شيء
+        if (!$user || $user->isDefaultStoreManager()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        // السوبر أدمن ومدير النظام: كل المخازن (عدا الرئيسي)
+        if ($user->isSuperAdmin() || $user->isSystemManager()) {
+            return $query;
+        }
+
+        $storeIds = [];
+
+        // (2) مدير الفرع: مخزن فرعه فقط
+        if ($user->isBranchManager()) {
+            $storeIds = array_merge(
+                $storeIds,
+                Branch::withoutGlobalScopes()
+                    ->forBranchManager('id')
+                    ->whereNotNull('store_id')
+                    ->pluck('store_id')
+                    ->all()
+            );
+        }
+
+        // (3) الفروع الإضافية من النوع التصنيعي => مخازنها
+        $storeIds = array_merge(
+            $storeIds,
+            $user->branches()
+                ->withoutGlobalScopes()
+                ->centralKitchens()
+                ->whereNotNull('branches.store_id')
+                ->pluck('branches.store_id')
+                ->all()
+        );
+
+        return $query->whereIn('stores.id', array_values(array_unique($storeIds)));
+    }
+
     public function scopeWithManagedStores($query)
     {
         if (isFinanceManager()) {

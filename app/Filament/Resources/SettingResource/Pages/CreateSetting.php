@@ -27,7 +27,11 @@ class CreateSetting extends CreateRecord
         parent::mount();
 
         // Pre-fill the form with existing settings
-        $this->form->fill(Setting::get()->pluck("value", "key")->toArray());
+        $settings = Setting::get()->pluck("value", "key")->toArray();
+        if (!array_key_exists('inventory_reports_roles', $settings)) {
+            $settings['inventory_reports_roles'] = [1, 3, 5, 7];
+        }
+        $this->form->fill($settings);
     }
 
     public function create(bool $another = false): void

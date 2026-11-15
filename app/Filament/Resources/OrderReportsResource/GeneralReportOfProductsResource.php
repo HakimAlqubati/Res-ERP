@@ -67,11 +67,12 @@ class GeneralReportOfProductsResource extends Resource
                     ->multiple()
                     ->label(__('lang.branch'))
                     ->searchable()
-                    ->options(Branch::whereIn(
+                    ->options(fn () => Branch::whereIn(
                         'type',
                         [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP]
                     )
                         ->withPopupsActiveAndExpired()
+                        ->forBranchManager('id')
                         ->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')

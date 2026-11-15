@@ -46,6 +46,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ManufacturingBranchResource extends Resource
@@ -238,7 +239,9 @@ class ManufacturingBranchResource extends Resource
 
     public static function getEloquentQuery(): EloquentBuilder
     {
-        $query = static::getModel()::query()->where('type', Branch::TYPE_CENTRAL_KITCHEN);
+        $query = static::getModel()::query()
+            ->where('type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->forBranchManager('id');
 
         if (
             static::isScopedToTenant() &&
@@ -248,6 +251,42 @@ class ManufacturingBranchResource extends Resource
         }
 
         return $query->with(['chefAssistants', 'user', 'store']);
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
     }
 
     public static function getNavigationBadge(): ?string

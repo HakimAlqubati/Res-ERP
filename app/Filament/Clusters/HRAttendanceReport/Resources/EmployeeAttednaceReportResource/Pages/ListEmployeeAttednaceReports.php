@@ -41,13 +41,15 @@ class ListEmployeeAttednaceReports extends ListRecords
 
     protected function getViewData(): array
     {
-        if (! isStuff()) {
+        if (isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager() || isAccountant() || isHR()
+            || isMaintenanceManager() || isOwner()
+            ) {
             $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
         } else {
             $employee_id = auth()->user()?->employee?->id;
         }
 
-        $employee  = Employee::with('branch:id,name')->find($employee_id);
+        $employee  = Employee::with('branch:id,name')->forBranchManager()->find($employee_id);
         $branchName = $employee?->branch?->name ?? '';
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $endDate   = $this->getTable()->getFilters()['date_range']->getState()['end_date'];

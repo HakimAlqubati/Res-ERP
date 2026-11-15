@@ -73,6 +73,7 @@ class Setting extends Model  implements Auditable
         if (in_array($this->key, [
             'grn_entry_role_id',
             'grn_approver_role_id',
+            'inventory_reports_roles',
         ])) {
             return json_decode($value, true) ?? [];
         }
@@ -81,6 +82,7 @@ class Setting extends Model  implements Auditable
         if (in_array($this->key, [
             'grn_affects_inventory',
             'auto_create_purchase_invoice',
+            'enable_in_transit_order_status',
         ])) {
             return filter_var($value, FILTER_VALIDATE_BOOLEAN);
         }
@@ -93,6 +95,7 @@ class Setting extends Model  implements Auditable
         if (in_array($this->key, [
             'grn_entry_role_id',
             'grn_approver_role_id',
+            'inventory_reports_roles',
         ])) {
             $this->attributes['value'] = json_encode($value);
             return;

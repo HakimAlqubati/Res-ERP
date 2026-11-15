@@ -105,7 +105,7 @@ class AdvanceWagesTable
                     ->visible(fn(AdvanceWage $record) => in_array(
                         $record->status,
                         [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]
-                    ))
+                    ) && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->action(function (AdvanceWage $record): void {
                         $record->cancel();
                         Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
@@ -123,7 +123,7 @@ class AdvanceWagesTable
                     ->visible(fn(AdvanceWage $record) => in_array(
                         $record->status,
                         [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED]
-                    ))
+                    ) && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->action(function (AdvanceWage $record): void {
                         $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
                         Notification::make()->success()->title(__('Advance wage approved.'))->send();

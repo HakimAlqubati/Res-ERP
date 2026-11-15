@@ -66,7 +66,10 @@ class StockAdjustmentSummaryReportResource extends Resource
 
                 SelectFilter::make('store_id')
                     ->label('Store')
-                    ->options(Store::active()->pluck('name', 'id')->toArray())
+                    ->options(fn () => Store::active()
+                        ->when(isBranchManagerOnly(), fn ($q) => $q->where('id', auth()->user()?->branch?->store_id))
+                        ->pluck('name', 'id')
+                        ->toArray())
                     ->searchable()
                     ->preload()
                     ->placeholder('All Stores'),
@@ -75,6 +78,9 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->label('From Date')
                     ->schema([
                         DatePicker::make('from_date')->maxDate(now())
+                        ->native(false)
+                           ->displayFormat(fn () => settingWithDefault('date_format', 'Y-m-d') ?: 'Y-m-d')
+                           ->format('Y-m-d')
                             ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {
@@ -85,7 +91,10 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->label('To Date')
                     ->schema([
                         DatePicker::make('to_date')
-                            // ->maxDate(now())
+                        // ->maxDate(now())
+                           ->native(false)
+                           ->displayFormat(fn () => settingWithDefault('date_format', 'Y-m-d') ?: 'Y-m-d')
+                           ->format('Y-m-d')
                             ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {

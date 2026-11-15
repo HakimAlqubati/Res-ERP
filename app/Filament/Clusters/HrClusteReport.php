@@ -10,7 +10,7 @@ class HrClusteReport extends Cluster
     protected static ?string $clusterBreadcrumb = 'HR';
     public static function getNavigationLabel(): string
     {
-        if(isStuff()){
+        if(isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())){
             return 'My Records';
         }
         return 'Reports';

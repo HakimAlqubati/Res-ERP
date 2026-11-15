@@ -97,7 +97,7 @@ Route::get('/test', function () {
     // بناء كويري واحد يحتوي كل المصادر باستخدام union
     $productIds = DB::table('orders_details as od')
         ->join('orders as o', 'od.order_id', '=', 'o.id')
-        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
         ->whereNull('o.deleted_at')
         ->select('od.product_id')
 
@@ -121,14 +121,14 @@ Route::get('/test', function () {
 
     $productIds1 = DB::table('orders_details as od')
         ->join('orders as o', 'od.order_id', '=', 'o.id')
-        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
         ->whereNull('o.deleted_at')
         ->distinct()
         ->pluck('od.product_id');
 
     $productIdsFromOrders = DB::table('orders_details as od')
         ->join('orders as o', 'od.order_id', '=', 'o.id')
-        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
         ->whereNull('o.deleted_at')
         ->pluck('od.product_id');
 
@@ -188,8 +188,15 @@ Route::get('/testFun', function () {
         'data' => 'test'
     ]);
 });
+
+// App Versions Public Check
+Route::get('/appVersions/check', [\App\Http\Controllers\Api\AppVersionController::class, 'check']);
+
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
+
+    // App Versions Management
+    Route::apiResource('appVersions', \App\Http\Controllers\Api\AppVersionController::class);
 
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
@@ -349,7 +356,9 @@ require base_path('routes/custom_api_test.php');
 
 
 
-Route::get('/stores', [StoreController::class, 'index']);
+Route::get('/stores', [StoreController::class, 'index'])
+->middleware('auth:api')
+;
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
 // Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
 // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح

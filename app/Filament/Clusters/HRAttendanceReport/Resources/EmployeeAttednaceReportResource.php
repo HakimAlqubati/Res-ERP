@@ -32,17 +32,17 @@ class EmployeeAttednaceReportResource extends Resource
     protected static ?string $cluster = HRAttendanceReport::class;
     public static function getModelLabel(): string
     {
-        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+        return (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
 
     public static function getNavigationLabel(): string
     {
-        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+        return (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
 
     public static function getPluralLabel(): string
     {
-        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+        return (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -76,6 +76,7 @@ class EmployeeAttednaceReportResource extends Resource
                         return Employee::query()
                             ->select('id', 'name', 'employee_no')
                             // ->where('active', 1)
+                            ->forBranchManager()
                             ->when($search, fn($q) => $q->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%")
@@ -86,11 +87,11 @@ class EmployeeAttednaceReportResource extends Resource
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
                     ->getOptionLabelUsing(function ($value): ?string {
-                        $employee = Employee::select('id', 'name')->find($value);
+                        $employee = Employee::select('id', 'name')->forBranchManager()->find($value);
                         return $employee ? "{$employee->name} - {$employee->id}" : null;
                     })
 
-                    ->hidden(fn() => isStuff() || isMaintenanceManager())
+                    ->hidden(fn() => (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) || isMaintenanceManager())
                     ->searchable(),
 
                 Filter::make('date_range')

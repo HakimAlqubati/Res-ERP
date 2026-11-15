@@ -76,6 +76,11 @@ class OrderTable
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer?->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
+                TextColumn::make('transfer_markup_percentage')
+                    ->label('Markup (%)')
+                    ->formatStateUsing(fn ($state) => $state ? "{$state}%" : '-')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('store.name')->label(__('lang.store')),
                 // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
@@ -84,10 +89,24 @@ class OrderTable
                         'primary',
                         'secondary' => static fn($state): bool => $state === Order::PENDING_APPROVAL,
                         'warning' => static fn($state): bool => $state === Order::READY_FOR_DELEVIRY,
+                        'info' => static fn($state): bool => $state === Order::IN_TRANSIT,
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
                         'danger' => static fn($state): bool => in_array($state, [Order::PROCESSING, Order::CANCELLED]),
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
+                BadgeColumn::make('type')
+                    ->label(__('lang.type'))
+                    ->colors([
+                        'secondary' => static fn($state): bool => in_array($state, [Order::TYPE_NORMAL, __('lang.normal'), 'Normal', 'عادي']),
+                        'warning' => static fn($state): bool => in_array($state, [Order::TYPE_MANUFACTURING, __('lang.manufacturing'), 'Manufacturing', 'تصنيع']),
+                    ])
+                    ->formatStateUsing(fn(?string $state): ?string => match ($state) {
+                        Order::TYPE_NORMAL => __('lang.normal'),
+                        Order::TYPE_MANUFACTURING => __('lang.manufacturing'),
+                        default => $state,
+                    })
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true)->sortable(),
                 TextColumn::make(
                     'total_amount'
@@ -95,7 +114,7 @@ class OrderTable
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
                     ->state(function (Order $record, OrderCostAnalysisService $service) {
-                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
                             $analysis = $service->getOrderValues($record->id);
                             return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
                         }
@@ -113,7 +132,7 @@ class OrderTable
                                     ->get();
 
                                 $total = $records->sum(function ($record) use ($service) {
-                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
                                         $analysis = $service->getOrderValues($record->id);
                                         return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
                                     }
@@ -150,14 +169,7 @@ class OrderTable
                     ->label(__('lang.order_status'))
                     ->multiple()
                     ->searchable()
-                    ->options([
-                        'ordered' => 'Ordered',
-                        'processing' => 'Processing',
-                        'ready_for_delivery' => 'Ready for deleviry',
-                        'delevired' => 'Delevired',
-                        'pending_approval' => 'Pending approval',
-                        'cancelled' => 'Cancelled',
-                    ]),
+                    ->options(fn () => Order::getStatusLabels()),
                 SelectFilter::make('customer_id')
                     ->searchable()
                     ->multiple()
@@ -335,7 +347,7 @@ class OrderTable
                 ]),
             ])
             // إظهار الزر فقط إذا كان الطلب جاهزاً للتحليل (تم شحنه/تسليمه)
-            ->hidden(fn(Order $record): bool => !in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]));
+            ->hidden(fn(Order $record): bool => !in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED]));
     }
 
     /**
@@ -351,7 +363,9 @@ class OrderTable
             ->modalHeading(__('توليد حركات دخول لمخزن الفرع'))
             ->modalDescription(fn(Order $record): string => "سيتم تكرار حركات الصرف (OUT) للطلب #{$record->id} كحركات دخول (IN) لمخزن الفرع بنفس التواريخ والكميات دون إعادة احتساب FIFO.")
             ->modalSubmitActionLabel(__('تأكيد التوليد'))
-->visible(fn()=> isHakimOrAdel())
+            ->visible(fn()=> isHakimOrAdel())
+            ->disabled(fn(Order $record): bool => isInTransitOrderEnabled() && $record->status !== Order::DELEVIRED)
+            ->tooltip(fn(Order $record): ?string => (isInTransitOrderEnabled() && $record->status !== Order::DELEVIRED) ? __('لا يمكن توليد حركات الدخول لأن الطلب لم يتم استلامه بعد (Delivered)') : null)
             ->action(function (Order $record) {
                 $service = app(CopyOrderOutToBranchStoreService::class);
                 $result = $service->handleForOrder($record);

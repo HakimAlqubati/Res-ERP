@@ -76,13 +76,18 @@ class ProductResource extends Resource
 
     public static function getRecordSubNavigation(Page $page): array
     {
-        return $page->generateNavigationItems([
+        $items = [
             ManageProducts::class,
-            CreateProduct::class,
-            EditProduct::class,
-            ViewProduct::class,
-            // Pages\ViewEmployee::class,
-        ]);
+        ];
+
+        if (static::canCreate()) {
+            $items[] = CreateProduct::class;
+            $items[] = EditProduct::class;
+        }
+
+        $items[] = ViewProduct::class;
+
+        return $page->generateNavigationItems($items);
     }
 
     public static function getRelations(): array
@@ -121,9 +126,72 @@ class ProductResource extends Resource
         return $query;
     }
 
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static function canEdit(Model $record): bool
     {
         if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
 

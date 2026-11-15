@@ -24,9 +24,9 @@ class OvertimeService
             foreach ($employees as $index => $employee) {
                 $hours = $employee['hours'];
                 if (is_string($hours) && strpos($hours, ':') !== false) {
-                    $hours = EmployeeOvertime::parseToDecimalHours($hours);
+                    [$h, $m] = explode(':', $hours);
+                    $hours = round((float)$h + ((float)$m / 60), 2);
                 }
-
                 EmployeeOvertime::create([
                     'employee_id' => $employee['employee_id'],
                     'date'        => $data['date'],
@@ -38,7 +38,6 @@ class OvertimeService
                     'created_by'  => auth()->id(),
                     'type'        => EmployeeOvertime::TYPE_BASED_ON_DAY,
                     'status'      => EmployeeOvertime::STATUS_PENDING,
-
                 ]);
             }
             DB::commit();
@@ -484,13 +483,12 @@ class OvertimeService
                                 : EmployeeOvertime::formatHours($result['overtime_hours']));
 
                         $dailyOvertime[] = [
-                            'employee_id'     => $employee->id,
-                            'name'            => $employee->name,
-                            'start_time'      => $result['overtime_start_time'],
-                            'end_time'        => $result['overtime_end_time'],
-                            'hours'           => $hoursFormatted,
-                            'hours_formatted' => $hoursFormatted,
-                            'notes'           => null,
+                            'employee_id' => $employee->id,
+                            'name'        => $employee->name,
+                            'start_time'  => $result['overtime_start_time'],
+                            'end_time'    => $result['overtime_end_time'],
+                            'hours'       => $this->formatOvertimeHours($result),
+                            'notes'       => null,
                         ];
                     }
                 }
@@ -556,13 +554,12 @@ class OvertimeService
                             : EmployeeOvertime::formatHours($result['overtime_hours']));
 
                     $dailyOvertime[] = [
-                        'employee_id'     => $employee->id,
-                        'name'            => $employee->name,
-                        'start_time'      => $result['overtime_start_time'],
-                        'end_time'        => $result['overtime_end_time'],
-                        'hours'           => $hoursFormatted,
-                        'hours_formatted' => $hoursFormatted,
-                        'notes'           => null,
+                        'employee_id' => $employee->id,
+                        'name'        => $employee->name,
+                        'start_time'  => $result['overtime_start_time'],
+                        'end_time'    => $result['overtime_end_time'],
+                        'hours'       => $this->formatOvertimeHours($result),
+                        'notes'       => null,
                     ];
                 }
             }
@@ -573,5 +570,24 @@ class OvertimeService
         }
 
         return $groupedOvertime;
+    }
+
+    /**
+     * Format overtime hours to H:i format (e.g. 1:27)
+     *
+     * @param array $result
+     * @return string
+     */
+    private function formatOvertimeHours(array $result): string
+    {
+        if (isset($result['supposed_duration_minutes'])) {
+            $totalMinutes = (int) $result['supposed_duration_minutes'];
+            $hours = intdiv($totalMinutes, 60);
+            $minutes = $totalMinutes % 60;
+            return sprintf('%d:%02d', $hours, $minutes);
+        }
+
+        $rawHours = (string) ($result['overtime_hours'] ?? 0);
+        return str_replace('.', ':', $rawHours);
     }
 }

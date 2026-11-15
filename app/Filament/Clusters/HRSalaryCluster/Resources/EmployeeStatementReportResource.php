@@ -62,12 +62,14 @@ class EmployeeStatementReportResource extends Resource
                     ->schema([
                         Select::make('employee_id')
                             ->label(__('lang.employee'))
-                            ->options(fn () => Employee::where('active', 1)
+                            ->options(fn () => Employee::query()
+                                ->forBranchManager()
                                 ->limit(10)
                                 ->get()
                                 ->mapWithKeys(fn ($e) => [$e->id => "{$e->name} - {$e->id}"])
                                 ->all())
-                            ->getSearchResultsUsing(fn (string $search) => Employee::where('active', 1)
+                            ->getSearchResultsUsing(fn (string $search) => Employee::query()
+                                ->forBranchManager()
                                 ->where(fn ($q) => $q
                                     ->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%"))
@@ -75,7 +77,7 @@ class EmployeeStatementReportResource extends Resource
                                 ->get()
                                 ->mapWithKeys(fn ($e) => [$e->id => "{$e->name} - {$e->id}"])
                                 ->all())
-                            ->getOptionLabelUsing(fn ($value) => ($e = Employee::find($value))
+                            ->getOptionLabelUsing(fn ($value) => ($e = Employee::forBranchManager()->find($value))
                                 ? "{$e->name} - {$e->id}"
                                 : null)
                             ->searchable()

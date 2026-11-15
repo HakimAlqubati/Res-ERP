@@ -22,6 +22,7 @@ class Order extends Model implements Auditable
     public const ORDERED = 'ordered';
     public const PROCESSING = 'processing';
     public const READY_FOR_DELEVIRY = 'ready_for_delivery';
+    public const IN_TRANSIT = 'in_transit';
     public const DELEVIRED = 'delevired';
     public const PENDING_APPROVAL = 'pending_approval';
     public const CANCELLED = 'cancelled';
@@ -52,6 +53,7 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
     ];
     protected $auditInclude = [
         'customer_id',
@@ -71,6 +73,11 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
+    ];
+
+    protected $casts = [
+        'transfer_markup_percentage' => 'float',
     ];
 
     protected $appends = [
@@ -146,13 +153,41 @@ class Order extends Model implements Auditable
     }
 
 
+    public static function getTypeLabels(): array
+    {
+        return [
+            self::TYPE_NORMAL => __('lang.normal'),
+            self::TYPE_MANUFACTURING => __('lang.manufacturing'),
+        ];
+    }
+
     // Status Labels
     public static function getStatusLabels(): array
+    {
+        $statuses = [
+            self::ORDERED => 'Ordered',
+            self::PROCESSING => 'Processing',
+            self::READY_FOR_DELEVIRY => 'Ready for Delivery',
+        ];
+
+        if (isInTransitOrderEnabled()) {
+            $statuses[self::IN_TRANSIT] = 'In Transit';
+        }
+
+        $statuses[self::DELEVIRED] = 'Delivered';
+        $statuses[self::PENDING_APPROVAL] = 'Pending Approval';
+        $statuses[self::CANCELLED] = 'Cancelled';
+
+        return $statuses;
+    }
+
+    public static function getAllStatusLabels(): array
     {
         return [
             self::ORDERED => 'Ordered',
             self::PROCESSING => 'Processing',
             self::READY_FOR_DELEVIRY => 'Ready for Delivery',
+            self::IN_TRANSIT => 'In Transit',
             self::DELEVIRED => 'Delivered',
             self::PENDING_APPROVAL => 'Pending Approval',
             self::CANCELLED => 'Cancelled',
@@ -165,6 +200,7 @@ class Order extends Model implements Auditable
             self::ORDERED => 'blue',
             self::PROCESSING => 'yellow',
             self::READY_FOR_DELEVIRY => 'orange',
+            self::IN_TRANSIT => 'sky',
             self::DELEVIRED => 'green',
             self::PENDING_APPROVAL => 'purple',
             self::CANCELLED => 'red',
@@ -177,7 +213,8 @@ class Order extends Model implements Auditable
         return match ($status) {
             self::ORDERED => 'heroicon-o-shopping-cart',
             self::PROCESSING => 'heroicon-o-cog',
-            self::READY_FOR_DELEVIRY => 'heroicon-o-truck',
+            self::READY_FOR_DELEVIRY => 'heroicon-o-archive-box',
+            self::IN_TRANSIT => 'heroicon-o-truck',
             self::DELEVIRED => 'heroicon-o-check-circle',
             self::PENDING_APPROVAL => 'heroicon-o-clock',
             self::CANCELLED => 'heroicon-o-x-circle',
@@ -207,6 +244,14 @@ class Order extends Model implements Auditable
     {
         parent::boot();
 
+        static::creating(function ($order) {
+            // Snapshot branch markup percentage on creation
+            if (is_null($order->transfer_markup_percentage) && $order->branch_id) {
+                $branch = $order->branch ?? Branch::withoutGlobalScopes()->find($order->branch_id);
+                $order->transfer_markup_percentage = $branch?->transfer_markup_percentage ?? 0;
+            }
+        });
+
         static::created(function ($order) {
 
             // Send notification to users with role ID = 5
@@ -232,13 +277,14 @@ class Order extends Model implements Auditable
 
         static::updated(function ($order) {
 
-            if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY]) && $order->isDirty('status')) {
+            if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY, self::IN_TRANSIT]) && $order->isDirty('status')) {
                 $customer = $order->customer;
                 if ($customer && $customer->fcm_token) {
+                    $label = self::getAllStatusLabels()[$order->status] ?? $order->status;
                     sendNotification(
                         $customer->fcm_token,
                         '📦 تحديث حالة الطلب',
-                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . self::getStatusLabels()[$order->status]
+                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . $label
                     );
                 }
             }
@@ -253,7 +299,12 @@ class Order extends Model implements Auditable
 
                 // جلب فرع الطلب ومخزنه بتجاوز أي Global Scopes (صلاحيات الفروع) في هذا الموضع فقط
                 $branch = $order->branch_id
-                    ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+                    ? Branch::withoutGlobalScopes()
+                        ->with([
+                            'store' => fn($q) => $q->withoutGlobalScopes(),
+                            'categoryMarkups',
+                        ])
+                        ->find($order->branch_id)
                     : null;
                 $branchStore = $branch?->store;
                 $hasBranchStore = (bool) ($branchStore && $branchStore->active);
@@ -288,11 +339,18 @@ class Order extends Model implements Auditable
 
                         self::moveFromInventory($productAllocations, $detail);
 
-                        if ($hasBranchStore) {
+                        if ($hasBranchStore && ! isInTransitOrderEnabled()) {
                             self::receiveIntoBranchStore($productAllocations, $detail, $branchStore->id);
                         }
                     }
                 }
+            }
+
+            if (
+                $order->status === self::DELEVIRED &&
+                $order->getOriginal('status') !== self::DELEVIRED
+            ) {
+                self::recordBranchReceiptIfPending($order);
             }
 
 
@@ -311,7 +369,7 @@ class Order extends Model implements Auditable
         });
 
         static::saved(function (Order $order) {
-            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) { 
+            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) { 
                 // Create Financial Transaction for Transfers (only for non-reseller branches)
                 if ($order->branch && $order->branch->type !== Branch::TYPE_RESELLER) {
                     app(\App\Services\Financial\TransferFinancialSyncService::class)->syncOrder($order);
@@ -346,6 +404,50 @@ class Order extends Model implements Auditable
         return;
     }
 
+    /**
+     * Resolve the effective transfer markup percentage for a specific order item/product.
+     */
+    public function resolveItemMarkupPercentage(?int $productId = null, ?OrderDetails $detail = null): float
+    {
+        if ($detail && ! is_null($detail->transfer_markup_percentage)) {
+            return (float) $detail->transfer_markup_percentage;
+        }
+
+        if ($productId && $this->relationLoaded('orderDetails')) {
+            $matchedDetail = $this->orderDetails->firstWhere('product_id', $productId);
+            if ($matchedDetail && ! is_null($matchedDetail->transfer_markup_percentage)) {
+                return (float) $matchedDetail->transfer_markup_percentage;
+            }
+        }
+
+        $branch = $this->relationLoaded('branch')
+            ? $this->branch
+            : ($this->branch_id ? Branch::withoutGlobalScopes()->with('categoryMarkups')->find($this->branch_id) : null);
+
+        if ($branch && $branch->has_custom_category_markup) {
+            $categoryId = ($detail && $detail->relationLoaded('product'))
+                ? $detail->product?->category_id
+                : ($productId ? Product::whereKey($productId)->value('category_id') : null);
+
+            if ($categoryId) {
+                return $branch->resolveTransferMarkupForCategory((int) $categoryId);
+            }
+        }
+
+        return (float) ($this->transfer_markup_percentage ?? $branch?->transfer_markup_percentage ?? 0);
+    }
+
+    /**
+     * Calculate transfer price with markup percentage.
+     */
+    public function calculateTransferPrice(float $basePrice, ?int $productId = null, ?OrderDetails $detail = null): float
+    {
+        $percentage = $this->resolveItemMarkupPercentage($productId, $detail);
+
+        return $percentage > 0
+            ? round($basePrice * (1 + ($percentage / 100)), 4)
+            : $basePrice;
+    }
 
     public static function receiveIntoBranchStore($allocations, $detail, ?int $targetStoreId = null)
     {
@@ -365,7 +467,7 @@ class Order extends Model implements Auditable
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
-                'price'                => $alloc['price_based_on_unit'],
+                'price'                => $order->calculateTransferPrice((float) $alloc['price_based_on_unit'], (int) $detail->product_id, $detail),
                 'movement_date'        => $order->transfer_date ?? now(),
                 'transaction_date'     => $order->transfer_date ?? now(),
                 'store_id'             => $targetStoreId,
@@ -373,6 +475,63 @@ class Order extends Model implements Auditable
                 'transactionable_id'   => $detail->order_id,
                 'transactionable_type' => \App\Models\Order::class,
                 'source_transaction_id' => $alloc['transaction_id'],
+            ]);
+        }
+    }
+
+    /**
+     * تسجيل حركات الدخول (IN) لمخزن الفرع عند وصول الطلب لحالة التسليم (Delivered)
+     * في حال كانت معلقة ولم تُسجل مسبقاً (عند تفعيل خيار in_transit).
+     */
+    public static function recordBranchReceiptIfPending(Order $order): void
+    {
+        $branch = $order->branch_id
+            ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+            : null;
+
+        $branchStore = $branch?->store;
+        if (! $branchStore || ! $branchStore->active) {
+            return;
+        }
+
+        // فحص الحماية من التكرار (Idempotency): إذا كانت حركات الدخول قد سُجلت بالفعل لهذا الطلب ومخزن الفرع
+        $hasIn = InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $order->id)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->where('store_id', $branchStore->id)
+            ->exists();
+
+        if ($hasIn) {
+            return;
+        }
+
+        // جلب حركات الصرف (OUT) المرتبطة بهذا الطلب
+        $outTransactions = InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $order->id)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+            ->get();
+
+        if ($outTransactions->isEmpty()) {
+            return;
+        }
+
+        $receiptDate = now();
+
+        foreach ($outTransactions as $out) {
+            InventoryTransaction::create([
+                'product_id'            => $out->product_id,
+                'movement_type'         => InventoryTransaction::MOVEMENT_IN,
+                'quantity'              => $out->quantity,
+                'unit_id'               => $out->unit_id,
+                'package_size'          => $out->package_size,
+                'price'                 => $out->price,
+                'movement_date'         => $receiptDate,
+                'transaction_date'      => $receiptDate,
+                'notes'                 => $out->notes ? ($out->notes . ' (Delivered)') : ('Supplied from Order #' . $order->id),
+                'store_id'              => $branchStore->id,
+                'transactionable_type'  => self::class,
+                'transactionable_id'    => $order->id,
+                'source_transaction_id' => $out->id,
             ]);
         }
     }
@@ -417,6 +576,10 @@ class Order extends Model implements Auditable
     public function getNextStatuses()
     {
         switch ($this->status) {
+            case self::PENDING_APPROVAL:
+                return [
+                    self::ORDERED => 'Ordered',
+                ];
             case self::ORDERED:
                 return [
                     // self::STATUS_PENDING => 'Pending',
@@ -429,8 +592,12 @@ class Order extends Model implements Auditable
                 ];
                 //     ];
             case self::READY_FOR_DELEVIRY:
+                return isInTransitOrderEnabled()
+                    ? [self::IN_TRANSIT => 'In Transit']
+                    : [self::DELEVIRED => 'Delivered'];
+            case self::IN_TRANSIT:
                 return [
-                    self::DELEVIRED => 'Delevired',
+                    self::DELEVIRED => 'Delivered',
                 ];
             case self::CANCELLED:
                 return []; // No transitions available from cancelled

@@ -23,6 +23,9 @@ class ListEmployeeStatementReports extends ListRecords
         $statementState = $filters['statement_filter']->getState() ?? [];
 
         $employeeId = ! empty($statementState['employee_id']) ? (int) $statementState['employee_id'] : null;
+        if ($employeeId && ! \App\Models\Employee::forBranchManager()->whereKey($employeeId)->exists()) {
+            $employeeId = null;
+        }
         $fromDate   = $statementState['from_date'] ?? now()->startOfMonth()->format('Y-m-d');
         $toDate     = $statementState['to_date'] ?? now()->endOfMonth()->format('Y-m-d');
 

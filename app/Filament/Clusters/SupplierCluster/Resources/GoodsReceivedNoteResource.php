@@ -922,5 +922,12 @@ class GoodsReceivedNoteResource extends Resource
         } else {
             $set('total_amount', $total);
         }
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isAccountant() || isFinanceManager() || isHR()) {
+            return true;
+        }
+
+        return false;
     }
 }

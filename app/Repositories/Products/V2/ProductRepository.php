@@ -83,7 +83,7 @@ class ProductRepository
                 return $q->whereBetween('orders.created_at', ["{$from_date} 00:00:00", "{$to_date} 23:59:59"]);
             })
             ->whereIn('orders.branch_id', $branch_id)
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT])
             ->whereNull('orders.deleted_at')
             ->groupBy('orders.branch_id', 'products.name', 'units.name')
             ->orderBy('orders.branch_id');

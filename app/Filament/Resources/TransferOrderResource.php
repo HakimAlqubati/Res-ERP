@@ -113,7 +113,7 @@ class TransferOrderResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->relationship('branch', 'name'),
+                    ->label(__('lang.branch'))->relationship('branch', 'name', fn (Builder $query) => $query->forBranchManager('id')),
                 Filter::make('created_at')
                     ->label(__('lang.created_at'))
                     ->schema([
@@ -192,12 +192,12 @@ class TransferOrderResource extends Resource
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
             })
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED]);
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
             })->forBranchManager()

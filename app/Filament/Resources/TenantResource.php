@@ -21,6 +21,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
@@ -83,6 +84,9 @@ class TenantResource extends Resource
                         ->multiple()
                         ->preload()
                         ->searchable(),
+                    Toggle::make('daily_backup_enabled')
+                        ->label('Daily Backup')
+                        ->default(true),
                 ]),
             ]);
     }
@@ -105,6 +109,7 @@ class TenantResource extends Resource
                 TextColumn::make('modules_titles')->label('Modules')->searchable()->toggleable(),
                 IconColumn::make('database_created')->label('Database Created')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(true),
                 ToggleColumn::make('active')->sortable()->searchable()->toggleable(),
+                ToggleColumn::make('daily_backup_enabled')->label('Daily Backup')->sortable()->searchable()->toggleable(),
                 TextColumn::make('updated_at')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
 

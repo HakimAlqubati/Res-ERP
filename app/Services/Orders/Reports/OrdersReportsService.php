@@ -37,7 +37,7 @@ class OrdersReportsService
     ): array {
         $query = Order::query()
             ->whereBetween('created_at', [$fromDate, $toDate])
-            ->whereIn('status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY]);
+            ->whereIn('status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT]);
 
         if ($branchIds && count($branchIds)) {
             $query->whereIn('branch_id', $branchIds);

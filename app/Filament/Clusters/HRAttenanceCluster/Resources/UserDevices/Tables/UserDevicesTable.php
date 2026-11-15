@@ -56,7 +56,9 @@ class UserDevicesTable
                     ->toggleable()
                     ->placeholder('-'),
                 ToggleColumn::make('active')->toggleable()
-                    ->label('Active')->alignCenter(),
+                    ->label('Active')
+                    ->disabled(fn ($record) => !UserDeviceResource::canEdit($record))
+                    ->alignCenter(),
 
                 // TextColumn::make('last_login')
                 //     ->label('Last Login')

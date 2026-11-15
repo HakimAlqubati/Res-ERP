@@ -23,7 +23,7 @@ class AdvanceWageForm
 
                 Select::make('employee_id')
                     ->label(__('lang.employee'))
-                    ->relationship('employee', 'name')
+                    ->relationship('employee', 'name', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->forBranchManager())
                     ->searchable()
                     ->required()
                     ->columnSpanFull()

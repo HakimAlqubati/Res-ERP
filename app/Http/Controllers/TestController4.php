@@ -59,6 +59,7 @@ class TestController4 extends Controller
         }
 
         $where[] = ' o.deleted_at is null ';
+        $where[] = 'EXISTS (SELECT 1 FROM orders_details od WHERE od.order_id = o.id)';
 
         // ✅ التحقق من وجود تفاصيل للطلب (مدمج في WHERE حتى يتطابق total مع عدد الطلبات في البيانات)
         $where[] = 'EXISTS (SELECT 1 FROM orders_details od WHERE od.order_id = o.id)';
@@ -102,12 +103,14 @@ class TestController4 extends Controller
             if ($ownerId) {
                 $where[] = 'o.customer_id = ' . (int) $ownerId;
             }
+       if (isBranchUser() && !isDriver() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen()) {
+            $where[] = 'o.customer_id = ' . (int) $user->owner?->id;
         }
 
         if (isDriver()) {
             $statuses = [
-                "'" . Order::READY_FOR_DELEVIRY . "'",
-                "'" . Order::DELEVIRED . "'"
+                "'" . Order::IN_TRANSIT . "'",
+                "'" . Order::READY_FOR_DELEVIRY . "'"
             ];
             $where[] = 'o.status IN (' . implode(',', $statuses) . ')';
         }
@@ -222,6 +225,7 @@ class TestController4 extends Controller
         SELECT
             o.id, 
             o.active, 
+            o.type,
             o.customer_id,
             o.status,
             o.branch_id,
@@ -254,6 +258,7 @@ class TestController4 extends Controller
             return [
                 'id' => $order->id,
                 'active' => $order->active,
+                'type' => $order?->type,
                 'created_by' => $order->customer_id,
                 'created_by_user_name' => $customers[$order->customer_id]->name ?? null,
                 'request_state_name' => $order->status,
@@ -273,14 +278,12 @@ class TestController4 extends Controller
         $lastPage = max($lastPage, 1);
 
         return response()->json([
-            'current_page' => (int) $page,
-            'per_page'     => (int) $perPage,
-            'total'        => $total,
-            'total_paid'   => $totalPaidAll,
-            'last_page'    => $lastPage,
-            'from'         => $total > 0 ? ($offset + 1) : null,
-            'to'           => $total > 0 ? min($offset + count($orders), $total) : null,
-            'data'         => $orders,
+            'current_page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'total_paid' => (float) $totalPaidAll,
+            'last_page' => (int) max(1, ceil($total / $perPage)),
+            'data' => $orders,
         ]);
     }
 

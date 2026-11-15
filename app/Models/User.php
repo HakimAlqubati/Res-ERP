@@ -63,6 +63,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'is_attendance_user',
         'fcm_token',
         'last_seen_at',
+        'can_add_branch_order',
     ];
     protected $auditInclude = [
         'name',
@@ -81,6 +82,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'can_add_branch_order',
     ];
 
     /**
@@ -99,7 +101,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'email_verified_at'    => 'datetime',
+        'can_add_branch_order' => 'boolean',
     ];
 
     protected $appends                = [
@@ -175,6 +178,18 @@ class User extends Authenticatable implements FilamentUser, Auditable
             $extraIds,
             $chefIds
         )));
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم ينتمي لفرع معين (الفرع الأساسي أو الفروع الإضافية)
+     */
+    public function belongsToBranch($branchId): bool
+    {
+        if (empty($branchId)) {
+            return false;
+        }
+
+        return in_array((int) $branchId, array_map('intval', $this->all_branch_ids), true);
     }
 
     /**
@@ -352,6 +367,17 @@ class User extends Authenticatable implements FilamentUser, Auditable
         }
         return false;
     }
+
+    public function isBranchManagerOnly(): bool
+    {
+        return $this->isBranchManager()
+            && ! $this->isSuperAdmin()
+            && ! $this->isSystemManager()
+            && ! $this->isFinanceManager()
+            && ! $this->isHR()
+            && ! $this->isAccountant()
+            && ! $this->isOwner();
+    }
     public function isFinanceManager()
     {
         return in_array(16, $this->roles->pluck('id')->toArray());
@@ -428,6 +454,152 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getIsBranchManagerAttribute() {}
+
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى delivered
+     * (مدير الفرع مالك الطلبية أو يوزر يتبع للفرع بشكل مباشر أو عبر الفروع الإضافية extra branches)
+     */
+    public function canDeliverOrder(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true;
+        }
+
+        // يتبع الفرع بشكل مباشر أو عبر الفروع الإضافية (extra branches) ويكون الطلب تابعاً للفرع
+        if (!empty($order->branch_id) && $this->belongsToBranch($order->branch_id)) {
+            return true;
+        }
+
+        // مدير الفرع مالك الطلبية
+        if ($this->isBranchManager()) {
+            // مالك الطلبية كـ customer_id
+            if ((int) $order->customer_id === (int) $this->id) {
+                return true;
+            }
+
+            // مدير الفرع المسجل في جدول branches
+            if ($order->branch && (int) $order->branch->manager_id === (int) $this->id) {
+                return true;
+            }
+
+            // أو لديه إدارة لهذا الفرع عبر علاقة manageBranches
+            if ($this->manageBranches()->where('branches.id', $order->branch_id)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى ready_for_delivery
+     * - إذا كان الطلب تصنيعياً: يجب أن يكون مخزن الطلب تابعاً لفرع تصنيعي، واليوزر إما مدير الفرع أو مساعد شيف فيه.
+     * - إذا كان الطلب عادياً: يجب أن يكون المخزن هو المخزن الافتراضي، واليوزر هو أمين المخزن الأساسي أو الإضافي.
+     */
+    public function canReadyForDelivery(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) { 
+            return true;
+        }
+
+        // 1. في حال كان الطلب تصنيعياً
+        if ($order->type === Order::TYPE_MANUFACTURING) {
+            if (empty($order->store_id)) {
+                return false;
+            }
+
+            $manufacturingBranch = Branch::withoutGlobalScopes()
+                ->where(function ($q) {
+                    $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
+                })
+                ->where('store_id', $order->store_id)
+                ->first();
+
+            if (!$manufacturingBranch) {
+                return false;
+            }
+
+            // مدير الفرع التصنيعي
+            if ((int) $manufacturingBranch->manager_id === (int) $this->id) {
+                return true;
+            }
+
+            // مساعد شيف عبر العلاقة chefAssistants
+            if ($manufacturingBranch->chefAssistants()->where('users.id', $this->id)->exists()) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // 2. في حال كان الطلب عادياً (غير تصنيعي)
+        $store = $order->store_id ? Store::find($order->store_id) : Store::defaultStore();
+
+        if (!$store || !$store->default_store) {
+            return false;
+        }
+
+        // أمين المخزن الأساسي أو الإضافي
+        return in_array((int) $this->id, array_map('intval', $store->all_storekeeper_ids), true);
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى in_transit
+     * (السائق أو المشرف العام / مدير النظام)
+     */
+    public function canInTransitOrder(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true;
+        }
+
+        return $this->isDriver();
+    }
+
+    public function canTransitOrder(Order $order): bool
+    {
+        return $this->canInTransitOrder($order);
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً باعتماد الطلب (تحويله من pending_approval إلى ordered)
+     * (مدير الفرع المعني أو المشرف العام / مدير النظام)
+     */
+    public function canApproveOrder(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true;
+        }
+
+        // مدير الفرع المسجل كـ manager_id في جدول branches
+        if (!empty($order->branch_id)) {
+            $isBranchManagerDirect = Branch::withoutGlobalScopes()
+                ->where('id', $order->branch_id)
+                ->where('manager_id', $this->id)
+                ->exists();
+
+            if ($isBranchManagerDirect) {
+                return true;
+            }
+        }
+
+        // مدير فرع مرتبط بالفرع مباشرة عبر users.branch_id
+        if ($this->isBranchManager() && !empty($this->branch_id) && (int) $this->branch_id === (int) $order->branch_id) {
+            return true;
+        }
+
+        // يدير الفرع عبر علاقة manageBranches
+        if (!empty($order->branch_id) && $this->manageBranches()->where('branches.id', $order->branch_id)->exists()) {
+            return true;
+        }
+
+        // مدير الفرع مالك الطلب كـ customer_id
+        if ($this->isBranchManager() && (int) $order->customer_id === (int) $this->id) {
+            return true;
+        }
+
+        return false;
+    }
 
 
 
@@ -557,9 +729,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
                     'employee_no'   => (Employee::withTrashed()->max('id') ?? 0) + 1,
                     'join_date'     => now(),
                     'job_title'     => $data['job_title'] ?? 'New Employee',
-                    'nationality'   => $this->nationality,      // من اليوزر
-                    'manager_id'    => $managerEmployeeId,      // من اليوزر
-                    'employee_type' => $this->user_type,        // من اليوزر
+                    'nationality'          => $this->nationality,      // من اليوزر
+                    'manager_id'           => $managerEmployeeId,      // من اليوزر
+                    'employee_type'        => $this->user_type,        // من اليوزر
+                    'can_add_branch_order' => (bool) ($this->can_add_branch_order ?? false),
                 ]);
 
                 Notification::make()

@@ -64,11 +64,17 @@ class StockSupplyOrderController extends Controller
                 });
             }]);
         }
-        $orders = $query->paginate($request->per_page ?? 10);
+        $perPage = (int) $request->input('per_page', 10);
+        $page    = (int) $request->input('page', 1);
+        $orders  = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
-            'status' => 'success',
-            'data' => $orders
+            'status'       => 'success',
+            'current_page' => $orders->currentPage(),
+            'last_page'    => $orders->lastPage(),
+            'per_page'     => $orders->perPage(),
+            'total'        => $orders->total(),
+            'data'         => $orders,
         ]);
     }
 

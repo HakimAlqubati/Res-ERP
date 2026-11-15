@@ -93,12 +93,13 @@ class ReportProductQuantitiesResource extends Resource
                     ->options(Category::active()->notForPos()->pluck('name', 'id')),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()->multiple()
-                    ->options(Branch::whereIn('type', [
+                    ->options(fn () => Branch::whereIn('type', [
                         Branch::TYPE_BRANCH,
                         Branch::TYPE_CENTRAL_KITCHEN,
                         Branch::TYPE_POPUP,
                     ])
                         ->activePopups()
+                        ->forBranchManager('id')
                         ->active()->pluck('name', 'id')),
 
                 Filter::make('order_number')

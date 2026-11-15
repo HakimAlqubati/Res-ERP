@@ -41,6 +41,7 @@ use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\AppLogs\AppLogResource;
+use App\Filament\Resources\AppVersions\AppVersionResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\BranchSalesReports\BranchSalesReportResource;
@@ -139,15 +140,15 @@ class AdminPanelProvider extends PanelProvider
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  MainOrdersCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  OrderReportsCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  POSIntegrationCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  ResellersCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isFinanceManager()) ?  ResellersCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  ManufacturingBranchesCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  HalalLabelReportResource::getNavigationItems() : [],
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor() || isAccountant()) ?  SupplierCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isAccountant() || isFinanceManager() || isHR()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportLinks::getNavigationItems() : [],
+                            InventoryReportLinks::canAccess() ?  InventoryReportLinks::getNavigationItems() : [],
                             // InventoryReportLinks::getNavigationItems(),
 
                         ));
@@ -203,6 +204,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('menu.system_settings'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR()) ? SettingResource::getNavigationItems() : [],
+                                (isSuperAdmin() || isSystemManager() || isHakimOrAdel()) ? AppVersionResource::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) &&
 
                                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))

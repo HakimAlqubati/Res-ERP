@@ -296,6 +296,15 @@ class ProductForm
                                         ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
                                         ->extraAttributes(['class' => 'bg-readonly-gray'])
                                         ->extraInputAttributes(['class' => 'cursor-not-allowed']),
+                                        ->default(1)
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
+                                        ->dehydrated()
+                                        ->required()->minValue(0.000000001),
+                                    TextInput::make('total_price')->default(0)
+                                        ->type('text')
+                                        ->extraInputAttributes(['readonly' => true]),
                                     TextInput::make('qty_waste_percentage')
                                         ->label('Waste %')
                                         ->default(0)

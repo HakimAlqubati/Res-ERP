@@ -12,4 +12,7 @@ return [
     'body_message_you_cannot_update_calculating_method' => 'لأنك بالفعل بدأت بالعمل ولديك طلبيات موجودة',
     'limit_days_orders' => 'عدد آخر أيام رجوع الطلبيات في التطبيق',
     'enable_user_orders_to_store' => 'إمكانية إرسال طلبيات المستخدمين للمخزن',
+    'enable_in_transit_order_status' => 'تفعيل مرحلة "في الطريق / In Transit" لشحنات الطلبات',
+    'in_transit_order_status_helper' => 'عند التفعيل، تُضاف مرحلة وسيطة (في الطريق) بين جاهز للتسليم وتم الاستلام لتمكين السائقين من تتبع الشحنة.',
 ];
+

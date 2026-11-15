@@ -32,6 +32,15 @@ if (!function_exists('isBranchManager')) {
         return false;
     }
 }
+if (!function_exists('isBranchManagerOnly')) {
+    function isBranchManagerOnly(): bool
+    {
+        if (auth()->check()) {
+            return auth()->user()->isBranchManagerOnly();
+        }
+        return false;
+    }
+}
 if (!function_exists('isSuperVisor')) {
     function isSuperVisor()
     {
@@ -179,5 +188,40 @@ if (!function_exists('isHakim')) {
         return in_array(auth()->user()->email, [
             'hakimahmed123321@gmail.com'
         ]);
+    }
+}
+
+if (!function_exists('canDeliverOrder')) {
+    function canDeliverOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canDeliverOrder($order);
+    }
+}
+
+if (!function_exists('canReadyForDelivery')) {
+    function canReadyForDelivery($order): bool
+    {
+        return auth()->check() && auth()->user()->canReadyForDelivery($order);
+    }
+}
+
+if (!function_exists('canInTransitOrder')) {
+    function canInTransitOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canInTransitOrder($order);
+    }
+}
+
+if (!function_exists('canTransitOrder')) {
+    function canTransitOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canTransitOrder($order);
+    }
+}
+
+if (!function_exists('canApproveOrder')) {
+    function canApproveOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canApproveOrder($order);
     }
 }

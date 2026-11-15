@@ -56,7 +56,7 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
                         'available_quantity' => $row['available_quantity'] ?? $row['quantity'],
                         'package_size' => getUnitPricePackageSize($row['product_id'], $row['unit_id']) ?? 1,
                     ]);
-                    if (in_array($row['status'], [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                    if (in_array($row['status'], [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
                         $this->createInventoryTransaction($detail);
                     }
                 }

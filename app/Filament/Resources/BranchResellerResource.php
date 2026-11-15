@@ -375,4 +375,49 @@ class BranchResellerResource extends Resource
     {
         return Color::Red;
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isFinanceManager() || isAccountant()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+
+        return false;
+    }
 }

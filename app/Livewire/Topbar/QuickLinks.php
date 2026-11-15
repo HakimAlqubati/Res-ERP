@@ -26,6 +26,12 @@ class QuickLinks extends Component
                 'href'         => \App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource::getUrl(),
             ],
             [
+                'label'       => 'Inventory Tracking',
+                'description' => 'View inventory tracking.',
+                'icon'        => 'heroicon-o-building-storefront',  
+                'href'         => \App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionTruckingReportResource::getUrl(),
+            ],
+            [
                 'label'       => 'Fifo Inventory',
                 'description' => 'Fifo inventory report.',
                 'icon'        => 'heroicon-o-archive-box',

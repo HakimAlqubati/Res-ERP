@@ -28,6 +28,9 @@ class ListStockInventoryValuationReport extends ListRecords
         $filterState = $filters['valuation_filter']->getState() ?? [];
 
         $storeId       = $filterState['store_id'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $inventoryDate = $filterState['inventory_date'] ?? null;
         $categoryId    = ! empty($filterState['category_id']) ? (int) $filterState['category_id'] : null;
 

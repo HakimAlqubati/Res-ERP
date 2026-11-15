@@ -11,13 +11,16 @@ class StoreController extends Controller
 {
     /**
      * Display a listing of all stores as key-value pairs (id => name).
+     * الفلترة حسب صلاحيات المستخدم تتم عبر Store::visibleTo().
      *
      * @return JsonResponse
      */
     public function index(): JsonResponse
     {
         try {
-            $stores = Store::orderBy('id')->pluck('name', 'id');
+            $stores = Store::visibleTo(auth()->user())
+                ->orderBy('id')
+                ->pluck('name', 'id');
 
             return response()->json([
                 'success' => true,

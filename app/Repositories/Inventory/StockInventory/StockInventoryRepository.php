@@ -3,6 +3,7 @@
 namespace App\Repositories\Inventory\StockInventory;
 
 use App\Models\StockInventory;
+use App\Models\Store;
 use App\Models\StockInventoryDetail;
 use App\Repositories\Inventory\StockInventory\Contracts\StockInventoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -71,15 +72,10 @@ class StockInventoryRepository implements StockInventoryRepositoryInterface
         $sortDirection = $filters['sort_direction'] ?? 'desc';
         $query->orderBy($sortBy, $sortDirection);
 
-        if(isSuperAdmin() || isSystemManager()){
-            return $query->paginate($perPage);
-        }
-        if(isBranchManager()){
-            $query->where('store_id', auth()->user()->branch?->store_id);
-            return $query->paginate($perPage);
-        }
-        
-        return $query->paginate($perPage); 
+        // تقييد الجرودات بالمخازن المسموح للمستخدم برؤيتها (نفس منطق Store::visibleTo)
+        $query->whereIn('store_id', Store::visibleTo(auth()->user())->select('stores.id'));
+
+        return $query->paginate($perPage);
     }
 
     /**

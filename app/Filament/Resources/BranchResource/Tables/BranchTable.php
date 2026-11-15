@@ -147,7 +147,7 @@ class BranchTable
                     Action::make('addStore')
                         ->label('Add Store')
                         ->icon('heroicon-o-plus-circle')
-                        ->visible(fn(Model $record) => ! $record->store && $record->type != Branch::TYPE_HQ)
+                        ->visible(fn(Model $record) => ! $record->store && $record->type != Branch::TYPE_HQ && BranchResource::canCreate())
                         ->schema([
                             TextInput::make('name')
                                 ->label('Store Name')
@@ -212,6 +212,7 @@ class BranchTable
                     Action::make('quick_edit')
                         ->label(__('Quick Edit'))
                         ->icon('heroicon-o-pencil-square')
+                        ->visible(fn () => BranchResource::canCreate())
                         ->modalHeading(__('Quick Edit Branch'))
                         ->modalWidth('lg')
                         ->schema(function ($record) {

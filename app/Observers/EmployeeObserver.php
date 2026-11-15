@@ -68,9 +68,10 @@ class EmployeeObserver
                 'phone_number'  => $employee->phone_number,
                 'user_type'     => $employee?->employee_type,
                 'nationality'   => $employee?->nationality,
-                'gender'        => $employee->gender,
-                'password'      => bcrypt('123456'),
-                'owner_id'      => $managerUserId,
+                'gender'               => $employee->gender,
+                'password'             => bcrypt('123456'),
+                'owner_id'             => $managerUserId,
+                'can_add_branch_order' => (bool) $employee->can_add_branch_order,
             ];
 
             // إذا كان لديه avatar نضيفه
@@ -146,6 +147,7 @@ class EmployeeObserver
             // }
 
             $user->active = $employee->active ?? 1;
+            $user->can_add_branch_order = (bool) $employee->can_add_branch_order;
             // Save changes to the user model
             $user->save();
         }

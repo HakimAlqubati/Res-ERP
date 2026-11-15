@@ -136,7 +136,7 @@ class GoodsReceivedNote extends Model implements Auditable
     // في حال إضافة جدول التفاصيل لاحقًا
     public function grnDetails()
     {
-        return $this->hasMany(GoodsReceivedNoteDetail::class, 'grn_id');
+        return $this->hasMany(GoodsReceivedNoteDetail::class, 'grn_id')->orderBy('id', 'asc');
     }
 
     public function inventoryTransactions()

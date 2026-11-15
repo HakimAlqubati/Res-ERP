@@ -19,14 +19,15 @@ class ListEmployeeFinancialSummaryReports extends ListRecords
         $branchId  = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
 
         $items = collect([]);
-        $employeeQuery = Employee::query();
         if ($branchId) {
-            $employeeQuery->where('branch_id', $branchId);
-        }
+            $employeeQuery = Employee::query()
+                ->forBranchManager()
+                ->where('branch_id', $branchId);
 
-        $employeeIds = $employeeQuery->pluck('id')->toArray();
-        if (!empty($employeeIds)) {
-            $items = app(EmployeeFinancialReportService::class)->generateForEmployees($employeeIds);
+            $employeeIds = $employeeQuery->pluck('id')->toArray();
+            if (!empty($employeeIds)) {
+                $items = app(EmployeeFinancialReportService::class)->generateForEmployees($employeeIds);
+            }
         }
 
         return [
