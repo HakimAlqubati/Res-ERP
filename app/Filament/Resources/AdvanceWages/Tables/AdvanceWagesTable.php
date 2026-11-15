@@ -105,7 +105,7 @@ class AdvanceWagesTable
                     ->visible(fn(AdvanceWage $record) => in_array(
                         $record->status,
                         [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]
-                    ))
+                    ) && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->action(function (AdvanceWage $record): void {
                         try {
                             if (
@@ -136,7 +136,7 @@ class AdvanceWagesTable
                     ->visible(fn(AdvanceWage $record) => in_array(
                         $record->status,
                         [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED]
-                    ))
+                    ) && (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isOwner()))
                     ->action(function (AdvanceWage $record): void {
                         try {
                             if ($record->status === AdvanceWage::STATUS_CANCELLED) {

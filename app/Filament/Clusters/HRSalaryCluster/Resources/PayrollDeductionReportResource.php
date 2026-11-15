@@ -81,6 +81,7 @@ class PayrollDeductionReportResource extends Resource
                             ->label(__('lang.employee'))
                             ->options(function () {
                                 return Employee::where('active', 1)
+                                    ->forBranchManager()
                                     ->limit(5)
                                     ->get()
                                     ->mapWithKeys(function ($employee) {
@@ -89,9 +90,10 @@ class PayrollDeductionReportResource extends Resource
                             })
                             ->getSearchResultsUsing(function (string $search) {
                                 return Employee::where('active', 1)
+                                    ->forBranchManager()
                                     ->where(function ($q) use ($search) {
                                         $q->where('name', 'like', "%{$search}%")
-                                            ->orWhere('id', 'like', "%{$search}%");
+                                             ->orWhere('id', 'like', "%{$search}%");
                                     })
                                     ->limit(50)
                                     ->get()
@@ -100,7 +102,7 @@ class PayrollDeductionReportResource extends Resource
                                     })->all();
                             })
                             ->getOptionLabelUsing(function ($value) {
-                                $employee = Employee::find($value);
+                                $employee = Employee::forBranchManager()->find($value);
 
                                 return $employee ? $employee->name.' - '.$employee->id : null;
                             })

@@ -95,7 +95,10 @@ class StoreResource extends Resource
                 ->words(5)
                 ->tooltip(fn($state) => $state)
                 ->toggleable(isToggledHiddenByDefault: true),
-                CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
+                CheckboxColumn::make('active')
+                    ->label(__('lang.active'))
+                    ->disabled(fn ($record) => ! static::canEdit($record))
+                    ->toggleable(),
                 TextColumn::make('storekeeper_name')
                     ->words(5)
                     ->tooltip(fn($state) => $state)
@@ -153,11 +156,68 @@ class StoreResource extends Resource
             ])
             ->with(['storekeeper', 'storekeepers']);
         $query->withManagedStores();
+        if (isBranchManagerOnly()) {
+            $query->where('id', auth()->user()?->branch?->store_id);
+        }
         return $query;
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return (string) static::getEloquentQuery()->count();
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canRestore(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -28,7 +28,7 @@ class UserDeviceForm
                         ->schema([
                             Select::make('branch_id')
                                 ->label('Branch')
-                                ->options(fn() => Branch::active()->pluck('name', 'id')->toArray())
+                                ->options(fn() => Branch::active()->forBranchManager('id')->pluck('name', 'id')->toArray())
                                 ->searchable()
                                 ->required()
                                 ->columnSpan(2)

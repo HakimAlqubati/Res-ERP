@@ -38,6 +38,9 @@ class ListInventoryTransactionReport extends ListRecords
         }
         $productId = $productIds[0] ?? null;
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        if (isBranchManagerOnly()) {
+            $storeId = auth()->user()?->branch?->store_id;
+        }
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'] ?? false;
         $unitId = 'all';

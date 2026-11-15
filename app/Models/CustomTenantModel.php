@@ -15,10 +15,17 @@ class CustomTenantModel extends Tenant
     use SoftDeletes;
     // use UsesLandlordConnection;
     protected $table = 'tenants';
-    protected $fillable = ['name', 'domain', 'database', 'active', 'database_created', 'modules'];
+    protected $fillable = ['name', 'domain', 'database', 'active', 'daily_backup_enabled', 'database_created', 'modules'];
     protected $casts = [
         'modules' => 'array',
+        'active' => 'boolean',
+        'daily_backup_enabled' => 'boolean',
     ];
+
+    public function scopeForDailyBackup($query)
+    {
+        return $query->where('active', true)->where('daily_backup_enabled', true);
+    }
     protected static function booted()
     {
         // static::creating(fn(CustomTenantModel $model) => $model->createDatabase());

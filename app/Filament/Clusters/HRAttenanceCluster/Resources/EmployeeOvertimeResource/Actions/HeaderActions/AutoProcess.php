@@ -35,7 +35,7 @@ class AutoProcess
                         ->default(now()),
                     Select::make('branch_id')
                         ->label('Branch')
-                        ->options(Branch::active()->pluck('name', 'id'))
+                        ->options(fn () => Branch::active()->forBranchManager('id')->pluck('name', 'id'))
                         ->required()
                         ->searchable()
                         ->preload()

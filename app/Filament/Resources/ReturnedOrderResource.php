@@ -281,6 +281,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
     public static function getOrderSearchQuery(string $search)
     {
         return Order::where('id', 'like', "%{$search}%")
+            ->forBranchManager()
             ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
             ->whereHas('branch', fn ($q) => $q->where('type', '!=', Branch::TYPE_RESELLER))
             ->limit(5)

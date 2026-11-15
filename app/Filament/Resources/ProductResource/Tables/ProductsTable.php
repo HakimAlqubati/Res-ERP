@@ -69,6 +69,7 @@ class ProductsTable
                     ->label('Import Quantities')
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('info')
+                    ->visible(fn () => ProductResource::canCreate())
                     ->schema([
                         FileUpload::make('file')
                             ->label('Upload Excel file')
@@ -91,6 +92,7 @@ class ProductsTable
                 Action::make('import_products')
                     ->label('Import Products')
                     ->icon('heroicon-o-arrow-up-tray')
+                    ->visible(fn () => ProductResource::canCreate())
                     ->schema([
                         FileUpload::make('file')
                             ->label('Upload Excel file')
@@ -188,6 +190,7 @@ class ProductsTable
                     ->searchable(isIndividual: false, isGlobal: false)->toggleable(),
                 CheckboxColumn::make('active')->label('Active?')
                     ->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true)
+                    ->disabled(fn (Product $record) => ! ProductResource::canEdit($record))
                     ->updateStateUsing(function (Product $record, $state) {
                         try {
                             $record->update(['active' => $state]);
@@ -272,7 +275,7 @@ class ProductsTable
                     Action::make('import_items')
                         ->label('Import Items')
                         ->icon('heroicon-o-arrow-up-tray')->button()
-                        ->visible(fn($record) => $record->is_manufacturing)
+                        ->visible(fn($record) => $record->is_manufacturing && ProductResource::canEdit($record))
                         ->schema([
                             FileUpload::make('file')
                                 ->label('Upload Excel file')
@@ -336,6 +339,7 @@ class ProductsTable
                     ->label('Update Price')
                     ->icon('heroicon-o-currency-dollar')->button()
                     ->color('info')
+                    ->visible(fn () => ProductResource::canCreate())
                     ->action(function (Collection $records) {
                         $productIds = $records->pluck('id')->toArray();
                         BatchProductCostingService::updateComponentPricesForMany($productIds);
@@ -404,7 +408,7 @@ class ProductsTable
             ->modalDescription('Select units available for orders.')
             ->modalSubmitActionLabel('Save')
             ->modalWidth('md')
-            ->visible(fn(Product $record): bool => $record->allUnitPrices()->exists())
+            ->visible(fn(Product $record): bool => $record->allUnitPrices()->exists() && ProductResource::canEdit($record))
             ->fillForm(function (Product $record): array {
                 $activeUnitIds = $record->allUnitPrices()
                     ->where('use_in_orders', true)

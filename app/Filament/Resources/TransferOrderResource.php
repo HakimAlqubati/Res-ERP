@@ -111,7 +111,7 @@ class TransferOrderResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->relationship('branch', 'name'),
+                    ->label(__('lang.branch'))->relationship('branch', 'name', fn (Builder $query) => $query->forBranchManager('id')),
                 Filter::make('created_at')
                     ->label(__('lang.created_at'))
                     ->schema([

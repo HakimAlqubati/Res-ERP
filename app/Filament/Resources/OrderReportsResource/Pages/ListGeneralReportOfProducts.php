@@ -38,7 +38,9 @@ class ListGeneralReportOfProducts extends ListRecords
     {
         $branchState = $this->getTable()->getFilters()['branch_id']->getState() ?? [];
         $branch_ids = $branchState['values'] ?? (isset($branchState['value']) ? (array) $branchState['value'] : null);
-        if (empty($branch_ids)) {
+        if (isBranchManagerOnly()) {
+            $branch_ids = auth()->user()?->branch_id ? [auth()->user()->branch_id] : [];
+        } elseif (empty($branch_ids)) {
             $branch_ids = [null]; // للبحث الشامل إذا لم يحدد فرع معين
         }
         

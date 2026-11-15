@@ -34,10 +34,12 @@ class ListReportProductQuantities extends ListRecords
             'order_number' => $this->getTable()->getFilters()['order_number']->getState()['order_number'] ?? null,
         ];
 
-        if (empty($filters['branch_id'])) {
+        if (isBranchManagerOnly()) {
+            $filters['branch_id'] = auth()->user()?->branch_id ? [auth()->user()->branch_id] : [];
+        } elseif (empty($filters['branch_id'])) {
             $filters['branch_id'] = Branch::whereIn('type', [
                 Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP,
-            ])->activePopups()->active()->pluck('id')->toArray();
+            ])->activePopups()->forBranchManager('id')->active()->pluck('id')->toArray();
         }
 
         // إنشاء الـ DTO

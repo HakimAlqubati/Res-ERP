@@ -819,4 +819,13 @@ class GoodsReceivedNoteResource extends Resource
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
          });
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isAccountant() || isFinanceManager() || isHR()) {
+            return true;
+        }
+
+        return false;
+    }
 }

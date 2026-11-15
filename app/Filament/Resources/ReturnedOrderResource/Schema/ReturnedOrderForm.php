@@ -29,12 +29,12 @@ class ReturnedOrderForm
                     ->schema([
                         Select::make('original_order_id')
                             ->label('Original Order')
-                            ->relationship('order', 'id')
+                            ->relationship('order', 'id', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->forBranchManager())
                             ->searchable()
                             ->required()->live()
                             ->getSearchResultsUsing(fn(string $search) => ReturnedOrderResource::getOrderSearchQuery($search))
                             ->afterStateUpdated(function ($state, $set) {
-                                $order = Order::find($state);
+                                $order = Order::forBranchManager()->find($state);
                                 if ($order && $order->branch_id) {
                                     $set('branch_id', $order->branch_id);
                                 }

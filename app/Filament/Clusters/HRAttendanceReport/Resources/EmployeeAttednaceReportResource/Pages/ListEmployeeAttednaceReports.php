@@ -49,7 +49,7 @@ class ListEmployeeAttednaceReports extends ListRecords
             $employee_id = auth()->user()?->employee?->id;
         }
 
-        $employee  = Employee::with('branch:id,name')->find($employee_id);
+        $employee  = Employee::with('branch:id,name')->forBranchManager()->find($employee_id);
         $branchName = $employee?->branch?->name ?? '';
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $endDate   = $this->getTable()->getFilters()['date_range']->getState()['end_date'];

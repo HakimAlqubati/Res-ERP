@@ -137,4 +137,13 @@ class InVSOutResellerReportResource extends Resource
     {
         return 'Report';
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isStoreManager() || isSuperVisor() || isFinanceManager() || isAccountant()) {
+            return true;
+        }
+
+        return false;
+    }
 }

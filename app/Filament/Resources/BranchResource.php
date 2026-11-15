@@ -59,12 +59,17 @@ class BranchResource extends Resource
 
        public static function getRecordSubNavigation(Page $page): array
     {
-        return $page->generateNavigationItems([
+        $items = [
             ManageBranches::class,
-            CreateBranch::class,
-            EditBranch::class,
-            // Pages\ViewEmployee::class,
-        ]);
+        ];
+
+        if (static::canCreate()) {
+            $items[] = CreateBranch::class;
+        }
+
+        $items[] = EditBranch::class;
+
+        return $page->generateNavigationItems($items);
     }
     public static function getNavigationBadge(): ?string
     {

@@ -180,6 +180,7 @@ class EmployeeOvertimeTable
                     ->getSearchResultsUsing(function ($search = null) {
                         return Employee::query()
                             ->where('active', 1)
+                            ->forBranchManager()
                             ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
                             ->limit(20)
 

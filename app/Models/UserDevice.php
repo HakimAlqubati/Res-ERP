@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class UserDevice extends Model
 {
+    use BranchScope;
+
     protected $table = 'hr_user_devices';
 
     protected $fillable = [

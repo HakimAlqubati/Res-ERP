@@ -41,9 +41,15 @@ class SalaryTransactionResource extends Resource
         return SalaryTransactionForm::configure($schema);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->when(isBranchManagerOnly(), fn (Builder $q) => $q->whereHas('employee', fn (Builder $e) => $e->where('branch_id', auth()->user()->branch_id)));
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return (string) static::getEloquentQuery()->count();
     }
 
     public static function infolist(Schema $schema): Schema
@@ -76,9 +82,46 @@ class SalaryTransactionResource extends Resource
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
+            ->when(isBranchManagerOnly(), fn (Builder $q) => $q->whereHas('employee', fn (Builder $e) => $e->where('branch_id', auth()->user()->branch_id)))
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isAccountant() || isOwner()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isAccountant() || isOwner()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isAccountant() || isOwner()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR() || isAccountant() || isOwner()) {
+            return true;
+        }
+
+        return false;
     }
 
     public static function canViewAny(): bool
