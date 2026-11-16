@@ -156,7 +156,7 @@ class PayrollsExport implements FromView
                 }
             }
 
-            $row['gross_salary'] = $row['base_salary'] + $row['total_additions'];
+            $row['gross_salary'] = $group['due_base_salary'] + $row['total_additions'];
 
             $totals['base_salary'] += $row['base_salary'] ?? 0;
             $totals['net_salary'] += $row['net_salary'] ?? 0;
@@ -196,10 +196,11 @@ class PayrollsExport implements FromView
                 $payroll = $group->first();
 
                 return [
-                    'payroll'      => $payroll,
-                    'base_salary'  => round((float) $group->sum('base_salary'), 2),
-                    'net_salary'   => round((float) $group->sum(fn($item) => (float) $item->getRawOriginal('net_salary')), 2),
-                    'transactions' => $this->mergeSimilarTransactions(
+                    'payroll'         => $payroll,
+                    'base_salary'     => round((float) ($payroll->employee?->salary ?? 0), 2),
+                    'due_base_salary' => round((float) $group->sum('base_salary'), 2),
+                    'net_salary'      => round((float) $group->sum(fn($item) => (float) $item->getRawOriginal('net_salary')), 2),
+                    'transactions'    => $this->mergeSimilarTransactions(
                         $group->flatMap(fn($payroll) => $payroll->transactions)
                     ),
                 ];

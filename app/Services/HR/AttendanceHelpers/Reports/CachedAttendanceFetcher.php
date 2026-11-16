@@ -84,7 +84,7 @@ class CachedAttendanceFetcher
         string $date,
         bool $forceRefresh = false
     ) {
-        $cacheKey = $this->buildCacheKey('period_details', $employeeId, $periodId, $date);
+        $cacheKey = $this->buildCacheKey('period_details_v2', $employeeId, $periodId, $date);
 
         if ($forceRefresh) {
             $this->forgetCache($cacheKey);

@@ -16,7 +16,7 @@ final class DeductionReportFilterDTO
         public readonly Carbon $toDate,
         public readonly ?int $employeeId = null,
         public readonly ?array $branchIds = null,
-        public readonly bool $includeEmployerContribution = true,
+        public readonly bool $includeEmployerContribution = false,
         public readonly ?array $deductionTypes = null,
         public readonly string $groupBy = self::GROUP_BY_EMPLOYEE
     ) {
@@ -35,7 +35,7 @@ final class DeductionReportFilterDTO
             toDate: Carbon::parse($data['to_date']),
             employeeId: isset($data['employee_id']) ? (int) $data['employee_id'] : null,
             branchIds: isset($data['branch_ids']) ? (array) $data['branch_ids'] : null,
-            includeEmployerContribution: isset($data['include_employer_contribution']) ? (bool) $data['include_employer_contribution'] : true,
+            includeEmployerContribution: isset($data['include_employer_contribution']) ? (bool) $data['include_employer_contribution'] : false,
             deductionTypes: $data['deduction_types'] ?? null,
             groupBy: $data['group_by'] ?? self::GROUP_BY_EMPLOYEE
         );

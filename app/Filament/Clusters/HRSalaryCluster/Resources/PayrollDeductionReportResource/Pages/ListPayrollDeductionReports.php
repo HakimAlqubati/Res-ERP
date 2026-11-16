@@ -43,10 +43,10 @@ class ListPayrollDeductionReports extends ListRecords
         $fromDate = $dateRange['from_date'] ?? now()->startOfMonth()->format('Y-m-d');
         $toDate = $dateRange['to_date'] ?? now()->endOfMonth()->format('Y-m-d');
 
-        // Optional Employer Contribution filter (default to true)
-        // If state is null/blank, it implies 'true' since placeholder is 'Yes'. If explicit false, make it false.
-        $employerContriState = $filters['include_employer_contribution']->getState()['value'] ?? true;
-        $includeEmployerContribution = filter_var($employerContriState, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        // Optional Employer Contribution filter (default to false)
+        // If state is null/blank, it implies 'false'. If explicit true, make it true.
+        $employerContriState = $filters['include_employer_contribution']->getState()['value'] ?? false;
+        $includeEmployerContribution = filter_var($employerContriState, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 
         $deductionState = $filters['deduction_type']->getState() ?? [];
         $deductionTypes = $deductionState['values'] ?? (isset($deductionState['value']) ? (array) $deductionState['value'] : null);

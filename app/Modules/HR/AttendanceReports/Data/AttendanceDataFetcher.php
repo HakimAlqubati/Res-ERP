@@ -250,9 +250,10 @@ class AttendanceDataFetcher
     {
         $attenance = Attendance::where('employee_id', $employeeId)
             ->accepted()
+            ->with('branch:id,name')
             ->where('period_id', $periodId)
             ->where('check_date', $date)
-            ->select('check_time', 'check_type', 'period_id')
+            ->select('check_time', 'check_type', 'period_id', 'branch_id')
             ->orderBy('id', 'asc')
             // ->groupBy('period_id')
             ->get();

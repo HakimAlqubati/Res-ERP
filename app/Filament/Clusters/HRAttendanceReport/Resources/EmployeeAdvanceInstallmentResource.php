@@ -56,6 +56,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return [
+            'id',
             'advanceRequest.code',
             'employee.name',
             'employee.employee_no',
@@ -74,7 +75,9 @@ class EmployeeAdvanceInstallmentResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         /** @var EmployeeAdvanceInstallment $record */
-        $details = [];
+        $details = [
+            __('lang.id') => '#' . $record->id,
+        ];
 
         if ($record->employee?->name) {
             $details[__('lang.employee')] = $record->employee->name;
@@ -98,7 +101,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
     public static function getGlobalSearchResultUrl(Model $record): ?string
     {
         return static::getUrl('index', [
-            'tableSearch' => $record->advanceRequest?->code ?? $record->employee?->name,
+            'tableSearch' => $record->advanceRequest?->code ?? (string) $record->id,
         ]);
     }
 
@@ -113,6 +116,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
             ->columns([
                 TextColumn::make('id')
                     ->label(__('lang.id'))
+                    ->searchable()
                     ->sortable()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),

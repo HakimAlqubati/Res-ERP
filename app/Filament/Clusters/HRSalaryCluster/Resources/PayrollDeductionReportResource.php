@@ -159,7 +159,7 @@ class PayrollDeductionReportResource extends Resource
                     ->selectablePlaceholder(false)
                     ->trueLabel('Yes')
                     ->falseLabel('No')
-                    ->default(true)
+                    ->default(false)
                     ->queries(
                         true: fn (Builder $query) => $query,
                         false: fn (Builder $query) => $query,

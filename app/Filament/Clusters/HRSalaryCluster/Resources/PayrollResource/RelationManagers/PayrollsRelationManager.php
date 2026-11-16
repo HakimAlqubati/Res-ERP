@@ -127,8 +127,17 @@ class PayrollsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
+                    ->getStateUsing(fn(Payroll $record) => (float) ($record->employee?->salary ?? 0))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                    ->sortable(),
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy(
+                            \App\Models\Employee::withoutGlobalScopes()
+                                ->select('salary')
+                                ->whereColumn('hr_employees.id', 'hr_payrolls.employee_id')
+                                ->limit(1),
+                            $direction
+                        );
+                    }),
 
 
 
@@ -222,11 +231,14 @@ class PayrollsRelationManager extends RelationManager
                         ->color('info')
                         ->icon('heroicon-o-arrow-down-on-square-stack')
                         ->action(function (Payroll $record) {
+                            $payrollIds = $this->payrollIdsForDisplay($record);
                             $transactions = SalaryTransaction::query()
-                                ->whereIn('payroll_id', $this->payrollIdsForDisplay($record))
+                                ->whereIn('payroll_id', $payrollIds)
                                 ->get();
                             $employeeName = $record->employee?->name ?? 'Employee';
-                            $netSalary = (float) $record->getRawOriginal('net_salary');
+                            $netSalary = (float) Payroll::query()
+                                ->whereIn('id', $payrollIds)
+                                ->sum('net_salary');
                             $fileName = 'transactions-' . $employeeName . '.xlsx';
                             return Excel::download(new PayrollTransactionsExport($transactions, $employeeName, $netSalary), $fileName);
                         }),
