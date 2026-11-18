@@ -34,6 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 \App\Http\Middleware\CheckUserActive::class,
             ])
         ;
+        $middleware->appendToPriorityList(
+            \Illuminate\Auth\Middleware\Authenticate::class,
+            \App\Http\Middleware\CheckUserActive::class
+        );
         $middleware->alias([
             'check' => \App\Http\Middleware\CheckAuthenticated::class,
             'lastSeen' => \App\Http\Middleware\TrackUserLastActivity::class,

@@ -120,15 +120,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function canAccessPanel(Panel $panel): bool
     {
-        if (!$this->active) {
-            return false;
-        }
-
-        if ($this->employee && $this->employee->pendingTerminationRequest()->exists()) {
-            return false;
-        }
-
-        return true;
+        return app(\App\Modules\HR\Employee\Services\AuthEligibilityService::class)->canAuthenticate($this);
     }
 
     public function manageBranches()

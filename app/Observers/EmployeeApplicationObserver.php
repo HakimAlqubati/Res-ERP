@@ -7,6 +7,7 @@ use App\Facades\Warnings;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\EmployeeApplicationV2;
 use App\Models\User;
+use App\Modules\HR\EmployeeApplications\Services\ApplicationApproverResolver;
 use App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService;
 use App\Services\HR\Applications\LeaveRequest\LeaveApprovalService;
 use App\Services\HR\Payroll\PayrollLockGuard;
@@ -32,6 +33,7 @@ class EmployeeApplicationObserver
         private readonly AdvanceApprovalService $advanceApprovalService,
         private readonly LeaveApprovalService $leaveApprovalService,
         private readonly PayrollLockGuard $payrollLockGuard,
+        private readonly ApplicationApproverResolver $approverResolver,
     ) {}
 
     // =========================================================================
@@ -77,12 +79,11 @@ class EmployeeApplicationObserver
     {
         try {
             $employee = $app->employee()->with(['manager.user'])->first();
+            $managerUser = $this->approverResolver->resolve($app);
 
-            if (! $employee?->manager?->user) {
+            if (! $managerUser || ! $employee) {
                 return;
             }
-
-            $managerUser = $employee->manager->user;
 
             // Do not notify the person who submitted the application.
             if (auth()->check() && auth()->id() === $managerUser->id) {

@@ -6,6 +6,9 @@ use App\Models\AppLog;
 use App\Models\Employee;
 use App\Models\EmployeeServiceTermination;
 use App\Models\User;
+use App\Modules\HR\Employee\Events\EmployeeAccessRevoked;
+use App\Rules\HR\Employee\CanRequestTerminationRule;
+use App\Rules\HR\Employee\EmployeeFinancialClearanceRule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Exception;
@@ -26,10 +29,14 @@ class EmployeeLifecycleService
      */
     public function requestTermination(Employee $employee, array $data): EmployeeServiceTermination
     {
-        $this->ensureFinancialClearance($employee);
-
         return DB::transaction(function () use ($employee, $data) {
-            $termination = $employee->serviceTermination()->create([
+            $lockedEmployee = Employee::lockForUpdate()->findOrFail($employee->id);
+
+            CanRequestTerminationRule::check($lockedEmployee);
+            EmployeeFinancialClearanceRule::check($lockedEmployee);
+
+            $termination = $lockedEmployee->serviceTerminations()->create([
+                'employment_cycle'   => (int) ($lockedEmployee->employment_cycle ?? 1),
                 'termination_date'   => $data['termination_date'],
                 'termination_reason' => $data['termination_reason'],
                 'notes'              => $data['notes'] ?? null,
@@ -37,10 +44,10 @@ class EmployeeLifecycleService
             ]);
 
             AppLog::write(
-                message: "Termination request created for Employee {$employee->name} (#{$employee->id})",
+                message: "Termination request created for Employee {$lockedEmployee->name} (#{$lockedEmployee->id})",
                 level: AppLog::LEVEL_INFO,
                 context: 'HR_TERMINATION_REQUEST',
-                extra: ['employee_id' => $employee->id, 'termination_id' => $termination->id]
+                extra: ['employee_id' => $lockedEmployee->id, 'termination_id' => $termination->id]
             );
 
             return $termination;
@@ -56,42 +63,58 @@ class EmployeeLifecycleService
      */
     public function approveTermination(EmployeeServiceTermination $termination, ?int $approverId = null): void
     {
-        $this->ensureFinancialClearance($termination->employee);
+        DB::transaction(function () use ($termination, $approverId) {
+            $lockedTermination = EmployeeServiceTermination::lockForUpdate()->findOrFail($termination->id);
+            $employee = $lockedTermination->employee
+                ? Employee::lockForUpdate()->find($lockedTermination->employee_id)
+                : null;
 
-        DB::beginTransaction();
-        try {
-            $termination->update([
+            if ($employee) {
+                EmployeeFinancialClearanceRule::check($employee);
+            }
+
+            $lockedTermination->update([
                 'status'      => EmployeeServiceTermination::STATUS_APPROVED,
                 'approved_at' => now(),
                 'approved_by' => $approverId ?? auth()->id(),
             ]);
 
-            // Deactivate Employee
-            $employee = $termination->employee;
+            $lockedTermination->refresh();
+
+            // Observer::updating may defer future terminations back to STATUS_PENDING (auto_approve=true).
+            // Only deactivate the employee and user when the termination is actually approved.
+            if ($lockedTermination->status !== EmployeeServiceTermination::STATUS_APPROVED) {
+                return;
+            }
+
             if ($employee) {
                 $employee->update(['active' => 0]);
 
-                // Deactivate Linked User
                 if ($employee->user_id) {
                     $user = User::withTrashed()->find($employee->user_id);
                     if ($user) {
                         $user->update(['active' => 0]);
                     }
+
+                    $userId = (int) $employee->user_id;
+                    $employeeId = (int) $employee->id;
+                    DB::afterCommit(static function () use ($userId, $employeeId, $lockedTermination): void {
+                        EmployeeAccessRevoked::dispatch(
+                            userId: $userId,
+                            employeeId: $employeeId,
+                            reason: "Termination #{$lockedTermination->id} approved"
+                        );
+                    });
                 }
             }
 
             AppLog::write(
-                message: "Termination approved for Employee {$employee->name} (#{$employee->id})",
+                message: "Termination approved for Employee " . ($employee?->name ?? "#{$lockedTermination->employee_id}") . " (#{$lockedTermination->employee_id})",
                 level: AppLog::LEVEL_INFO,
                 context: 'HR_TERMINATION_APPROVED',
-                extra: ['employee_id' => $employee?->id, 'termination_id' => $termination->id]
+                extra: ['employee_id' => $employee?->id, 'termination_id' => $lockedTermination->id]
             );
-
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -129,17 +152,21 @@ class EmployeeLifecycleService
      */
     public function rehire(Employee $employee, array $data): void
     {
-        DB::beginTransaction();
-        try {
-            // 1. Reactivate employee and update join date
-            $employee->update([
-                'active' => 1,
-                'join_date' => $data['join_date'],
+        DB::transaction(function () use ($employee, $data) {
+            $lockedEmployee = Employee::lockForUpdate()->findOrFail($employee->id);
+            $nextCycle = ((int) ($lockedEmployee->employment_cycle ?? 1)) + 1;
+
+            // 1. Reactivate employee, update join date, and advance employment cycle
+            //    so prior approved terminations remain intact as historical audit records.
+            $lockedEmployee->update([
+                'active'           => 1,
+                'employment_cycle' => $nextCycle,
+                'join_date'        => $data['join_date'],
             ]);
 
             // 2. Reactivate/Restore linked user if exists
-            if ($employee->user_id) {
-                $user = User::withTrashed()->find($employee->user_id);
+            if ($lockedEmployee->user_id) {
+                $user = User::withTrashed()->find($lockedEmployee->user_id);
                 if ($user) {
                     if (method_exists($user, 'trashed') && $user->trashed()) {
                         $user->restore();
@@ -148,8 +175,8 @@ class EmployeeLifecycleService
                 }
             }
 
-            // 3. Cancel any pending termination requests
-            $employee->serviceTermination()
+            // 3. Cancel any lingering pending termination requests without altering approved history
+            $lockedEmployee->serviceTerminations()
                 ->where('status', EmployeeServiceTermination::STATUS_PENDING)
                 ->update([
                     'status' => EmployeeServiceTermination::STATUS_CANCEL,
@@ -158,43 +185,16 @@ class EmployeeLifecycleService
 
             // 4. Log the rehire event
             AppLog::write(
-                message: "Employee {$employee->name} (#{$employee->id}) rehired successfully with join date: {$data['join_date']}",
+                message: "Employee {$lockedEmployee->name} (#{$lockedEmployee->id}) rehired successfully (cycle #{$nextCycle}) with join date: {$data['join_date']}",
                 level: AppLog::LEVEL_INFO,
                 context: 'HR_REHIRE',
                 extra: [
-                    'employee_id' => $employee->id,
-                    'join_date' => $data['join_date'],
-                    'notes' => $data['notes'] ?? null
+                    'employee_id'      => $lockedEmployee->id,
+                    'employment_cycle' => $nextCycle,
+                    'join_date'        => $data['join_date'],
+                    'notes'            => $data['notes'] ?? null
                 ]
             );
-
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    /**
-     * Guard against terminating an employee with uncleared financial obligations.
-     * Throws a ValidationException which is gracefully natively handled by Filament and APIs.
-     *
-     * @param Employee $employee
-     * @throws ValidationException
-     */
-    protected function ensureFinancialClearance(Employee $employee): void
-    {
-        // Leverage Eloquent relations rather than raw static calls
-        $unpaidBalance = (float) $employee->advancedInstallments()
-            ->where('is_paid', false)
-            ->sum('installment_amount');
-
-        if ($unpaidBalance > 0) {
-            throw ValidationException::withMessages([
-                'financial_clearance' => __('Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount', [
-                    'amount' => number_format($unpaidBalance, 2)
-                ]),
-            ]);
-        }
+        });
     }
 }

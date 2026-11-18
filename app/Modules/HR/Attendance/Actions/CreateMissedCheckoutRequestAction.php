@@ -6,6 +6,8 @@ use App\Models\EmployeeApplicationV2;
 use App\Models\MissedCheckOutRequest;
 use App\Modules\HR\Attendance\DTOs\AttendanceContextDTO;
 use App\Modules\HR\Attendance\Exceptions\DuplicateMissedCheckoutRequestException;
+use App\Modules\HR\EmployeeApplications\DTOs\ApplicationBranchContext;
+use App\Modules\HR\EmployeeApplications\Services\ApplicationBranchResolver;
 
 /**
  * Action: Create an Auto-Generated Missed Checkout Request
@@ -59,10 +61,22 @@ class CreateMissedCheckoutRequestAction
      */
     private function createApplication(AttendanceContextDTO $context): EmployeeApplicationV2
     {
+        $dateString = $context->requestTime->toDateString();
+        $branchId = app(ApplicationBranchResolver::class)->resolve(
+            new ApplicationBranchContext(
+                employee: $context->employee,
+                applicationTypeId: EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+                payload: [
+                    'application_date' => $dateString,
+                    'missed_checkout_request' => ['date' => $dateString],
+                ],
+            )
+        ) ?? $context->employee->branch_id;
+
         return EmployeeApplicationV2::create([
             'employee_id'          => $context->employee->id,
-            'branch_id'            => $context->employee->branch_id,
-            'application_date'     => $context->requestTime->toDateString(),
+            'branch_id'            => $branchId,
+            'application_date'     => $dateString,
             'status'               => EmployeeApplicationV2::STATUS_PENDING,
             'application_type_id'  => EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
             'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],

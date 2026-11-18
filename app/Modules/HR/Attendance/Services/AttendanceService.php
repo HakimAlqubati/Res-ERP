@@ -11,6 +11,7 @@ use App\Modules\HR\Attendance\Exceptions\AttendanceException;
 use App\Modules\HR\Attendance\Exceptions\MultipleShiftsException;
 use App\Modules\HR\Attendance\Exceptions\ShiftConflictException;
 use App\Modules\HR\Attendance\Exceptions\TypeRequiredException;
+use App\Modules\HR\Attendance\Services\Validator\Rules\HistoricalBranchEligibilityRule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -53,20 +54,22 @@ class AttendanceService
             return AttendanceResultDTO::failure(__('Employee not found.'));
         }
 
-        // 1.1 التحقق من صلاحية الفرع للموظف
-        if (
-            isset($payload['branch_id']) &&
-            (int) $payload['branch_id'] !== (int) $employee->branch_id &&
-            ! $employee->allow_attendance_from_any_branch
-        ) {
-            return AttendanceResultDTO::failure(__('Employee is not allowed to attend from this branch.'));
-        }
-
         // 2. تحليل الوقت
         $requestTime = $this->parseRequestTime($payload);
 
         if ($requestTime === null) {
             return AttendanceResultDTO::failure(__('Invalid date format.'));
+        }
+
+        // 2.1 التحقق من صلاحية الفرع للموظف عبر Rule class (يدعم الفروع التاريخية للطلبات)
+        $requestedBranchId = isset($payload['branch_id']) ? (int) $payload['branch_id'] : null;
+        if (! app(HistoricalBranchEligibilityRule::class)->isAllowed(
+            employee: $employee,
+            branchId: $requestedBranchId,
+            requestTime: $requestTime,
+            attendanceType: $payload['attendance_type'] ?? null
+        )) {
+            return AttendanceResultDTO::failure(__('Employee is not allowed to attend from this branch.'));
         }
 
         // 3. تنفيذ العملية مع Lock (والتحقق يتم داخل القفل)

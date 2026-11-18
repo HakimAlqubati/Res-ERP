@@ -7,6 +7,8 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
 use App\Models\EmployeeApplicationV2;
+use App\Modules\HR\EmployeeApplications\DTOs\ApplicationBranchContext;
+use App\Modules\HR\EmployeeApplications\Services\ApplicationBranchResolver;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -129,9 +131,17 @@ class CreateEmployeeApplication extends CreateRecord
         }
 
         $employee = Employee::find($data['employee_id']);
-        
-        if ($employee && $employee->branch()->exists()) {   
-            $data['branch_id'] = $employee->branch->id;
+
+        if ($employee) {
+            $resolvedBranchId = app(ApplicationBranchResolver::class)->resolve(
+                new ApplicationBranchContext(
+                    employee: $employee,
+                    applicationTypeId: (int) $data['application_type_id'],
+                    payload: array_merge($this->data ?? [], $data),
+                    explicitBranchId: isset($data['branch_id']) ? (int) $data['branch_id'] : null,
+                )
+            );
+            $data['branch_id'] = $resolvedBranchId ?? auth()->user()?->branch_id;
         } elseif (auth()->user()->branch_id) {
             $data['branch_id'] = auth()->user()->branch_id;
         }

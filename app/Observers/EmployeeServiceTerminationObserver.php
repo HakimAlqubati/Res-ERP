@@ -2,8 +2,11 @@
 
 namespace App\Observers;
 
+use App\Models\Employee;
 use App\Models\EmployeeServiceTermination;
 use App\Models\User;
+use App\Modules\HR\Employee\Events\EmployeeAccessRevoked;
+use App\Rules\HR\Employee\CanRequestTerminationRule;
 use App\Rules\HR\Employee\NoFutureTerminationApprovalRule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -21,24 +24,21 @@ class EmployeeServiceTerminationObserver
             $employeeServiceTermination->created_by = auth()->id();
         }
 
-        if (!$employeeServiceTermination->branch_id) {
-            // Retrieve employee if not already loaded
-            $employeeServiceTermination->loadMissing('employee');
-            $employeeServiceTermination->branch_id = $employeeServiceTermination->employee?->branch_id;
+        $employeeServiceTermination->loadMissing('employee');
+        $employee = $employeeServiceTermination->employee
+            ?? ($employeeServiceTermination->employee_id ? Employee::find($employeeServiceTermination->employee_id) : null);
+
+        if (!$employeeServiceTermination->branch_id && $employee) {
+            $employeeServiceTermination->branch_id = $employee->branch_id;
         }
 
-        // Prevent creating multiple terminations if one is already pending or approved.
-        $hasActiveTermination = EmployeeServiceTermination::where('employee_id', $employeeServiceTermination->employee_id)
-            ->whereIn('status', [
-                EmployeeServiceTermination::STATUS_PENDING, 
-                EmployeeServiceTermination::STATUS_APPROVED
-            ])
-            ->exists();
+        if ($employee && empty($employeeServiceTermination->employment_cycle)) {
+            $employeeServiceTermination->employment_cycle = (int) ($employee->employment_cycle ?? 1);
+        }
 
-        if ($hasActiveTermination) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'employee_id' => 'Employee already has an active termination request.'
-            ]);
+        // Prevent creating multiple active terminations within the current employment cycle.
+        if ($employee) {
+            CanRequestTerminationRule::check($employee);
         }
     }
 
@@ -47,6 +47,21 @@ class EmployeeServiceTerminationObserver
      */
     public function created(EmployeeServiceTermination $employeeServiceTermination): void
     {
+        $employee = $employeeServiceTermination->employee;
+
+        if ($employee?->user_id) {
+            $userId = (int) $employee->user_id;
+            $employeeId = (int) $employee->id;
+
+            DB::afterCommit(static function () use ($userId, $employeeId, $employeeServiceTermination): void {
+                EmployeeAccessRevoked::dispatch(
+                    userId: $userId,
+                    employeeId: $employeeId,
+                    reason: "Termination request #{$employeeServiceTermination->id} created"
+                );
+            });
+        }
+
         $hrUsers = User::whereHas('roles', function ($query) {
             $query->where('roles.id', 19);
         })->get();

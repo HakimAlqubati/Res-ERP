@@ -239,4 +239,76 @@ class EmployeeBranchLog extends Model
 
         return $segments;
     }
+
+    /**
+     * Resolve the branch ID an employee belonged to on a given target date.
+     * Uses EmployeePeriodHistory as a tie-breaker on exact transfer-boundary dates.
+     */
+    public static function resolveBranchIdAtDate(int $employeeId, Carbon|string $date): ?int
+    {
+        $parsedDate = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
+        $dayStart = $parsedDate->copy()->startOfDay()->toDateTimeString();
+        $dayEnd = $parsedDate->copy()->endOfDay()->toDateTimeString();
+
+        $matchingLogs = static::query()
+            ->where('employee_id', $employeeId)
+            ->where('start_at', '<=', $dayEnd)
+            ->where(function ($q) use ($dayStart) {
+                $q->whereNull('end_at')
+                    ->orWhere('end_at', '>=', $dayStart);
+            })
+            ->orderByDesc('start_at')
+            ->orderByDesc('id')
+            ->get(['id', 'branch_id', 'start_at', 'end_at']);
+
+        if ($matchingLogs->isEmpty()) {
+            return null;
+        }
+
+        if ($matchingLogs->count() === 1) {
+            return (int) $matchingLogs->first()->branch_id;
+        }
+
+        // Tie-breaker for transfer day overlap: match historical shift branch if available
+        $dateString = $parsedDate->toDateString();
+        $candidateBranchIds = $matchingLogs->pluck('branch_id')->unique()->values()->all();
+
+        $shiftBranchId = EmployeePeriodHistory::query()
+            ->where('employee_id', $employeeId)
+            ->where('active', true)
+            ->where('start_date', '<=', $dateString)
+            ->where(function ($q) use ($dateString) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $dateString);
+            })
+            ->whereIn('branch_id', $candidateBranchIds)
+            ->orderByDesc('start_date')
+            ->value('branch_id');
+
+        if ($shiftBranchId) {
+            return (int) $shiftBranchId;
+        }
+
+        return (int) $matchingLogs->first()->branch_id;
+    }
+
+    /**
+     * Check whether an employee belonged to the given branch on a specific date.
+     */
+    public static function employeeBelongsToBranchAtDate(int $employeeId, int $branchId, Carbon|string $date): bool
+    {
+        $parsedDate = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
+        $dayStart = $parsedDate->copy()->startOfDay()->toDateTimeString();
+        $dayEnd = $parsedDate->copy()->endOfDay()->toDateTimeString();
+
+        return static::query()
+            ->where('employee_id', $employeeId)
+            ->where('branch_id', $branchId)
+            ->where('start_at', '<=', $dayEnd)
+            ->where(function ($q) use ($dayStart) {
+                $q->whereNull('end_at')
+                    ->orWhere('end_at', '>=', $dayStart);
+            })
+            ->exists();
+    }
 }

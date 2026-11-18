@@ -21,9 +21,14 @@ class Employee extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
     use EmployeeRelationships, EmployeeAccessorsTrait, EmployeeAttendanceTrait;
 
+    public function serviceTerminations()
+    {
+        return $this->hasMany(EmployeeServiceTermination::class);
+    }
+
     public function serviceTermination()
     {
-        return $this->hasOne(EmployeeServiceTermination::class);
+        return $this->hasOne(EmployeeServiceTermination::class)->latestOfMany();
     }
     
     public function paymentMethod()
@@ -33,7 +38,7 @@ class Employee extends Model implements Auditable
     
     public function pendingTerminationRequest()
     {
-        return $this->hasOne(EmployeeServiceTermination::class)->pending();
+        return $this->hasOne(EmployeeServiceTermination::class)->pending()->latestOfMany();
     }
 
     protected $table = 'hr_employees';
@@ -50,6 +55,7 @@ class Employee extends Model implements Auditable
         'department_id',
         'employee_no',
         'active',
+        'employment_cycle',
         'avatar',
         'join_date',
         'address',
@@ -120,6 +126,7 @@ class Employee extends Model implements Auditable
         'department_id',
         'employee_no',
         'active',
+        'employment_cycle',
         'avatar',
         'join_date',
         'address',
@@ -159,6 +166,7 @@ class Employee extends Model implements Auditable
         'can_add_branch_order'             => 'boolean',
         'allow_attendance_from_any_branch' => 'boolean',
         'max_weekly_leave_days'            => 'integer',
+        'employment_cycle'                 => 'integer',
         'no_shift_is_present'              => 'boolean',
         'salary_allocation_rule'           => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
         'emergency_number'                 => \App\Casts\EmergencyContactCast::class,
@@ -244,8 +252,9 @@ class Employee extends Model implements Auditable
             ->where('join_date', '<=', $periodEnd->toDateString())
             ->where(function ($q) use ($periodStart) {
                 $q->active()
-                    ->orWhereHas('serviceTermination', function ($sub) use ($periodStart) {
-                        $sub->where('status', EmployeeServiceTermination::STATUS_APPROVED)
+                    ->orWhereHas('serviceTerminations', function ($sub) use ($periodStart) {
+                        $sub->whereColumn('hr_employee_service_terminations.employment_cycle', 'hr_employees.employment_cycle')
+                            ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
                             ->where('termination_date', '>=', $periodStart->toDateString());
                     });
             });

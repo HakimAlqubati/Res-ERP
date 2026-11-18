@@ -4,6 +4,8 @@ namespace App\Services\HR\Applications;
 
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
+use App\Modules\HR\EmployeeApplications\DTOs\ApplicationBranchContext;
+use App\Modules\HR\EmployeeApplications\Services\ApplicationBranchResolver;
 use App\Rules\HR\Applications\AdvanceRequestConsistencyRule;
 use App\Exceptions\HR\LeaveApprovalException;
 use Illuminate\Support\Facades\DB;
@@ -24,9 +26,17 @@ class EmployeeApplicationService
         // 1) جلب الموظف
         $employee = Employee::findOrFail($data['employee_id']);
 
-        // 2) تعيين branch_id تلقائياً
-        if (!isset($data['branch_id']) && $employee->branch) {
-            $data['branch_id'] = $employee->branch->id;
+        // 2) تعيين branch_id تلقائياً عبر قواعد تحديد الفرع (يدعم سجلات الفروع التاريخية)
+        $resolvedBranchId = app(ApplicationBranchResolver::class)->resolve(
+            new ApplicationBranchContext(
+                employee: $employee,
+                applicationTypeId: (int) $data['application_type_id'],
+                payload: $data,
+                explicitBranchId: isset($data['branch_id']) ? (int) $data['branch_id'] : null,
+            )
+        );
+        if ($resolvedBranchId !== null) {
+            $data['branch_id'] = $resolvedBranchId;
         }
 
         // 3) تعيين application_type_name تلقائياً
@@ -347,6 +357,7 @@ class EmployeeApplicationService
 
                     $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle([
                         'employee_id'                    => $record->employee_id,
+                        'branch_id'                      => $record->branch_id,
                         'date_time'                      => $details->date . ' ' . $details->time,
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
@@ -368,6 +379,7 @@ class EmployeeApplicationService
 
                     $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle([
                         'employee_id'                    => $record->employee_id,
+                        'branch_id'                      => $record->branch_id,
                         'date_time'                      => $details->date . ' ' . $details->time,
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,

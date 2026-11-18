@@ -9,6 +9,7 @@ use App\Models\AdvanceWage;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Modules\HR\Employee\Services\EmployeeLifecycleService;
+use App\Rules\HR\Employee\EmployeeFinancialClearanceRule;
 use App\Rules\HR\Employee\NoFutureTerminationApprovalRule;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 use App\Services\S3ImageService;
@@ -59,17 +60,7 @@ class RecordActions
                             ->live()
                             ->columnSpanFull()
                             ->rules([
-                                fn (Employee $record) => function (string $attribute, $value, Closure $fail) use ($record) {
-                                    $unpaidBalance = (float) $record->advancedInstallments()
-                                        ->where('is_paid', false)
-                                        ->sum('installment_amount');
-
-                                    if ($unpaidBalance > 0) {
-                                        $fail(__('lang.cannot_process_financial_clearance', [
-                                            'amount' => number_format($unpaidBalance, 2),
-                                        ]) ?: 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: '.number_format($unpaidBalance, 2));
-                                    }
-                                },
+                                fn (Employee $record) => new EmployeeFinancialClearanceRule($record),
                             ]),
 
                         Textarea::make('termination_reason')
@@ -108,16 +99,16 @@ class RecordActions
                 ->schema(fn (Employee $record) => [
                     DatePicker::make('termination_date')
                         ->label(__('lang.termination_date'))
-                        ->default($record->serviceTermination->termination_date)
+                        ->default($record->pendingTerminationRequest?->termination_date)
                         ->required()
                         ->live(),
                     Textarea::make('termination_reason')
                         ->label(__('lang.termination_reason'))
-                        ->default($record->serviceTermination->termination_reason)
+                        ->default($record->pendingTerminationRequest?->termination_reason)
                         ->required(),
                     Textarea::make('notes')
                         ->label(__('lang.notes'))
-                        ->default($record->serviceTermination->notes),
+                        ->default($record->pendingTerminationRequest?->notes),
 
                 ])
                 ->label(__('lang.approve_termination'))
@@ -125,14 +116,19 @@ class RecordActions
                 // ->requiresConfirmation()
                 ->action(function ($record, array $data) {
                     try {
-                        $record->serviceTermination->update([
+                        $pending = $record->pendingTerminationRequest;
+                        if (! $pending) {
+                            throw new \Exception('No pending termination request found.');
+                        }
+
+                        $pending->update([
                             'termination_date' => $data['termination_date'],
                             'termination_reason' => $data['termination_reason'],
                             'notes' => $data['notes'] ?? null,
                         ]);
 
                         app(EmployeeLifecycleService::class)
-                            ->approveTermination($record->serviceTermination);
+                            ->approveTermination($pending);
 
                         if (Carbon::parse($data['termination_date'])->isFuture()) {
                             Notification::make()
@@ -157,8 +153,13 @@ class RecordActions
                 ->icon('heroicon-o-x-circle')
                 ->action(function (array $data, $record) {
                     try {
+                        $pending = $record->pendingTerminationRequest;
+                        if (! $pending) {
+                            throw new \Exception('No pending termination request found.');
+                        }
+
                         app(EmployeeLifecycleService::class)
-                            ->rejectTermination($record->serviceTermination, $data);
+                            ->rejectTermination($pending, $data);
 
                         Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
                     } catch (\Exception $e) {

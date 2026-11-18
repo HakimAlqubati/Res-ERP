@@ -201,6 +201,7 @@ class EmployeeApplicationResource extends Resource
                     // باقي الكود كما هو...
                     $validated = [
                         'employee_id'      => $employee->id,
+                        'branch_id'        => $record->branch_id,
                         'date_time'        => $data['request_check_date'] . ' ' . $data['request_check_time'],
                         'type'             => Attendance::CHECKTYPE_CHECKOUT,
                         'attendance_type'  => Attendance::ATTENDANCE_TYPE_REQUEST,
@@ -923,6 +924,7 @@ class EmployeeApplicationResource extends Resource
 
                     $validated = [
                         'employee_id' => $employee->id,
+                        'branch_id' => $record->branch_id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
                         'type' =>  Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST,

@@ -3,7 +3,10 @@
 return [
     App\Modules\HR\Attendance\Providers\AttendanceServiceProvider::class,
     App\Modules\HR\AttendanceReports\Providers\AttendanceReportServiceProvider::class,
+    App\Modules\HR\Employee\Providers\EmployeeModuleServiceProvider::class,
+    App\Modules\HR\EmployeeApplications\Providers\EmployeeApplicationServiceProvider::class,
     App\Modules\HR\Payroll\Providers\PayrollServiceProvider::class,
+    App\Modules\HR\SalaryIncrease\Providers\SalaryIncreaseServiceProvider::class,
     App\Modules\Docs\Providers\DocsServiceProvider::class,
     App\Providers\AWS\AwsServiceProvider::class,
     App\Providers\AppServiceProvider::class,

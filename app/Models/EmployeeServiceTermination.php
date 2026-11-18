@@ -19,6 +19,7 @@ class EmployeeServiceTermination extends Model
 
     protected $fillable = [
         'employee_id',
+        'employment_cycle',
         'branch_id',
         'termination_date',
         'termination_reason',
@@ -36,6 +37,7 @@ class EmployeeServiceTermination extends Model
     ];
 
     protected $casts = [
+        'employment_cycle' => 'integer',
         'termination_date' => 'date',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',

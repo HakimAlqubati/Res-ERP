@@ -71,10 +71,10 @@ class AuthController extends Controller
                 // نحدث وقت آخر دخول
                 $user->touchDeviceLogin($deviceId);
             }
-            if ($user->employee && $user->employee->pendingTerminationRequest()->exists()) {
+            if ($blockReason = app(\App\Modules\HR\Employee\Services\AuthEligibilityService::class)->getBlockReason($user)) {
                 Auth::logout();
                 return response()->json([
-                    'error' => 'Your account is pending termination. Please contact the administrator.'
+                    'error' => $blockReason
                 ], 403);
             }
 
@@ -104,8 +104,8 @@ class AuthController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        if (!$user->active) {
-            return response()->json(['error' => 'Account is inactive'], 403);
+        if ($blockReason = app(\App\Modules\HR\Employee\Services\AuthEligibilityService::class)->getBlockReason($user)) {
+            return response()->json(['error' => $blockReason], 403);
         }
 
         $otp = rand(100000, 999999);
@@ -143,8 +143,8 @@ class AuthController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        if (!$user->active) {
-            return response()->json(['error' => 'Account is inactive'], 403);
+        if ($blockReason = app(\App\Modules\HR\Employee\Services\AuthEligibilityService::class)->getBlockReason($user)) {
+            return response()->json(['error' => $blockReason], 403);
         }
 
         // حذف الـ OTP بعد الاستخدام

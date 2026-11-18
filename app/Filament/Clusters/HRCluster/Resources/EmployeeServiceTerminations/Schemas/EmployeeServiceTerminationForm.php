@@ -3,7 +3,8 @@
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeServiceTerminations\Schemas;
 
 use App\Models\Employee;
-use Closure;
+use App\Rules\HR\Employee\CanRequestTerminationRule;
+use App\Rules\HR\Employee\EmployeeFinancialClearanceRule;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -23,40 +24,27 @@ class EmployeeServiceTerminationForm
                     ->schema([
                         Select::make('employee_id')
                             ->label(__('lang.employee'))
-                            ->relationship('employee', 'name', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->forBranchManager())
+                            ->relationship('employee', 'name', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->active()->forBranchManager())
                             ->getOptionLabelFromRecordUsing(fn (Employee $record) => "{$record->id} - {$record->name}")
                             ->searchable(['id', 'employee_no', 'name'])
                             ->optionsLimit(5)
                             ->preload()
                             ->required()
-                            ->live(),
+                            ->disabledOn('edit')
+                            ->live()
+                            ->rules(fn (string $operation): array => $operation === 'create'
+                                ? [new CanRequestTerminationRule()]
+                                : []
+                            ),
                         DatePicker::make('termination_date')
                             ->label(__('lang.termination_date'))
                             ->required()
                             ->default(now())
                             ->live()
                             ->rules([
-                                fn (Get $get) => function (string $attribute, $value, Closure $fail) use ($get) {
-                                    $employeeId = $get('employee_id');
-                                    if (!$employeeId) {
-                                        return;
-                                    }
-
-                                    $employee = Employee::find($employeeId);
-                                    if (!$employee) {
-                                        return;
-                                    }
-
-                                    $unpaidBalance = (float) $employee->advancedInstallments()
-                                        ->where('is_paid', false)
-                                        ->sum('installment_amount');
-
-                                    if ($unpaidBalance > 0) {
-                                        $fail(__('lang.cannot_process_financial_clearance', [
-                                            'amount' => number_format($unpaidBalance, 2),
-                                        ]) ?: 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: '.number_format($unpaidBalance, 2));
-                                    }
-                                },
+                                fn (Get $get) => new EmployeeFinancialClearanceRule(
+                                    $get('employee_id') ? Employee::find($get('employee_id')) : null
+                                ),
                             ]),
                         Textarea::make('termination_reason')
                             ->label(__('lang.termination_reason'))
