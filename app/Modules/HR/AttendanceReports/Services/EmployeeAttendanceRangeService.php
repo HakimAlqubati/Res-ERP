@@ -105,6 +105,14 @@ class EmployeeAttendanceRangeService
             $dayAttendances = ($attendances->get($currentDateStr) ?? collect())->groupBy('period_id');
             $dayOvertimes = ($overtimes->get($currentDateStr) ?? collect());
 
+            $effectiveBranch = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::resolveEffectiveBranch($dayHistories, $employee);
+            $officialHoliday = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::findApplicableHoliday($holidays ?? null, $currentDateStr, $effectiveBranch['branch_id']);
+            if ($officialHoliday && $dayAttendances->isEmpty()) {
+                $report->put($currentDateStr, \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::buildUnattendedHolidayDay($this->processor, $currentDateStr, $currentDayName, $officialHoliday, $effectiveBranch['branch_id'], $effectiveBranch['branch_name']));
+                $tempDate->addDay();
+                continue;
+            }
+
             \App\Modules\HR\AttendanceReports\Processors\VirtualPeriodInjector::inject($dayAttendances, $dayHistories, $workPeriodMap);
 
             $dayReport = $this->processor->processDay(
@@ -120,6 +128,10 @@ class EmployeeAttendanceRangeService
                 $employee->discount_exception_if_attendance_late ?? false,
                 $this->statsInjector
             );
+
+            if ($officialHoliday) {
+                $dayReport = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::decorateWorkedHolidayDay($dayReport, $officialHoliday);
+            }
 
             $report->put($currentDateStr, $dayReport);
             $tempDate->addDay();

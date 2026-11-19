@@ -86,7 +86,9 @@ class AttendanceDataFetcher
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
-        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
+        $holidays = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::loadConfirmedForRange($dateStr, $dateStr);
+
+        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap', 'holidays');
     }
 
     /**
@@ -158,7 +160,9 @@ class AttendanceDataFetcher
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
-        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
+        $holidays = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::loadConfirmedForRange($startDateStr, $endDateStr);
+
+        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap', 'holidays');
     }
 
     /**
@@ -242,7 +246,9 @@ class AttendanceDataFetcher
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
-        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
+        $holidays = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::loadConfirmedForRange($startDateStr, $endDateStr);
+
+        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap', 'holidays');
     }
 
 

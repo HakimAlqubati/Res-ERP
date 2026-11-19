@@ -87,6 +87,7 @@ class AttendanceReportManager implements AttendanceReportInterface
                     'terminations'  => $termination,
                     'overtimes'     => ($bulkData['overtimes'][$employee->id] ?? collect()),
                     'workPeriodMap' => $bulkData['workPeriodMap'],
+                    'holidays'      => ($bulkData['holidays'] ?? collect()),
                 ];
 
                 $processedData = $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData);

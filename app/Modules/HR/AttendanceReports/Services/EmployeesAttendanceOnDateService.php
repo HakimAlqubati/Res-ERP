@@ -86,6 +86,19 @@ class EmployeesAttendanceOnDateService
                     $dayAttendances = ($attendances->get($empId) ?? collect())->groupBy('period_id');
                     $dayOvertimes = ($overtimes->get($empId) ?? collect());
 
+                    $effectiveBranch = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::resolveEffectiveBranch($dayHistories, $employee);
+                    $officialHoliday = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::findApplicableHoliday($holidays ?? null, $dateStr, $effectiveBranch['branch_id']);
+                    if ($officialHoliday && $dayAttendances->isEmpty()) {
+                        $report->put($dateStr, \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::buildUnattendedHolidayDay($this->processor, $dateStr, $dayName, $officialHoliday, $effectiveBranch['branch_id'], $effectiveBranch['branch_name']));
+                        $this->statsInjector->inject($report, $employee);
+
+                        $results->put($empId, [
+                            'employee' => ['id' => $empId, 'name' => $employee->name],
+                            'attendance_report' => $report,
+                        ]);
+                        continue;
+                    }
+
                     \App\Modules\HR\AttendanceReports\Processors\VirtualPeriodInjector::inject($dayAttendances, $dayHistories, $workPeriodMap);
 
                     $dayReport = $this->processor->processDay(
@@ -101,6 +114,10 @@ class EmployeesAttendanceOnDateService
                         $employee->discount_exception_if_attendance_late,
                         $this->statsInjector
                     );
+
+                    if ($officialHoliday) {
+                        $dayReport = \App\Modules\HR\Holidays\Processors\OfficialHolidayAttendanceProcessor::decorateWorkedHolidayDay($dayReport, $officialHoliday);
+                    }
 
                     // Check if employee is absent and has auto weekly leave setting enabled
                     $isAbsent = isset($dayReport['day_status']) && $dayReport['day_status'] === \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value;
