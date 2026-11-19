@@ -75,7 +75,8 @@
             "public/",
             "public/uploads/",
             "storage/",
-            "bootstrap/cache/"
+            "bootstrap/cache/",
+            "vendor/google/apiclient-services/"
         ]
     },
     "autoload-dev": {
@@ -98,13 +99,7 @@
             "pestphp/pest-plugin": true,
             "php-http/discovery": true,
             "wikimedia/composer-merge-plugin": false
-        },
-        "exclude-from-classmap": [
-            "node_modules/",
-            "public/",
-            "storage/",
-            "bootstrap/cache/"
-        ]
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true
