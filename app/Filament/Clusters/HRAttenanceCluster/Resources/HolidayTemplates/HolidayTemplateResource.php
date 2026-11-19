@@ -11,6 +11,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayTemplates\Schemas\
 use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayTemplates\Tables\HolidayTemplatesTable;
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\HolidayTemplate;
+use App\Modules\HR\Holidays\Builders\HolidayTemplateQueryBuilder;
 use BackedEnum;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -18,13 +19,12 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class HolidayTemplateResource extends Resource
 {
     protected static ?string $model = HolidayTemplate::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendar;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookmarkSquare;
 
     protected static ?string $cluster = HRLeaveManagementCluster::class;
 
@@ -36,7 +36,7 @@ class HolidayTemplateResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Public Holidays';
+        return 'Holiday Templates';
     }
 
     public static function getPluralLabel(): ?string
@@ -75,19 +75,18 @@ class HolidayTemplateResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->with(['createdBy', 'confirmedBy'])
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+        return HolidayTemplateQueryBuilder::make(parent::getEloquentQuery())
+            ->withStandardRelations()
+            ->withoutTrashedScope()
+            ->build();
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-        return parent::getRecordRouteBindingEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+        return HolidayTemplateQueryBuilder::make(parent::getRecordRouteBindingEloquentQuery())
+            ->withStandardRelations()
+            ->withoutTrashedScope()
+            ->build();
     }
 
     public static function canViewAny(): bool

@@ -6,9 +6,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayTemplates\Sc
 
 use App\Models\Branch;
 use App\Models\HolidayTemplate;
-use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -22,174 +20,60 @@ class HolidayTemplateForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $syncDatesFromFixedDayMonth = static function (Get $get, Set $set): void {
-            if ($get('type') !== HolidayTemplate::TYPE_FIXED) {
-                return;
-            }
-
-            $month = (int) ($get('month') ?? 0);
-            $day = (int) ($get('day') ?? 0);
-            $year = (int) ($get('year') ?: now()->year);
-            $countDays = max(1, (int) ($get('count_days') ?: 1));
-
-            if ($month < 1 || $month > 12 || $day < 1 || $day > 31) {
-                return;
-            }
-
-            $maxDaysInMonth = Carbon::createFromDate($year, $month, 1)->daysInMonth;
-            $validDay = min($day, $maxDaysInMonth);
-
-            $fromDate = Carbon::createFromDate($year, $month, $validDay)->startOfDay();
-            $toDate = $fromDate->copy()->addDays($countDays - 1);
-
-            $set('from_date', $fromDate->toDateString());
-            $set('to_date', $toDate->toDateString());
-        };
-
-        $syncToDateFromCountDays = static function (Get $get, Set $set): void {
-            $fromDateValue = $get('from_date');
-            $countDays = max(1, (int) ($get('count_days') ?: 1));
-
-            if (! $fromDateValue) {
-                $syncDatesFromFixedDayMonth($get, $set);
-
-                return;
-            }
-
-            $fromDate = Carbon::parse($fromDateValue)->startOfDay();
-            $toDate = $fromDate->copy()->addDays($countDays - 1);
-
-            $set('to_date', $toDate->toDateString());
-            $set('year', (int) $fromDate->year);
-
-            if ($get('type') === HolidayTemplate::TYPE_FIXED) {
-                $set('month', (int) $fromDate->month);
-                $set('day', (int) $fromDate->day);
-            }
-        };
-
-        $syncCountDaysFromDateRange = static function (Get $get, Set $set): void {
-            $fromDateValue = $get('from_date');
-            $toDateValue = $get('to_date');
-
-            if (! $fromDateValue || ! $toDateValue) {
-                return;
-            }
-
-            $fromDate = Carbon::parse($fromDateValue)->startOfDay();
-            $toDate = Carbon::parse($toDateValue)->startOfDay();
-
-            if ($toDate->lt($fromDate)) {
-                $toDate = $fromDate->copy();
-                $set('to_date', $toDate->toDateString());
-            }
-
-            $set('count_days', (int) $fromDate->diffInDays($toDate) + 1);
-            $set('year', (int) $fromDate->year);
-
-            if ($get('type') === HolidayTemplate::TYPE_FIXED) {
-                $set('month', (int) $fromDate->month);
-                $set('day', (int) $fromDate->day);
-            }
-        };
-
         return $schema->components([
-            Fieldset::make('Holiday Template Information')
+            Fieldset::make('Holiday Template Definition')
                 ->columnSpanFull()
-                ->columns(4)
+                ->columns(3)
                 ->schema([
                     TextInput::make('name')
                         ->label('Occasion / Holiday Name')
                         ->placeholder('e.g. Eid Al-Fitr, Unity Day')
                         ->maxLength(150)
+                        ->unique(HolidayTemplate::class, 'name', ignoreRecord: true)
                         ->required(),
 
                     Select::make('type')
-                        ->label('Holiday Type')
+                        ->label('Calendar Type')
                         ->options(HolidayTemplate::typeOptions())
                         ->default(HolidayTemplate::TYPE_FIXED)
                         ->required()
                         ->live()
-                        ->afterStateUpdated(function (?string $state, Get $get, Set $set) use ($syncDatesFromFixedDayMonth): void {
-                            if ($state === HolidayTemplate::TYPE_HIJRI) {
-                                $set('status', HolidayTemplate::STATUS_TENTATIVE);
-                            } else {
-                                $set('status', HolidayTemplate::STATUS_CONFIRMED);
-                                $syncDatesFromFixedDayMonth($get, $set);
+                        ->afterStateUpdated(function (?string $state, Get $get, Set $set): void {
+                            if ($state === HolidayTemplate::TYPE_HIJRI && (int) $get('day') > 30) {
+                                $set('day', 30);
                             }
                         }),
 
-                    Select::make('status')
-                        ->label('Status')
-                        ->options(HolidayTemplate::statusOptions())
-                        ->default(HolidayTemplate::STATUS_CONFIRMED)
-                        ->required(),
-
                     TextInput::make('count_days')
-                        ->label('Number of Days')
+                        ->label('Default Number of Days')
                         ->numeric()
                         ->minValue(1)
                         ->maxValue(60)
                         ->default(1)
-                        ->required()
-                        ->live(onBlur: true)
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $syncToDateFromCountDays($get, $set)),
+                        ->required(),
                 ]),
 
-            Fieldset::make('Template & Calendar Dates')
+            Fieldset::make('Recurring Day & Month (Without Year)')
                 ->columnSpanFull()
-                ->columns(5)
+                ->columns(2)
                 ->schema([
                     Select::make('month')
-                        ->label(fn (Get $get): string => $get('type') === HolidayTemplate::TYPE_HIJRI ? 'Hijri Month' : 'Month')
+                        ->label(fn (Get $get): string => $get('type') === HolidayTemplate::TYPE_HIJRI ? 'Hijri Month' : 'Gregorian Month')
                         ->options(fn (Get $get): array => HolidayTemplate::monthOptions((string) $get('type')))
                         ->searchable()
-                        ->required(fn (Get $get): bool => $get('type') === HolidayTemplate::TYPE_FIXED)
-                        ->live()
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $syncDatesFromFixedDayMonth($get, $set)),
+                        ->required(),
 
                     Select::make('day')
-                        ->label(fn (Get $get): string => $get('type') === HolidayTemplate::TYPE_HIJRI ? 'Hijri Day' : 'Day')
+                        ->label(fn (Get $get): string => $get('type') === HolidayTemplate::TYPE_HIJRI ? 'Hijri Day (1 - 30)' : 'Gregorian Day (1 - 31)')
                         ->options(fn (Get $get): array => HolidayTemplate::dayOptions((string) $get('type')))
                         ->searchable()
-                        ->required(fn (Get $get): bool => $get('type') === HolidayTemplate::TYPE_FIXED)
-                        ->live()
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $syncDatesFromFixedDayMonth($get, $set)),
-
-                    Select::make('year')
-                        ->label('Year')
-                        ->options(HolidayTemplate::yearOptions())
-                        ->default((int) now()->year)
-                        ->searchable()
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $syncDatesFromFixedDayMonth($get, $set)),
-
-                    DatePicker::make('from_date')
-                        ->label('From Date (Gregorian)')
-                        ->default(now()->toDateString())
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $syncToDateFromCountDays($get, $set)),
-
-                    DatePicker::make('to_date')
-                        ->label('To Date (Gregorian)')
-                        ->default(now()->toDateString())
-                        ->required()
-                        ->afterOrEqual('from_date')
-                        ->live()
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $syncCountDaysFromDateRange($get, $set)),
+                        ->required(),
                 ]),
 
-            Fieldset::make('Settings & Branch Scope')
+            Fieldset::make('Status & Branch Scope')
                 ->columnSpanFull()
-                ->columns(3)
+                ->columns(2)
                 ->schema([
-                    Toggle::make('is_recurring')
-                        ->label('Recurring Yearly')
-                        ->inline(false)
-                        ->default(true),
-
                     Toggle::make('active')
                         ->label('Active')
                         ->inline(false)
