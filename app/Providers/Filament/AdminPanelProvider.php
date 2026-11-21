@@ -337,9 +337,9 @@ class AdminPanelProvider extends PanelProvider
                 //     ]),
             ])
 
-            // ->assets([
-            //     Css::make('main', '')
-            // ])
+            ->assets([
+                Css::make('main', public_path('css/app/main.css')),
+            ])
             ->spa()
             ->databaseNotifications()
             ->globalSearch()
