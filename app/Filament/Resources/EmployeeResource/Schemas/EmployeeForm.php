@@ -17,6 +17,8 @@ use App\Models\Position;
 use App\Models\User;
 use App\Models\UserType;
 use App\Modules\HR\Employee\Services\PassportValidationService;
+use App\Modules\HR\EmployeeDocuments\Support\DynamicFieldDateExtractor;
+use App\Modules\HR\EmployeeDocuments\Support\EmployeeFileTypeCatalog;
 use Carbon\Carbon;
 use Closure;
 use Filament\Forms\Components\DatePicker;
@@ -33,6 +35,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
@@ -378,90 +381,101 @@ class EmployeeForm
                         ->icon('heroicon-o-document-plus')
                         ->schema([
                             Repeater::make('files')
-                                ->relationship() // Define the relationship with the `files` table
+                                ->relationship()
                                 ->columns(2)
                                 ->defaultItems(0)
-                                ->table([
-                                    TableColumn::make(__('lang.file_type'))->width('16rem'),
-                                    TableColumn::make(__('lang.attachment'))->alignCenter()->width('16rem'),
-                                    TableColumn::make(__('lang.fields'))->alignCenter()->width('10rem'),
-                                ])
+                                ->collapsible()
+                                ->itemLabel(fn (array $state): ?string => app(EmployeeFileTypeCatalog::class)->find($state['file_type_id'] ?? null)['name'] ?? null)
                                 ->schema([
                                     Fieldset::make('File Details')->label(__('lang.file_details'))->columnSpanFull()->schema([
-                                        Grid::make()->columns(2)->columnSpanFull()->schema([
+                                        Grid::make()->columns(3)->columnSpanFull()->schema([
                                             Select::make('file_type_id')
                                                 ->label(__('lang.file_type'))
                                                 ->required()
-                                                ->options(
-                                                    EmployeeFileType::select('id', 'name')
-                                                        ->where('active', 1)
-                                                        ->get()
-                                                        ->pluck('name', 'id')
-                                                )
+                                                ->options(fn (): array => app(EmployeeFileTypeCatalog::class)->activeOptions())
+                                                ->getOptionLabelUsing(fn ($value): ?string => app(EmployeeFileTypeCatalog::class)->find($value)['name'] ?? null)
                                                 ->searchable()
-                                                ->reactive() // Makes the field reactive to changes
-                                                ->afterStateUpdated(function ($state, $get, $set) {
-                                                    if (is_numeric($state)) {
-                                                        $dynamicFields = EmployeeFileTypeField::where('file_type_id', $state)->get();
-                                                        $set('dynamic_fields', $dynamicFields->toArray());
-                                                    } else {
-                                                        $set('dynamic_fields', []);
+                                                ->live()
+                                                ->afterStateUpdated(function ($state, Set $set): void {
+                                                    if (! app(EmployeeFileTypeCatalog::class)->hasExpiry($state)) {
+                                                        $set('issue_date', null);
+                                                        $set('expiry_date', null);
                                                     }
-                                                }),
+                                                })
+                                                ->columnSpan(1),
 
                                             FileUpload::make('attachment')
                                                 ->label(__('lang.attach_file'))
                                                 ->downloadable()
                                                 ->previewable()
                                                 ->maxSize(20000)
-                                                // ->required()
                                                 ->imageEditor()
-                                                ->circleCropper(),
+                                                ->circleCropper()
+                                                ->columnSpan(1),
+
+                                            Toggle::make('active')
+                                                ->label(__('lang.active'))
+                                                ->default(true)
+                                                ->inline(false)
+                                                ->columnSpan(1),
+
+                                            DatePicker::make('issue_date')
+                                                ->label(__('lang.issue_date'))
+                                                ->live()
+                                                ->nullable()
+                                                ->visible(fn (Get $get): bool => app(EmployeeFileTypeCatalog::class)->hasExpiry($get('file_type_id')))
+                                                ->columnSpan(1),
+
+                                            DatePicker::make('expiry_date')
+                                                ->label(__('lang.expiry_date'))
+                                                ->visible(fn (Get $get): bool => app(EmployeeFileTypeCatalog::class)->hasExpiry($get('file_type_id')))
+                                                ->required(fn (Get $get): bool => app(EmployeeFileTypeCatalog::class)->hasExpiry($get('file_type_id')))
+                                                ->minDate(fn (Get $get) => $get('issue_date') ?: null)
+                                                ->rules([
+                                                    fn (Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get): void {
+                                                        $issueDate = $get('issue_date');
+                                                        if (! empty($issueDate) && ! empty($value) && $value < $issueDate) {
+                                                            $fail(__('lang.expiry_date_must_be_after_issue_date'));
+                                                        }
+                                                    },
+                                                ])
+                                                ->columnSpan(1),
                                         ]),
                                     ]),
 
-                                    Fieldset::make('Additional Fields')->label(__('lang.additional_fields'))->columnSpanFull()
-                                        ->schema(function (Get $get) {
-                                            // Fetch the dynamic fields for the current file_type_id
-                                            $fileTypeId = $get('file_type_id');
-                                            if (! $fileTypeId) {
+                                    Fieldset::make('Additional Fields')
+                                        ->label(__('lang.additional_fields'))
+                                        ->columnSpanFull()
+                                        ->visible(fn (Get $get): bool => static::resolveVisibleDynamicFields($get('file_type_id')) !== [])
+                                        ->schema(function (Get $get): array {
+                                            $dynamicFields = static::resolveVisibleDynamicFields($get('file_type_id'));
+
+                                            if ($dynamicFields === []) {
                                                 return [];
                                             }
 
-                                            $dynamicFields = EmployeeFileTypeField::where('file_type_id', $fileTypeId)->get();
+                                            return array_values(array_filter(array_map(static function (array $field) {
+                                                $name = $field['field_name'];
+                                                $label = ucfirst(str_replace('_', ' ', $name));
 
-                                            // Map the fields dynamically
-                                            return $dynamicFields->map(function ($field) {
-                                                return match ($field->field_type) {
-                                                    'text' => TextInput::make("dynamic_field_values.{$field->field_name}")
-                                                        ->label(ucfirst(str_replace('_', ' ', $field->field_name)))
+                                                return match ($field['field_type']) {
+                                                    'text' => TextInput::make("dynamic_field_values.{$name}")
+                                                        ->label($label)
                                                         ->required(),
-                                                    'number' => TextInput::make("dynamic_field_values.{$field->field_name}")
-                                                        ->label(ucfirst(str_replace('_', ' ', $field->field_name)))
+                                                    'number' => TextInput::make("dynamic_field_values.{$name}")
+                                                        ->label($label)
                                                         ->numeric()
                                                         ->required(),
-                                                    'date' => DatePicker::make("dynamic_field_values.{$field->field_name}")
-                                                        ->label(ucfirst(str_replace('_', ' ', $field->field_name)))
+                                                    'date' => DatePicker::make("dynamic_field_values.{$name}")
+                                                        ->label($label)
                                                         ->required(),
                                                     default => null,
                                                 };
-                                            })->filter()->toArray();
+                                            }, $dynamicFields)));
                                         }),
                                 ])
-                                ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
-
-                                    // dd($data['dynamic_field_values']);
-                                    foreach ($data as &$file) {
-                                        if (isset($file['dynamic_field_values'])) {
-                                            $file['dynamic_field_values'] = json_encode($file['dynamic_field_values']);
-                                        }
-                                    }
-                                    // dd($file);
-                                    $data['dynamic_field_values'] = $file;
-
-                                    //  dd($data);
-                                    return $data;
-                                }),
+                                ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => static::sanitizeEmployeeFileData($data))
+                                ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => static::sanitizeEmployeeFileData($data)),
 
                         ]),
 
@@ -804,5 +818,54 @@ class EmployeeForm
     public static function formatTitleCase(?string $state): string
     {
         return Str::title(preg_replace('/\s+/u', ' ', trim((string) $state)));
+    }
+
+    /**
+     * Returns dynamic fields to display for the selected file type.
+     * When has_expiry is enabled, hides redundant legacy issue/expiry date fields
+     * from the form without deleting them or wiping stored dynamic_field_values.
+     *
+     * @return array<int, array{id: int, field_name: string, field_type: string}>
+     */
+    protected static function resolveVisibleDynamicFields(int|string|null $fileTypeId): array
+    {
+        $catalog = app(EmployeeFileTypeCatalog::class);
+        $fields = $catalog->dynamicFields($fileTypeId);
+
+        if ($fields === [] || ! $catalog->hasExpiry($fileTypeId)) {
+            return $fields;
+        }
+
+        $extractor = app(DynamicFieldDateExtractor::class);
+
+        return array_values(array_filter(
+            $fields,
+            static fn (array $field): bool => ! (
+                ($field['field_type'] ?? null) === 'date'
+                && $extractor->isMappedDateKey((string) ($field['field_name'] ?? ''))
+            )
+        ));
+    }
+
+    /**
+     * Server-side sanitization for employee file repeater rows.
+     * Clears issue_date and expiry_date when the selected file type has no expiry,
+     * and preserves dynamic_field_values cleanly for SafeJsonArrayCast.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected static function sanitizeEmployeeFileData(array $data): array
+    {
+        if (! app(EmployeeFileTypeCatalog::class)->hasExpiry($data['file_type_id'] ?? null)) {
+            $data['issue_date'] = null;
+            $data['expiry_date'] = null;
+        }
+
+        if (! array_key_exists('active', $data) || $data['active'] === null) {
+            $data['active'] = true;
+        }
+
+        return $data;
     }
 }

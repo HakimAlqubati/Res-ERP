@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeJsonArrayCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -13,14 +14,19 @@ class EmployeeFile extends Model implements Auditable
     protected $table = 'hr_employee_files';
 
     protected $casts = [
-        'dynamic_field_values' => 'array', // Automatically decode JSON to array
+        'active' => 'boolean',
+        'issue_date' => 'date',
+        'expiry_date' => 'date',
+        'dynamic_field_values' => SafeJsonArrayCast::class,
     ];
-    
+
     // Define the fillable fields
     protected $fillable = [
         'employee_id',
         'file_type_id',
         'attachment',
+        'issue_date',
+        'expiry_date',
         'active',
         'description',
         'dynamic_field_values',
@@ -29,6 +35,8 @@ class EmployeeFile extends Model implements Auditable
         'employee_id',
         'file_type_id',
         'attachment',
+        'issue_date',
+        'expiry_date',
         'active',
         'description',
         'dynamic_field_values',

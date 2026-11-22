@@ -6,6 +6,8 @@ use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\RelationshipRepeater;
 use Filament\Actions\EditAction;
 use Filament\Actions\BulkActionGroup;
@@ -23,8 +25,10 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -48,7 +52,30 @@ class EmployeeFileTypeResource extends Resource
                         TextInput::make('name')->required()->columnSpan(1),
                         Toggle::make('active')->default(1)->columnSpan(1)->inline(false),
                         Toggle::make('is_required')->label('Is required for employee?')->default(0)->columnSpan(1)->inline(false),
-
+                        Toggle::make('has_expiry')
+                            ->label(__('lang.has_expiry'))
+                            ->default(false)
+                            ->inline(false)
+                            ->live()
+                            ->afterStateUpdated(function (bool $state, Set $set): void {
+                                if (! $state) {
+                                    $set('expiry_alert_days', null);
+                                } else {
+                                    $set('expiry_alert_days', 30);
+                                }
+                            })
+                            ->columnSpan(1),
+                        TextInput::make('expiry_alert_days')
+                            ->label(__('lang.expiry_alert_days'))
+                            ->helperText(__('lang.expiry_alert_days_helper'))
+                            ->numeric()
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(365)
+                            ->default(30)
+                            ->visible(fn (Get $get): bool => (bool) $get('has_expiry'))
+                            ->required(fn (Get $get): bool => (bool) $get('has_expiry'))
+                            ->columnSpan(2),
                     ]),
                     Textarea::make('description')->columnSpanFull(),
                 ]),
@@ -86,9 +113,20 @@ class EmployeeFileTypeResource extends Resource
                 TextColumn::make('description')->searchable(),
                 ToggleColumn::make('active')->disabled()->searchable()->sortable(),
                 ToggleColumn::make('is_required')->disabled()->searchable()->sortable(),
+                IconColumn::make('has_expiry')
+                    ->label(__('lang.has_expiry'))
+                    ->boolean()
+                    ->alignCenter()
+                    ->sortable(),
+                TextColumn::make('expiry_alert_days')
+                    ->label(__('lang.expiry_alert_days'))
+                    ->alignCenter()
+                    ->sortable()
+                    ->formatStateUsing(fn ($state, EmployeeFileType $record): string => $record->has_expiry ? (string) ($state ?? 30) : '-'),
             ])
             ->filters([
-                //
+                TernaryFilter::make('has_expiry')
+                    ->label(__('lang.has_expiry')),
             ])
             ->recordActions([
                 EditAction::make(),

@@ -19,12 +19,23 @@ class EmployeeFileType extends Model implements Auditable
         'description',
         'active',
         'is_required',
+        'has_expiry',
+        'expiry_alert_days',
     ];
     protected $auditInclude = [
         'name',
         'description',
         'active',
         'is_required',
+        'has_expiry',
+        'expiry_alert_days',
+    ];
+
+    protected $casts = [
+        'active' => 'boolean',
+        'is_required' => 'boolean',
+        'has_expiry' => 'boolean',
+        'expiry_alert_days' => 'integer',
     ];
 
     // Static method to get counts
@@ -42,5 +53,10 @@ class EmployeeFileType extends Model implements Auditable
     public function dynamicFields()
     {
         return $this->hasMany(EmployeeFileTypeField::class, 'file_type_id');
+    }
+
+    public function files()
+    {
+        return $this->hasMany(EmployeeFile::class, 'file_type_id');
     }
 }
