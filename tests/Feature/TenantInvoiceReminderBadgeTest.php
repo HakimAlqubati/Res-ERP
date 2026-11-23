@@ -177,7 +177,7 @@ class TenantInvoiceReminderBadgeTest extends TestCase
 
         $html = $this->renderTopbarHook();
 
-        $this->assertStringContainsString('invoice-warn-badge--warning', $html);
+        $this->assertStringContainsString('invoice-warn-badge--danger', $html);
         $this->assertStringContainsString('data-days="6"', $html);
         $this->assertStringContainsString('Days Left', $html);
         $this->assertStringContainsString($selected->invoice_number, $html);
