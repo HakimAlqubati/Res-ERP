@@ -11,6 +11,8 @@ class CentralDashboard extends BaseDashboard
 
     protected static ?string $navigationLabel = 'Dashboard';
 
+    protected static ?int $navigationSort = 1;
+
     public function getWidgets(): array
     {
         return [

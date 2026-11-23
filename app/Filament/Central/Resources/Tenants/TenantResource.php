@@ -39,7 +39,9 @@ class TenantResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::BuildingOffice2;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Tenants Management';
+    protected static string | UnitEnum | null $navigationGroup = null;
+
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'name';
 
