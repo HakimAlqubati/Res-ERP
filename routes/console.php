@@ -1,6 +1,5 @@
 <?php
 
-use App\Filament\Resources\TenantResource;
 use App\Jobs\TestJob;
 use App\Mail\GeneralNotificationMail;
 use App\Models\CustomTenantModel;

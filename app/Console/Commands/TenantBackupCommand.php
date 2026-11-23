@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Filament\Resources\TenantResource;
 use App\Models\AppLog;
 use App\Models\CustomTenantModel;
+use App\Services\Tenancy\TenantBackupService;
 use Illuminate\Console\Command;
 
 class TenantBackupCommand extends Command
@@ -26,14 +26,14 @@ class TenantBackupCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(TenantBackupService $backupService): int
     {
         AppLog::write('tenant:backup started at ' . now());
         $tenants = CustomTenantModel::forDailyBackup()->get();
 
         foreach ($tenants as $tenant) {
             try {
-                TenantResource::generateTenantBackup($tenant);
+                $backupService->backupToGoogleDrive($tenant);
                 AppLog::write("Backup successful for tenant: {$tenant->name}");
             } catch (\Throwable $e) {
                 AppLog::write("Backup failed for tenant: {$tenant->name}. Error: " . $e->getMessage(), AppLog::LEVEL_ERROR);
