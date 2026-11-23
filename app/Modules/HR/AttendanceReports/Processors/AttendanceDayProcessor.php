@@ -66,6 +66,15 @@ class AttendanceDayProcessor
             $flatDayAttendances = $flatDayAttendances->merge($atts);
         }
 
+        // Pre-loop resolution of day overtimes to their respective periods to avoid double-counting
+        // and prevent an earlier non-overtime shift from stealing an unassigned legacy/general overtime record.
+        $periodOvertimesMap = $this->mapDayOvertimesToPeriods(
+            $dayOvertimes,
+            $dayHistories,
+            $dayAttendances,
+            $workPeriodMap
+        );
+
         foreach ($dayHistories->values() as $history) {
             $periodId = $history->period_id;
             $workPeriod = $workPeriodMap->get($periodId);
@@ -84,7 +93,8 @@ class AttendanceDayProcessor
             $checkInCol = $periodRecords->where('check_type', Attendance::CHECKTYPE_CHECKIN)->values();
             $checkOutCol = $periodRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->values();
 
-            $approvedOvertime = $this->overtimeCalculator->calcApprovedOvertimeFromMemory($periodRecords, $workPeriod, $dayOvertimes);
+            $periodOvertimes = $periodOvertimesMap->get($periodId) ?? collect();
+            $approvedOvertime = $this->overtimeCalculator->calcApprovedOvertimeFromMemory($periodRecords, $workPeriod, $periodOvertimes);
 
             $lastCheckoutResource = null;
             if ($checkOutCol->isNotEmpty()) {
@@ -193,5 +203,155 @@ class AttendanceDayProcessor
             'leave_type' => $leave->transaction_description,
             'leave_type_id' => $leave->leave_type,
         ];
+    }
+
+    /**
+     * Pre-loop allocation of approved day overtimes to their respective periods.
+     *
+     * - Records with explicit `period_id` map directly to that period.
+     * - Records with `period_id = null` are evaluated across ALL periods of the day in strict priority order:
+     *   1. Virtual No-Shift period (`VIRTUAL_PERIOD_ID = -1`) if start_time matches its check-in or it is the only period.
+     *   2. Regular period whose check-in matches `start_time` (HH:MM).
+     *   3. Regular period where actual worked hours exceed supposed shift hours (`actualHours > supposedHours`).
+     *   4. First regular period where the employee actually attended (`$periodRecords->isNotEmpty()`).
+     *   5. Virtual No-Shift period if present.
+     */
+    private function mapDayOvertimesToPeriods(
+        Collection $dayOvertimes,
+        Collection $dayHistories,
+        Collection $dayAttendances,
+        Collection $workPeriodMap
+    ): Collection {
+        $mapped = collect();
+
+        if ($dayOvertimes->isEmpty()) {
+            return $mapped;
+        }
+
+        $unassigned = collect();
+
+        foreach ($dayOvertimes as $ot) {
+            if ($ot->period_id !== null) {
+                $pid = (int) $ot->period_id;
+                if (! $mapped->has($pid)) {
+                    $mapped->put($pid, collect());
+                }
+                $mapped->get($pid)->push($ot);
+            } else {
+                $unassigned->push($ot);
+            }
+        }
+
+        if ($unassigned->isEmpty()) {
+            return $mapped;
+        }
+
+        $virtualId = VirtualPeriodInjector::VIRTUAL_PERIOD_ID;
+        $hasVirtualPeriod = $dayAttendances->has($virtualId);
+        $periodIds = $dayHistories->pluck('period_id')->unique()->values();
+
+        // Pre-calculate actual and supposed hours for each period in the day for priority evaluation
+        $periodMetrics = [];
+        foreach ($periodIds as $pid) {
+            $workPeriod = $workPeriodMap->get($pid);
+            if (! $workPeriod) {
+                continue;
+            }
+            $records = ($dayAttendances->get($pid) ?? collect())->sortBy('id')->values();
+            $totalMinutes = 0;
+
+            for ($i = 0; $i < $records->count(); $i++) {
+                $current = $records[$i];
+                if ($current->check_type !== Attendance::CHECKTYPE_CHECKIN) {
+                    continue;
+                }
+                $next = $records[$i + 1] ?? null;
+                if ($next && $next->check_type === Attendance::CHECKTYPE_CHECKOUT) {
+                    $in = Carbon::parse("{$current->check_date} {$current->check_time}");
+                    $out = Carbon::parse("{$next->check_date} {$next->check_time}");
+                    if ($out->lt($in)) {
+                        $out->addDay();
+                    }
+                    $totalMinutes += $in->diffInMinutes($out);
+                    $i++;
+                }
+            }
+
+            $actualHours = $totalMinutes / 60;
+            $supposedHours = $this->durationCalculator->getSupposedDurationHours($workPeriod);
+
+            $periodMetrics[$pid] = [
+                'records' => $records,
+                'actual_hours' => $actualHours,
+                'supposed_hours' => $supposedHours,
+                'exceeded' => $actualHours > $supposedHours,
+                'attended' => $records->isNotEmpty() && $actualHours > 0,
+            ];
+        }
+
+        foreach ($unassigned as $ot) {
+            $targetPid = null;
+            $otHm = ! empty($ot->start_time) ? substr((string) $ot->start_time, 0, 5) : null;
+
+            // Priority 1 & 2: Match by start_time (HH:MM) against check-in records across all periods (including virtual -1)
+            if ($otHm !== null) {
+                foreach ($periodMetrics as $pid => $metric) {
+                    $hasMatchingIn = $metric['records']
+                        ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                        ->contains(fn ($a) => substr((string) $a->check_time, 0, 5) === $otHm);
+                    if ($hasMatchingIn) {
+                        $targetPid = $pid;
+                        break;
+                    }
+                }
+            }
+
+            // If virtual No-Shift is the only period in the day
+            if ($targetPid === null && $hasVirtualPeriod && $periodIds->count() === 1 && (int) $periodIds->first() === $virtualId) {
+                $targetPid = $virtualId;
+            }
+
+            // Priority 3: Period where employee actually exceeded supposed shift hours (preferring one without assigned overtime yet)
+            if ($targetPid === null) {
+                foreach ($periodMetrics as $pid => $metric) {
+                    if ($pid !== $virtualId && $metric['exceeded'] && (! $mapped->has($pid) || $mapped->get($pid)->isEmpty())) {
+                        $targetPid = $pid;
+                        break;
+                    }
+                }
+            }
+            if ($targetPid === null) {
+                foreach ($periodMetrics as $pid => $metric) {
+                    if ($pid !== $virtualId && $metric['exceeded']) {
+                        $targetPid = $pid;
+                        break;
+                    }
+                }
+            }
+
+            // Priority 4: First period where employee actually attended (actualHours > 0)
+            if ($targetPid === null) {
+                foreach ($periodMetrics as $pid => $metric) {
+                    if ($pid !== $virtualId && $metric['attended']) {
+                        $targetPid = $pid;
+                        break;
+                    }
+                }
+            }
+
+            // Priority 5: Virtual No-Shift period if present
+            if ($targetPid === null && $hasVirtualPeriod) {
+                $targetPid = $virtualId;
+            }
+
+            if ($targetPid !== null) {
+                if (! $mapped->has($targetPid)) {
+                    $mapped->put($targetPid, collect());
+                }
+                $mapped->get($targetPid)->push($ot);
+            }
+        }
+
+        return $mapped;
     }
 }

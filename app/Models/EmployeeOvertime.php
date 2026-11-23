@@ -37,6 +37,7 @@ class EmployeeOvertime extends Model implements Auditable
     protected $fillable = [
         'employee_id',
         'date',
+        'period_id',
         'start_time',
         'end_time',
         'hours',
@@ -56,6 +57,7 @@ class EmployeeOvertime extends Model implements Auditable
     protected $auditInclude = [
         'employee_id',
         'date',
+        'period_id',
         'start_time',
         'end_time',
         'hours',
@@ -97,6 +99,144 @@ class EmployeeOvertime extends Model implements Auditable
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function workPeriod()
+    {
+        return $this->belongsTo(WorkPeriod::class, 'period_id');
+    }
+
+    /**
+     * Intelligently resolve period_id for a daily/hourly overtime entry when not explicitly provided.
+     * Supports 24h circular distance for cross-midnight shifts and preserves null for NO_SHIFT attendances.
+     */
+    public static function resolvePeriodId(int $employeeId, string $date, ?string $startTime = null): ?int
+    {
+        if ($employeeId <= 0 || empty($date)) {
+            return null;
+        }
+
+        $dateStr = substr(trim($date), 0, 10);
+
+        $timeToMinutes = static function (?string $timeStr): ?int {
+            if (empty($timeStr)) {
+                return null;
+            }
+            $parts = explode(':', trim($timeStr));
+            if (count($parts) < 2) {
+                return null;
+            }
+            return ((int) $parts[0] * 60) + (int) $parts[1];
+        };
+
+        $circularDistance = static function (int $m1, int $m2): int {
+            $diff = abs($m1 - $m2);
+            return min($diff, 1440 - $diff);
+        };
+
+        $attendances = Attendance::query()
+            ->where('employee_id', $employeeId)
+            ->where('check_date', $dateStr)
+            ->where('accepted', 1)
+            ->whereNull('deleted_at')
+            ->orderBy('id', 'asc')
+            ->get(['id', 'period_id', 'check_time', 'check_type', 'status']);
+
+        $checkIns = $attendances->where('check_type', Attendance::CHECKTYPE_CHECKIN)->values();
+        $noShiftValue = \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value;
+
+        if (! empty($startTime)) {
+            $targetHm = substr(trim($startTime), 0, 5);
+            $targetMinutes = $timeToMinutes($startTime);
+
+            if ($checkIns->isNotEmpty()) {
+                // 1. Exact HH:MM match on check-in
+                $exact = $checkIns->first(fn ($att) => substr((string) $att->check_time, 0, 5) === $targetHm);
+                if ($exact) {
+                    if ($exact->period_id === null || $exact->status === $noShiftValue) {
+                        return null;
+                    }
+                    return (int) $exact->period_id;
+                }
+
+                // 2. Closest check-in by circular 24-hour time distance
+                if ($targetMinutes !== null) {
+                    $closest = $checkIns->sortBy(function ($att) use ($timeToMinutes, $circularDistance, $targetMinutes) {
+                        $attMin = $timeToMinutes($att->check_time);
+                        return $attMin !== null ? $circularDistance($attMin, $targetMinutes) : 9999;
+                    })->first();
+
+                    if ($closest) {
+                        if ($closest->period_id === null || $closest->status === $noShiftValue) {
+                            return null;
+                        }
+                        return (int) $closest->period_id;
+                    }
+                }
+            }
+
+            // 3. Fallback to employee's active period histories on that date if no check-in records exist
+            if ($targetMinutes !== null) {
+                $histories = EmployeePeriodHistory::query()
+                    ->with('workPeriod:id,start_at')
+                    ->where('employee_id', $employeeId)
+                    ->where('active', 1)
+                    ->where(function ($q) use ($dateStr) {
+                        $q->whereNull('start_date')->orWhere('start_date', '<=', $dateStr);
+                    })
+                    ->where(function ($q) use ($dateStr) {
+                        $q->whereNull('end_date')->orWhere('end_date', '>=', $dateStr);
+                    })
+                    ->get()
+                    ->unique('period_id')
+                    ->values();
+
+                if ($histories->isNotEmpty()) {
+                    $bestHistory = $histories->sortBy(function ($h) use ($timeToMinutes, $circularDistance, $targetMinutes) {
+                        $pStart = $h->start_time ?? $h->workPeriod?->start_at;
+                        $pMin = $timeToMinutes($pStart);
+                        return $pMin !== null ? $circularDistance($pMin, $targetMinutes) : 9999;
+                    })->first();
+
+                    return $bestHistory ? (int) $bestHistory->period_id : null;
+                }
+            }
+
+            return null;
+        }
+
+        // 4. When start_time is empty (e.g. BatchQuickAdd): resolve only if employee has a single unambiguous shift
+        if ($attendances->isNotEmpty()) {
+            $hasNoShift = $attendances->contains(fn ($a) => $a->period_id === null || $a->status === $noShiftValue);
+            if ($hasNoShift) {
+                return null;
+            }
+            $distinctPeriods = $attendances->pluck('period_id')->filter()->unique()->values();
+            if ($distinctPeriods->count() === 1) {
+                return (int) $distinctPeriods->first();
+            }
+            return null;
+        }
+
+        $distinctAssignedPeriods = EmployeePeriodHistory::query()
+            ->where('employee_id', $employeeId)
+            ->where('active', 1)
+            ->where(function ($q) use ($dateStr) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', $dateStr);
+            })
+            ->where(function ($q) use ($dateStr) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $dateStr);
+            })
+            ->pluck('period_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($distinctAssignedPeriods->count() === 1) {
+            return (int) $distinctAssignedPeriods->first();
+        }
+
+        return null;
     }
 
     // Relationship with the User model (for approval)

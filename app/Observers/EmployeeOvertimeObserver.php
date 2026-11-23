@@ -3,10 +3,12 @@
 namespace App\Observers;
 
 use App\Exceptions\HR\PayrollConflictException;
+use App\Models\Attendance;
 use App\Models\EmployeeOvertime;
 use App\Models\Payroll;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Observer for EmployeeOvertime model.
@@ -23,12 +25,31 @@ class EmployeeOvertimeObserver
     ) {}
 
     /**
-     * Prevent creating overtime records if the payroll month is locked.
+     * Prevent creating overtime records if the payroll month is locked,
+     * auto-resolve period_id when applicable, and prevent duplicate shift overtime.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function creating(EmployeeOvertime $employeeOvertime): void
     {
+        if (empty($employeeOvertime->type)) {
+            $employeeOvertime->type = EmployeeOvertime::TYPE_BASED_ON_DAY;
+        }
+
+        if ($employeeOvertime->type === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+            $employeeOvertime->period_id = null;
+        } elseif (
+            empty($employeeOvertime->period_id)
+            && ! empty($employeeOvertime->employee_id)
+            && ! empty($employeeOvertime->date)
+        ) {
+            $employeeOvertime->period_id = EmployeeOvertime::resolvePeriodId(
+                (int) $employeeOvertime->employee_id,
+                (string) $employeeOvertime->date,
+                $employeeOvertime->start_time
+            );
+        }
+
         if (empty($employeeOvertime->date)) {
             return;
         }
@@ -41,6 +62,8 @@ class EmployeeOvertimeObserver
             $date->month,
             'date'
         );
+
+        $this->ensureNoDuplicateOvertime($employeeOvertime);
     }
 
 
@@ -123,6 +146,14 @@ class EmployeeOvertimeObserver
         ) {
             $this->ensureNoConflictWithPayroll($employeeOvertime);
         }
+
+        if ($employeeOvertime->type === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+            $employeeOvertime->period_id = null;
+        }
+
+        if ($employeeOvertime->isDirty(['employee_id', 'date', 'type', 'period_id'])) {
+            $this->ensureNoDuplicateOvertime($employeeOvertime);
+        }
     }
 
     /**
@@ -175,6 +206,102 @@ class EmployeeOvertimeObserver
     }
 
     /**
+     * Prevent duplicate active overtime entries for the same employee, date, type, and shift (period_id).
+     *
+     * Rules:
+     * - TYPE_BASED_ON_MONTH (full-day overtime): at most 1 active record per employee per date.
+     * - TYPE_BASED_ON_DAY (hourly/shift overtime): at most 1 active record per employee, date, and period_id.
+     *   If period_id is NULL and employee has no NO_SHIFT attendance on that date, it acts as a general
+     *   whole-day manual entry and conflicts with any based_on_day entry on that date.
+     *
+     * @throws ValidationException
+     */
+    private function ensureNoDuplicateOvertime(EmployeeOvertime $employeeOvertime): void
+    {
+        if (empty($employeeOvertime->employee_id) || empty($employeeOvertime->date)) {
+            return;
+        }
+
+        $dateStr = Carbon::parse($employeeOvertime->date)->toDateString();
+        $type = $employeeOvertime->type ?: EmployeeOvertime::TYPE_BASED_ON_DAY;
+
+        $baseQuery = EmployeeOvertime::query()
+            ->where('employee_id', $employeeOvertime->employee_id)
+            ->whereDate('date', $dateStr)
+            ->where('type', $type);
+
+        if ($employeeOvertime->exists && $employeeOvertime->id) {
+            $baseQuery->where('id', '!=', $employeeOvertime->id);
+        }
+
+        if ($type === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+            if ($baseQuery->exists()) {
+                throw ValidationException::withMessages([
+                    'date' => "Overtime record already exists for employee #{$employeeOvertime->employee_id} on {$dateStr}.",
+                ]);
+            }
+            return;
+        }
+
+        $noShiftValue = \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value;
+        $hasNoShiftAttendance = Attendance::query()
+            ->where('employee_id', $employeeOvertime->employee_id)
+            ->where('check_date', $dateStr)
+            ->where('accepted', 1)
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($noShiftValue) {
+                $q->whereNull('period_id')
+                    ->orWhere('status', $noShiftValue);
+            })
+            ->exists();
+
+        if ($employeeOvertime->period_id !== null) {
+            $periodId = (int) $employeeOvertime->period_id;
+
+            $conflict = $baseQuery->where(function ($q) use ($periodId, $hasNoShiftAttendance) {
+                $q->where('period_id', $periodId);
+                if (! $hasNoShiftAttendance) {
+                    $q->orWhereNull('period_id');
+                }
+            })->exists();
+        } else {
+            if ($hasNoShiftAttendance) {
+                $conflict = $baseQuery->whereNull('period_id')->exists();
+            } else {
+                $conflict = $baseQuery->exists();
+            }
+        }
+
+        if ($conflict) {
+            throw ValidationException::withMessages([
+                'date' => "Overtime record already exists for employee #{$employeeOvertime->employee_id} on {$dateStr} for this shift.",
+            ]);
+        }
+    }
+
+    /**
+     * Prevent restoring a soft-deleted overtime record if the payroll period is locked
+     * or if an active duplicate record already exists for the same shift.
+     *
+     * @throws ValidationException
+     */
+    public function restoring(EmployeeOvertime $employeeOvertime): void
+    {
+        if (! empty($employeeOvertime->date)) {
+            $date = Carbon::parse($employeeOvertime->date);
+
+            $this->payrollLockGuard->checkLock(
+                (int) $employeeOvertime->employee_id,
+                $date->year,
+                $date->month,
+                'date'
+            );
+        }
+
+        $this->ensureNoDuplicateOvertime($employeeOvertime);
+    }
+
+    /**
      * Handle the EmployeeOvertime "created" event.
      */
     public function created(EmployeeOvertime $employeeOvertime): void
@@ -211,7 +338,7 @@ class EmployeeOvertimeObserver
      */
     public function restored(EmployeeOvertime $employeeOvertime): void
     {
-        //
+        clearEmployeeDailyAttendanceCache($employeeOvertime->employee_id, $employeeOvertime->date);
     }
 
     /**

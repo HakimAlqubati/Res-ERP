@@ -25,8 +25,8 @@ class AttendanceOvertimeCalculator
 
 
         // 4. اجلب الأوفر تايم المعتمد لليوم والفترة
-        $approvedOvertimeDB = $employee->overtimesByDate($date) // احذف هذا السطر إذا ما عندك period_id بجدول الاوفر تايم
-            ->sum('hours');                                         // تأكد أن الساعات مخزنة كـ float
+        $approvedOvertimeDB = $employee->overtimesByDate($date, $period['period_id'] ?? null)
+            ->sum('hours');
 
         if ($date == "2026-03-25") {
             // dd($approvedOvertimeDB, $date);

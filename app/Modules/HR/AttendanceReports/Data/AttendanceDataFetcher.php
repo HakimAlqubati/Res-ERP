@@ -76,7 +76,7 @@ class AttendanceDataFetcher
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->day()
             ->where('date', $dateStr)
-            ->select('employee_id', 'hours', 'date')
+            ->select('id', 'employee_id', 'period_id', 'start_time', 'hours', 'date')
             ->get()
             ->groupBy('employee_id');
 
@@ -150,7 +150,7 @@ class AttendanceDataFetcher
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->day()
             ->whereBetween('date', [$startDateStr, $endDateStr])
-            ->select('hours', 'date')
+            ->select('id', 'employee_id', 'period_id', 'start_time', 'hours', 'date')
             ->get()
             ->groupBy('date');
 
@@ -231,7 +231,7 @@ class AttendanceDataFetcher
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->day()
             ->whereBetween('date', [$startDateStr, $endDateStr])
-            ->select('employee_id', 'hours', 'date')
+            ->select('id', 'employee_id', 'period_id', 'start_time', 'hours', 'date')
             ->get()
             ->groupBy(['employee_id', 'date']);
 

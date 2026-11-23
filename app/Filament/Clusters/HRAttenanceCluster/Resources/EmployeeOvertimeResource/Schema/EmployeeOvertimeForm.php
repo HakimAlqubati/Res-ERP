@@ -57,13 +57,15 @@ class EmployeeOvertimeForm
 
                                             // Only add to the results if there are overtime records
                                             if (! empty($overtimeResults)) {
-                                                $employeesWithOvertime[] = [
-                                                    'employee_id'      => $employee->id,
-                                                    'overtime_details' => $overtimeResults,
-                                                    'overtime_hours'   => $overtimeResults[0]['overtime_hours'],
-                                                    'start_time'       => $overtimeResults[0]['overtime_start_time'],
-                                                    'end_time'         => $overtimeResults[0]['overtime_end_time'],
-                                                ];
+                                                foreach ($overtimeResults as $periodOvertime) {
+                                                    $employeesWithOvertime[] = [
+                                                        'employee_id'    => $employee->id,
+                                                        'period_id'      => $periodOvertime['period_id'] ?? null,
+                                                        'overtime_hours' => $periodOvertime['overtime_hours'],
+                                                        'start_time'     => $periodOvertime['overtime_start_time'],
+                                                        'end_time'       => $periodOvertime['overtime_end_time'],
+                                                    ];
+                                                }
                                             }
                                         }
                                     }
@@ -72,12 +74,10 @@ class EmployeeOvertimeForm
                                     $set('employees', array_map(function ($employee) {
                                         return [
                                             'employee_id' => $employee['employee_id'],
-
+                                            'period_id'   => $employee['period_id'],
                                             'start_time'  => $employee['start_time'],
                                             'end_time'    => $employee['end_time'],
-
                                             'notes'       => null,
-                                            // 'hours' => 55,
                                             'hours'       => $employee['overtime_hours'],
                                         ];
                                     }, $employeesWithOvertime));
@@ -109,15 +109,15 @@ class EmployeeOvertimeForm
 
                                             // Only add to the results if there are overtime records
                                             if (! empty($overtimeResults)) {
-                                                $employeesWithOvertime[] = [
-                                                    'employee_id'      => $employee->id,
-                                                    'overtime_details' => $overtimeResults,
-                                                    'overtime_hours'   => $overtimeResults[0]['overtime_hours'],
-                                                    // 'start_time' => $overtimeResults[0]['overtime_start_time'],
-                                                    // 'end_time' => $overtimeResults[0]['overtime_end_time'],
-                                                    'start_time'       => $overtimeResults[0]['check_in_time'],
-                                                    'end_time'         => $overtimeResults[0]['check_out_time'],
-                                                ];
+                                                foreach ($overtimeResults as $periodOvertime) {
+                                                    $employeesWithOvertime[] = [
+                                                        'employee_id'    => $employee->id,
+                                                        'period_id'      => $periodOvertime['period_id'] ?? null,
+                                                        'overtime_hours' => $periodOvertime['overtime_hours'],
+                                                        'start_time'     => $periodOvertime['overtime_start_time'],
+                                                        'end_time'       => $periodOvertime['overtime_end_time'],
+                                                    ];
+                                                }
                                             }
                                         }
                                     }
@@ -126,10 +126,9 @@ class EmployeeOvertimeForm
                                     $set('employees', array_map(function ($employee) {
                                         return [
                                             'employee_id' => $employee['employee_id'],
-
+                                            'period_id'   => $employee['period_id'],
                                             'start_time'  => $employee['start_time'],
                                             'end_time'    => $employee['end_time'],
-
                                             'notes'       => null,
                                             'hours'       => $employee['overtime_hours'],
                                         ];
@@ -219,21 +218,29 @@ class EmployeeOvertimeForm
                         ->schema(
 
                             [
-                                Grid::make()->columns(4)->schema([
+                                Grid::make()->columns(5)->schema([
                                     Select::make('employee_id')->live()
                                         ->unique(
                                             ignoreRecord: true,
                                             modifyRuleUsing: function (Unique $rule, Get $get, $state) {
                                                 return $rule->where('employee_id', $state)
                                                     ->where('date', $get('../../date'))
-                                                ;
+                                                    ->where('type', EmployeeOvertime::TYPE_BASED_ON_DAY)
+                                                    ->where('period_id', $get('period_id'))
+                                                    ->whereNull('deleted_at');
                                             }
                                         )
                                         ->relationship('employee', 'name')
                                         ->validationMessages([
-                                            'unique' => 'This overtime has been recorded',
+                                            'unique' => 'This overtime has been recorded for this shift',
                                         ])
                                         ->required(),
+                                    Select::make('period_id')
+                                        ->label('Shift')
+                                        ->options(fn () => \App\Models\WorkPeriod::pluck('name', 'id'))
+                                        ->disabled()
+                                        ->dehydrated()
+                                        ->placeholder('No Shift'),
                                     TimePicker::make('start_time')->disabled()
                                         ->dehydrated()
                                         ->label('Checkin')

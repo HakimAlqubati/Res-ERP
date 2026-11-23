@@ -63,43 +63,64 @@ trait EmployeeAttendanceTrait
 
     public function calculateEmployeeOvertime($employee, $date)
     {
-        $employeePeriods = $employee ? $employee->periodHistoriesOnDate($date) : collect();
-
-        if ($employee === null || $employeePeriods->isEmpty()) {
+        if ($employee === null || empty($date)) {
             return [];
         }
 
-        // Skip calculation if employee already has an approved overtime for this date
-        $hasApprovedOvertime = EmployeeOvertime::where('employee_id', $employee->id)
-            ->where('date', $date)
-            ->where('status', EmployeeOvertime::STATUS_APPROVED)
-            ->exists();
+        $dateStr = $date instanceof Carbon ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        $employeePeriods = $employee->periodHistoriesOnDate($dateStr);
 
-        if ($hasApprovedOvertime) {
+        // Fetch all active (non-deleted) daily overtime records for this date (pending, approved, rejected)
+        $existingOvertimes = EmployeeOvertime::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('date', $dateStr)
+            ->where('type', EmployeeOvertime::TYPE_BASED_ON_DAY)
+            ->get(['id', 'period_id', 'start_time', 'status']);
+
+        $dayAttendances = $this->attendances()
+            ->where('employee_id', $employee->id)
+            ->where('check_date', $dateStr)
+            ->accepted()
+            ->orderBy('id')
+            ->get();
+
+        $noShiftValue = \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value;
+        $noShiftAttendances = $dayAttendances->filter(
+            fn ($a) => $a->status === $noShiftValue || $a->period_id === null
+        )->values();
+        $hasNoShift = $noShiftAttendances->count() >= 2;
+
+        // If a general whole-day overtime record (period_id = null) exists and there is no NO_SHIFT attendance, skip day
+        if ($existingOvertimes->contains(fn ($ot) => $ot->period_id === null) && ! $hasNoShift) {
             return [];
         }
+
+        $allowedOffset = Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime'));
+        $halfHourRule = Setting::getSetting('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR
+            && Setting::getSetting('calculating_overtime_with_half_hour_after_hour');
 
         $results = [];
-        $arr = [];
 
         foreach ($employeePeriods as $employeePeriod) {
             $period = $employeePeriod->workPeriod;
-            if (!$period) continue;
+            if (! $period) {
+                continue;
+            }
 
-            $attendances = $this->attendances()
-                ->where('employee_id', $employee->id)
-                ->where('period_id', $period->id)
-                ->where('check_date', $date)
-                ->accepted()
-                ->orderBy('id')
-                ->get();
+            // Skip this specific shift if it already has an overtime record
+            if ($existingOvertimes->contains(fn ($ot) => $ot->period_id !== null && (int) $ot->period_id === (int) $period->id)) {
+                continue;
+            }
 
-            $arr[] = $attendances;
+            $attendances = $dayAttendances->where('period_id', $period->id)->values();
+            if ($attendances->count() < 2) {
+                continue;
+            }
+
             $totalMinutes = 0;
-            $checkInTime  = null;
-            $checkOutTime = null;
+            $firstCheckInTime = null;
+            $lastCheckOutTime = null;
 
-            // dd($attendances, $date, $period, $employee);
             for ($i = 0; $i < $attendances->count(); $i++) {
                 $checkIn = $attendances[$i];
 
@@ -109,53 +130,66 @@ trait EmployeeAttendanceTrait
                         $checkOut = $attendances[$i];
 
                         if ($checkOut->check_type === 'checkout') {
-                            $checkInTime  = Carbon::parse("{$checkIn->real_check_date} {$checkIn->check_time}");
-                            $checkOutTime = Carbon::parse("{$checkOut->real_check_date} {$checkOut->check_time}");
+                            $inDate = $checkIn->real_check_date ?: $checkIn->check_date;
+                            $outDate = $checkOut->real_check_date ?: $checkOut->check_date;
+                            $checkInTime  = Carbon::parse("{$inDate} {$checkIn->check_time}");
+                            $checkOutTime = Carbon::parse("{$outDate} {$checkOut->check_time}");
 
                             if ($checkOutTime < $checkInTime) {
                                 $checkOutTime->addDay();
                             }
 
                             $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
+                            $firstCheckInTime = $firstCheckInTime ?? $checkInTime;
+                            $lastCheckOutTime = $checkOutTime;
                         }
                     }
                 }
             }
 
-            $arr[] = $attendances;
-            $arr2[] = $totalMinutes;
+            if ($totalMinutes === 0 || ! $firstCheckInTime || ! $lastCheckOutTime) {
+                continue;
+            }
 
-            list($hours, $minutes) = explode(':', $period->supposed_duration);
-            $supposedDurationMinutes = ($hours * 60) + $minutes;
+            // Skip if a legacy record (period_id = null) matches this shift's check-in HH:MM
+            $firstInHm = substr($firstCheckInTime->toTimeString(), 0, 5);
+            if ($existingOvertimes->contains(fn ($ot) => $ot->period_id === null && ! empty($ot->start_time) && substr((string) $ot->start_time, 0, 5) === $firstInHm)) {
+                continue;
+            }
 
-            if ($totalMinutes >= ($supposedDurationMinutes + Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime')))) {
+            [$hours, $minutes] = explode(':', $period->supposed_duration);
+            $supposedDurationMinutes = ((int) $hours * 60) + (int) $minutes;
+
+            if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
                 $overtimeHours    = round($overtimeMinutes / 60 * 2) / 2;
                 $remainingMinutes = $overtimeMinutes % 60;
 
                 $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
 
-                $overtimeStartTime = $checkInTime;
-                $overtimeEndTime   = $checkOutTime;
-
-                if (
-                    Setting::getSetting('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR
-                    && Setting::getSetting('calculating_overtime_with_half_hour_after_hour')
-                ) {
+                if ($halfHourRule) {
                     $overtimeHours = round($overtimeHours, 2);
                 }
 
                 $results[] = [
                     'employee_id'               => $employee->id,
                     'period_id'                 => $period->id,
+                    'period_name'               => $period->name,
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
                     'overtime_hours'            => $overtimeHours,
                     'overtime'                  => $formattedOvertime,
-                    'overtime_start_time'       => $overtimeStartTime->toTimeString(),
-                    'overtime_end_time'         => $overtimeEndTime->toTimeString(),
-                    'check_in_time'             => $checkIn->check_time,
-                    'check_out_time'            => $checkOut->check_time,
+                    'overtime_start_time'       => $firstCheckInTime->toTimeString(),
+                    'overtime_end_time'         => $lastCheckOutTime->toTimeString(),
+                    'check_in_time'             => $firstCheckInTime->toTimeString(),
+                    'check_out_time'            => $lastCheckOutTime->toTimeString(),
                 ];
+            }
+        }
+
+        if ($hasNoShift && ! $existingOvertimes->contains(fn ($ot) => $ot->period_id === null)) {
+            $noShiftOvertime = $this->calculateNoShiftOvertime($noShiftAttendances, (bool) $halfHourRule);
+            if (! empty($noShiftOvertime)) {
+                $results[] = $noShiftOvertime;
             }
         }
 
@@ -202,7 +236,9 @@ trait EmployeeAttendanceTrait
             ->where(function ($q) use ($d) {
                 $q->whereNull('end_date')->orWhere('end_date', '>=', $d->toDateString());
             })
-            ->get();
+            ->get()
+            ->unique('period_id')
+            ->values();
 
         return $workPeriods;
     }
@@ -269,12 +305,7 @@ trait EmployeeAttendanceTrait
      */
     public function calculateOvertimeInMemory(string $date, int $allowedOffset, bool $halfHourRule): array
     {
-        // 1. التحقق من وجود إضافي معتمد مسبقاً في هذا اليوم
-        if ($this->overtimes->where('date', $date)->isNotEmpty()) {
-            return [];
-        }
-
-        // 2. جلب بصمات هذا اليوم فقط
+        // 1. جلب بصمات هذا اليوم فقط
         $attendances = $this->attendances
             ->where('check_date', $date)
             ->sortBy('id')
@@ -284,26 +315,41 @@ trait EmployeeAttendanceTrait
             return [];
         }
 
-        // 3. التحقق إذا كان الحضور بدون وردية (No Shift) وتوجيهه لدالة مبسطة (SRP)
-        if ($attendances->contains('status', \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value)) {
-            return $this->calculateNoShiftOvertime($attendances, $halfHourRule);
+        // 2. جلب سجلات الإضافي المسجلة مسبقاً لهذا اليوم (جميع الحالات إن وجدت allDayOvertimes، أو المعتمدة overtimes)
+        $existingSource = $this->relationLoaded('allDayOvertimes') ? $this->allDayOvertimes : $this->overtimes;
+        $dayExistingOvertimes = $existingSource->where('date', $date)->values();
+
+        $noShiftValue = \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value;
+        $noShiftAttendances = $attendances->filter(
+            fn ($a) => $a->status === $noShiftValue || $a->period_id === null
+        )->values();
+        $hasNoShift = $noShiftAttendances->count() >= 2;
+
+        // إذا وُجد إضافي عام لليوم (period_id = null) ولا يوجد دوام NO_SHIFT، نتخطى اليوم بالكامل
+        if ($dayExistingOvertimes->contains(fn ($ot) => $ot->period_id === null) && ! $hasNoShift) {
+            return [];
         }
 
-        // 4. فلترة الفترات النشطة لهذا اليوم للورديات العادية
+        // 3. فلترة الفترات النشطة لهذا اليوم للورديات العادية مع إزالة تكرار أيام الأسبوع (unique period_id)
         $activePeriods = $this->periodHistories->filter(function ($history) use ($date) {
             $startValid = is_null($history->start_date) || $history->start_date <= $date;
             $endValid = is_null($history->end_date) || $history->end_date >= $date;
             return $startValid && $endValid;
-        });
+        })->unique('period_id')->values();
 
-        if ($activePeriods->isEmpty()) {
-            return [];
-        }
+        $results = [];
 
-        // 5 & 6. حساب الإضافي لكل وردية على حدة بناءً على بصماتها فقط
+        // 4. حساب الإضافي لكل وردية على حدة بناءً على بصماتها فقط
         foreach ($activePeriods as $history) {
             $period = $history->workPeriod;
-            if (!$period) continue;
+            if (! $period) {
+                continue;
+            }
+
+            // تخطي هذه الوردية إذا كان لها سجل إضافي مسجل مسبقاً
+            if ($dayExistingOvertimes->contains(fn ($ot) => $ot->period_id !== null && (int) $ot->period_id === (int) $period->id)) {
+                continue;
+            }
 
             // فلترة البصمات الخاصة بهذه الوردية فقط
             $periodAttendances = $attendances->where('period_id', $period->id)->values();
@@ -321,8 +367,10 @@ trait EmployeeAttendanceTrait
                 $next = $periodAttendances[$i + 1];
 
                 if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
-                    $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
-                    $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
+                    $inDate = $current->real_check_date ?: $current->check_date;
+                    $outDate = $next->real_check_date ?: $next->check_date;
+                    $in  = \Carbon\Carbon::parse("{$inDate} {$current->check_time}");
+                    $out = \Carbon\Carbon::parse("{$outDate} {$next->check_time}");
 
                     if ($out < $in) {
                         $out->addDay();
@@ -335,17 +383,21 @@ trait EmployeeAttendanceTrait
                 }
             }
 
-            if ($totalMinutes === 0) {
+            if ($totalMinutes === 0 || ! $firstCheckInTime || ! $lastCheckOutTime) {
+                continue;
+            }
+
+            // تخطي الوردية إذا كان هناك سجل تاريخي (period_id = null) يطابق وقت دخول هذه الوردية (HH:MM)
+            $firstInHm = substr($firstCheckInTime->toTimeString(), 0, 5);
+            if ($dayExistingOvertimes->contains(fn ($ot) => $ot->period_id === null && ! empty($ot->start_time) && substr((string) $ot->start_time, 0, 5) === $firstInHm)) {
                 continue;
             }
 
             [$hours, $minutes] = explode(':', $period->supposed_duration);
-            $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
+            $supposedDurationMinutes = ((int) $hours * 60) + (int) $minutes;
 
             if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
-
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
-
                 $overtimeHours = round(($overtimeMinutes / 60) * 2) / 2;
 
                 if ($halfHourRule) {
@@ -355,19 +407,30 @@ trait EmployeeAttendanceTrait
                 $remainingMinutes = $overtimeMinutes % 60;
                 $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
 
-                return [
+                $results[] = [
                     'employee_id'               => $this->id,
                     'period_id'                 => $period->id,
+                    'period_name'               => $period->name,
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
                     'overtime_hours'            => $overtimeHours,
                     'overtime'                  => $formattedOvertime,
-                    'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
-                    'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
+                    'overtime_start_time'       => $firstCheckInTime->toTimeString(),
+                    'overtime_end_time'         => $lastCheckOutTime->toTimeString(),
+                    'check_in_time'             => $firstCheckInTime->toTimeString(),
+                    'check_out_time'            => $lastCheckOutTime->toTimeString(),
                 ];
             }
         }
 
-        return [];
+        // 5. حساب إضافي البصمات بدون وردية (No Shift) بشكل مستقل إن وجدت ولم يُسجل لها إضافي مسبقاً
+        if ($hasNoShift && ! $dayExistingOvertimes->contains(fn ($ot) => $ot->period_id === null)) {
+            $noShiftOvertime = $this->calculateNoShiftOvertime($noShiftAttendances, $halfHourRule);
+            if (! empty($noShiftOvertime)) {
+                $results[] = $noShiftOvertime;
+            }
+        }
+
+        return $results;
     }
 
     /**
@@ -385,8 +448,10 @@ trait EmployeeAttendanceTrait
             $next = $attendances[$i + 1];
 
             if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
-                $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
-                $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
+                $inDate = $current->real_check_date ?: $current->check_date;
+                $outDate = $next->real_check_date ?: $next->check_date;
+                $in  = \Carbon\Carbon::parse("{$inDate} {$current->check_time}");
+                $out = \Carbon\Carbon::parse("{$outDate} {$next->check_time}");
 
                 if ($out < $in) {
                     $out->addDay();
@@ -415,11 +480,14 @@ trait EmployeeAttendanceTrait
         return [
             'employee_id'               => $this->id,
             'period_id'                 => null, // لا يوجد وردية
+            'period_name'               => 'No Shift',
             'supposed_duration_minutes' => $totalMinutes,
             'overtime_hours'            => $overtimeHours,
             'overtime'                  => $formattedOvertime,
             'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
             'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
+            'check_in_time'             => $firstCheckInTime?->toTimeString(),
+            'check_out_time'            => $lastCheckOutTime?->toTimeString(),
         ];
     }
 }

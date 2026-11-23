@@ -139,6 +139,12 @@ trait EmployeeRelationships
             ->day();
     }
 
+    public function allDayOvertimes()
+    {
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+            ->day();
+    }
+
     public function dailyOvertimes()
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
@@ -146,12 +152,18 @@ trait EmployeeRelationships
             ->month();
     }
 
-    public function overtimesByDate($date)
+    public function overtimesByDate($date, $periodId = null)
     {
-        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+        $query = $this->hasMany(EmployeeOvertime::class, 'employee_id')
             ->day()
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->where('date', $date);
+
+        if ($periodId !== null) {
+            $query->where('period_id', $periodId);
+        }
+
+        return $query;
     }
 
     public function overtimesofMonth($date)

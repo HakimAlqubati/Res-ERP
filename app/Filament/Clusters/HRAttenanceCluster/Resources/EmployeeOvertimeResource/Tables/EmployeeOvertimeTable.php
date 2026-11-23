@@ -85,6 +85,12 @@ class EmployeeOvertimeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
 
+                TextColumn::make('workPeriod.name')
+                    ->label('Shift')
+                    ->placeholder('—')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
                 TextColumn::make('start_time')
                     ->label('Checkin')
                     ->sortable()->toggleable(isToggledHiddenByDefault: true),

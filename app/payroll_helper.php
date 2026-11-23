@@ -528,12 +528,12 @@ if (!function_exists('getLeaveMonthlyBalance')) {
     }
 }
 if (!function_exists('getEmployeeOvertimesOfSpecificDate')) {
-    function getEmployeeOvertimesOfSpecificDate($date, $employee)
+    function getEmployeeOvertimesOfSpecificDate($date, $employee, $periodId = null)
     {
         $month = Carbon::parse($date)->month; // Get the month from the given date
 
-        // Filter the overtimes to only include those that match the same month
-        $overtimesForMonth = $employee->overtimesByDate($date)
+        // Filter the overtimes to only include those that match the same month (and period when provided)
+        $overtimesForMonth = $employee->overtimesByDate($date, $periodId)
             ->get() // Retrieve the collection first
             ->filter(function ($overtime) use ($month) {
                 return Carbon::parse($overtime->date)->month == $month;

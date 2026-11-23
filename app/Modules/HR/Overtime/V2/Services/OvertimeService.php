@@ -21,7 +21,7 @@ class OvertimeService
         $query = EmployeeOvertime::query()
             ->forBranchManager()
             ->forEmployee()
-            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name', 'rejectedBy:id,name']);
+            ->with(['employee:id,name', 'workPeriod:id,name', 'approvedBy:id,name', 'createdBy:id,name', 'rejectedBy:id,name']);
 
         // if (isBranchManager()) {
         //     $query->where('branch_id', auth()->user()->branch_id);

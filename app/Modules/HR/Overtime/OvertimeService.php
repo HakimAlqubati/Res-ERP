@@ -30,10 +30,11 @@ class OvertimeService
                 EmployeeOvertime::create([
                     'employee_id' => $employee['employee_id'],
                     'date'        => $data['date'],
-                    'start_time'  => $employee['start_time'],
-                    'end_time'    => $employee['end_time'],
+                    'period_id'   => $employee['period_id'] ?? null,
+                    'start_time'  => $employee['start_time'] ?? null,
+                    'end_time'    => $employee['end_time'] ?? null,
                     'hours'       => $hours,
-                    'notes'       => $employee['notes'],
+                    'notes'       => $employee['notes'] ?? null,
                     'branch_id'   => $data['branch_id'],
                     'created_by'  => auth()->id(),
                     'type'        => EmployeeOvertime::TYPE_BASED_ON_DAY,
@@ -102,37 +103,116 @@ class OvertimeService
      */
     public function storeBulkOvertime(array $data): array
     {
-        $employeeIds = collect($data['employees'])->pluck('employee_id');
+        if ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_DAY && ! empty($data['employees'])) {
+            foreach ($data['employees'] as $idx => $empItem) {
+                if (empty($empItem['period_id']) && ! empty($empItem['employee_id']) && ! empty($data['date'])) {
+                    $data['employees'][$idx]['period_id'] = EmployeeOvertime::resolvePeriodId(
+                        (int) $empItem['employee_id'],
+                        (string) $data['date'],
+                        $empItem['start_time'] ?? null
+                    );
+                }
+            }
+
+            // In-request deduplication by (employee_id + period_id)
+            $data['employees'] = collect($data['employees'])
+                ->unique(fn ($emp) => $emp['employee_id'] . '_' . ($emp['period_id'] ?? 'null'))
+                ->values()
+                ->all();
+        } elseif (! empty($data['employees'])) {
+            $data['employees'] = collect($data['employees'])
+                ->unique('employee_id')
+                ->values()
+                ->all();
+        }
+
+        $employeeIds = collect($data['employees'])->pluck('employee_id')->unique()->values();
 
         $existingRecords = EmployeeOvertime::where('date', $data['date'])
             ->where('type', $data['type'])
             ->whereIn('employee_id', $employeeIds)
             ->with('employee:id,name')
-            ->withTrashed()
             ->get();
 
+        $skippedRecords = collect();
+
         if ($existingRecords->isNotEmpty()) {
-            $existingEmployeeIds = $existingRecords->pluck('employee_id')->toArray();
+            $noShiftValue = \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value;
+            $noShiftEmployeeIds = \App\Models\Attendance::query()
+                ->whereIn('employee_id', $employeeIds)
+                ->where('check_date', $data['date'])
+                ->where('accepted', 1)
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($noShiftValue) {
+                    $q->whereNull('period_id')
+                        ->orWhere('status', $noShiftValue);
+                })
+                ->pluck('employee_id')
+                ->unique()
+                ->toArray();
 
-            // Filter out existing employees
-            $data['employees'] = array_filter($data['employees'], function ($employee) use ($existingEmployeeIds) {
-                return !in_array($employee['employee_id'], $existingEmployeeIds);
-            });
+            $filteredEmployees = [];
 
-            // Re-index array
-            $data['employees'] = array_values($data['employees']);
+            foreach ($data['employees'] as $employee) {
+                $empId = (int) $employee['employee_id'];
+                $empExisting = $existingRecords->where('employee_id', $empId);
 
-            // Filter employees_with_month if it exists
-            if (isset($data['employees_with_month'])) {
-                $data['employees_with_month'] = array_filter($data['employees_with_month'], function ($employee) use ($existingEmployeeIds) {
-                    return !in_array($employee['employee_id'], $existingEmployeeIds);
-                });
-                $data['employees_with_month'] = array_values($data['employees_with_month']);
+                if ($empExisting->isEmpty()) {
+                    $filteredEmployees[] = $employee;
+                    continue;
+                }
+
+                $isDuplicate = false;
+                $matchedRecord = $empExisting->first();
+
+                if ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+                    $isDuplicate = true;
+                } else {
+                    $empPeriodId = isset($employee['period_id']) && $employee['period_id'] !== null && $employee['period_id'] !== ''
+                        ? (int) $employee['period_id']
+                        : null;
+                    $hasNoShift = in_array($empId, $noShiftEmployeeIds);
+
+                    if ($empPeriodId !== null) {
+                        $samePeriodRecord = $empExisting->first(fn ($r) => $r->period_id !== null && (int) $r->period_id === $empPeriodId);
+                        $nullPeriodConflict = ! $hasNoShift ? $empExisting->first(fn ($r) => $r->period_id === null) : null;
+                        if ($samePeriodRecord || $nullPeriodConflict) {
+                            $isDuplicate = true;
+                            $matchedRecord = $samePeriodRecord ?: $nullPeriodConflict;
+                        }
+                    } else {
+                        if ($hasNoShift) {
+                            $nullRecord = $empExisting->first(fn ($r) => $r->period_id === null);
+                            if ($nullRecord) {
+                                $isDuplicate = true;
+                                $matchedRecord = $nullRecord;
+                            }
+                        } else {
+                            $isDuplicate = true;
+                        }
+                    }
+                }
+
+                if ($isDuplicate) {
+                    $skippedRecords->push($matchedRecord);
+                } else {
+                    $filteredEmployees[] = $employee;
+                }
+            }
+
+            $data['employees'] = array_values($filteredEmployees);
+
+            // Filter employees_with_month if it exists (for TYPE_BASED_ON_MONTH)
+            if (isset($data['employees_with_month']) && $data['type'] === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+                $existingEmployeeIds = $existingRecords->pluck('employee_id')->toArray();
+                $data['employees_with_month'] = array_values(array_filter($data['employees_with_month'], function ($employee) use ($existingEmployeeIds) {
+                    return ! in_array($employee['employee_id'], $existingEmployeeIds);
+                }));
             }
 
             // If all were duplicates
             if (empty($data['employees'])) {
-                $duplicateNames = $existingRecords->map(function ($record) {
+                $duplicateNames = $skippedRecords->unique('employee_id')->map(function ($record) {
                     return $record->employee
                         ? "{$record->employee->name} (#{$record->employee_id})"
                         : "#{$record->employee_id}";
@@ -148,7 +228,7 @@ class OvertimeService
             $this->handleOverTimeMonth($data);
         }
 
-        $skippedCount = $existingRecords->count();
+        $skippedCount = $skippedRecords->count();
         $message = $skippedCount > 0
             ? "Overtime records created successfully. Skipped {$skippedCount} existing records."
             : 'Overtime records created successfully';
@@ -196,8 +276,8 @@ class OvertimeService
                     'employees' => $employeesToStore
                 ];
 
-                $this->storeBulkOvertime($storeData);
-                $results[$branch->name] = count($employeesToStore);
+                $storeResult = $this->storeBulkOvertime($storeData);
+                $results[$branch->name] = $storeResult['count'] ?? count($employeesToStore);
             } catch (Exception $e) {
                 $results[$branch->name] = "Skipped/Error: " . $e->getMessage();
             }
@@ -411,22 +491,19 @@ class OvertimeService
 
         foreach ($employees as $employee) {
             // Calculate overtime for the specified date
-            // Assuming the trait is used in Employee model
             if (method_exists($employee, 'calculateEmployeeOvertime')) {
                 $overtimeResults = $employee->calculateEmployeeOvertime($employee, $date);
 
-                // Only add to the results if there are overtime records
-                if (!empty($overtimeResults)) {
-                    // Flatten or pick the relevant part just like in the filament code
-                    // The filament code picks index 0
-                    if (isset($overtimeResults)) {
-                        $result = $overtimeResults;
+                if (! empty($overtimeResults)) {
+                    foreach ($overtimeResults as $result) {
                         $employeesWithOvertime[] = [
                             'employee_id' => $employee->id,
                             'name'        => $employee->name,
-                            'start_time'  => $result[0]['overtime_start_time'],
-                            'end_time'    => $result[0]['overtime_end_time'],
-                            'hours'       => $result[0]['overtime_hours'],
+                            'period_id'   => $result['period_id'] ?? null,
+                            'period_name' => $result['period_name'] ?? null,
+                            'start_time'  => $result['overtime_start_time'],
+                            'end_time'    => $result['overtime_end_time'],
+                            'hours'       => $result['overtime_hours'],
                             'notes'       => null,
                         ];
                     }
@@ -465,16 +542,19 @@ class OvertimeService
                 if (method_exists($employee, 'calculateEmployeeOvertime')) {
                     $overtimeResults = $employee->calculateEmployeeOvertime($employee, $dateString);
 
-                    if (!empty($overtimeResults) && isset($overtimeResults[0])) {
-                        $result = $overtimeResults[0];
-                        $dailyOvertime[] = [
-                            'employee_id' => $employee->id,
-                            'name'        => $employee->name,
-                            'start_time'  => $result['overtime_start_time'],
-                            'end_time'    => $result['overtime_end_time'],
-                            'hours'       => $this->formatOvertimeHours($result),
-                            'notes'       => null,
-                        ];
+                    if (! empty($overtimeResults)) {
+                        foreach ($overtimeResults as $result) {
+                            $dailyOvertime[] = [
+                                'employee_id' => $employee->id,
+                                'name'        => $employee->name,
+                                'period_id'   => $result['period_id'] ?? null,
+                                'period_name' => $result['period_name'] ?? null,
+                                'start_time'  => $result['overtime_start_time'],
+                                'end_time'    => $result['overtime_end_time'],
+                                'hours'       => $this->formatOvertimeHours($result),
+                                'notes'       => null,
+                            ];
+                        }
                     }
                 }
             }
@@ -514,11 +594,13 @@ class OvertimeService
                         })
                         ->with('workPeriod');
                 },
-                // افترض أن العلاقة في موديل الموظف لجدول EmployeeOvertime اسمها overtimes
                 'overtimes' => function ($query) use ($fromDate, $toDate) {
                     $query->whereBetween('date', [$fromDate, $toDate])
                         ->where('status', EmployeeOvertime::STATUS_APPROVED);
-                }
+                },
+                'allDayOvertimes' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('date', [$fromDate, $toDate]);
+                },
             ])
             ->get();
         $groupedOvertime = [];
@@ -531,16 +613,25 @@ class OvertimeService
 
             foreach ($employees as $employee) {
                 // استدعاء دالة الحساب التي تعمل على الـ Collections المحملة مسبقاً
-                $result = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
-                if (!empty($result)) {
-                    $dailyOvertime[] = [
-                        'employee_id' => $employee->id,
-                        'name'        => $employee->name,
-                        'start_time'  => $result['overtime_start_time'],
-                        'end_time'    => $result['overtime_end_time'],
-                        'hours'       => $this->formatOvertimeHours($result),
-                        'notes'       => null,
-                    ];
+                $overtimeResults = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
+                if (! empty($overtimeResults)) {
+                    // دعم كلٍّ من مصفوفة الفترات أو المصفوفة المفردة للتوافقية
+                    $items = isset($overtimeResults[0]) && is_array($overtimeResults[0])
+                        ? $overtimeResults
+                        : [$overtimeResults];
+
+                    foreach ($items as $result) {
+                        $dailyOvertime[] = [
+                            'employee_id' => $employee->id,
+                            'name'        => $employee->name,
+                            'period_id'   => $result['period_id'] ?? null,
+                            'period_name' => $result['period_name'] ?? null,
+                            'start_time'  => $result['overtime_start_time'],
+                            'end_time'    => $result['overtime_end_time'],
+                            'hours'       => $this->formatOvertimeHours($result),
+                            'notes'       => null,
+                        ];
+                    }
                 }
             }
 

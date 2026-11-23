@@ -70,6 +70,7 @@ class OvertimeController extends Controller
             'branch_id' => 'required|exists:branches,id',
             'employees' => 'required|array|min:1',
             'employees.*.employee_id' => 'required|exists:hr_employees,id',
+            'employees.*.period_id' => 'nullable|integer|exists:hr_work_periods,id',
             'employees.*.start_time' => 'required|date_format:H:i',
             'employees.*.end_time' => 'required|date_format:H:i', // Removed after rule because it might be cross-day
             'employees.*.hours' => 'required|numeric|min:0',

@@ -29,7 +29,7 @@ class OvertimeReportService
         $query = EmployeeOvertime::query()
             ->forBranchManager()
             ->forEmployee()
-            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'approvedBy:id,name']);
+            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'workPeriod:id,name', 'approvedBy:id,name']);
 
         $this->applyFilters($query, $filter);
 
@@ -37,6 +37,8 @@ class OvertimeReportService
         $summaryQuery = clone $query;
 
         $paginatedRecords = $query->orderBy('date', 'desc')
+            ->orderBy('employee_id', 'asc')
+            ->orderBy('start_time', 'asc')
             ->paginate($filter->perPage, ['*'], 'page', $filter->page);
 
         $paginatedRecords->getCollection()->transform(function ($item) {

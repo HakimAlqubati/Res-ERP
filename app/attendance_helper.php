@@ -539,12 +539,12 @@ if (!function_exists('employeeAttendances')) {
                             $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
 
-                            $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
-                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() > 0) {
+                            $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee, $period->period_id ?? null);
+                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date, $period->period_id ?? null)->count() > 0) {
                                 // if ($isActualLargerThanSupposed &&  $employee->overtimes->count() > 0) {
                                 $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
                             }
-                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
+                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date, $period->period_id ?? null)->count() == 0) {
                                 $approvedOvertime = $formattedSupposedActualDuration;
                             }
                             if (!$isActualLargerThanSupposed) {
@@ -855,12 +855,12 @@ if (!function_exists('employeeAttendancesByDate')) {
 
                                 $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
-                                $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
+                                $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee, $period->period_id ?? null);
 
-                                if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
+                                if ($isActualLargerThanSupposed && $employee->overtimesByDate($date, $period->period_id ?? null)->count() > 0) {
                                     $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
                                 }
-                                if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
+                                if ($isActualLargerThanSupposed && $employee->overtimesByDate($date, $period->period_id ?? null)->count() == 0) {
                                     $approvedOvertime = $formattedSupposedActualDuration;
                                 }
                                 if (!$isActualLargerThanSupposed) {
