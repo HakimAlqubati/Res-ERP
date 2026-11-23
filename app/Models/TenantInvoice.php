@@ -162,6 +162,22 @@ class TenantInvoice extends Model
             ->whereDate('due_date', '<', today());
     }
 
+    public function scopeInWarningWindow(Builder $query): Builder
+    {
+        return $query
+            ->where('status', self::STATUS_UNPAID)
+            ->whereRaw('due_date <= DATE_ADD(?, INTERVAL warning_days DAY)', [today()->toDateString()]);
+    }
+
+    public static function getMostUrgentWarningForTenant(int $tenantId): ?self
+    {
+        return static::query()
+            ->where('tenant_id', $tenantId)
+            ->inWarningWindow()
+            ->orderBy('due_date', 'asc')
+            ->first();
+    }
+
     public function isUnpaid(): bool
     {
         return $this->status === self::STATUS_UNPAID;
@@ -177,6 +193,59 @@ class TenantInvoice extends Model
         return $this->isUnpaid()
             && $this->due_date !== null
             && $this->due_date->lt(today());
+    }
+
+    public function isInWarningWindow(): bool
+    {
+        if (! $this->isUnpaid() || $this->due_date === null) {
+            return false;
+        }
+
+        $daysUntilDue = (int) today()->diffInDays($this->due_date->copy()->startOfDay(), false);
+
+        return $daysUntilDue <= $this->warning_days;
+    }
+
+    public function getOverdueDays(): int
+    {
+        if (! $this->isOverdue() || $this->due_date === null) {
+            return 0;
+        }
+
+        return (int) $this->due_date->copy()->startOfDay()->diffInDays(today());
+    }
+
+    public function getWarningBadgeDays(): int
+    {
+        return $this->remaining_days ?? 0;
+    }
+
+    public function isUrgentWarning(): bool
+    {
+        return $this->isOverdue() || $this->getWarningBadgeDays() <= 3;
+    }
+
+    public function getWarningTooltip(): string
+    {
+        if ($this->isOverdue()) {
+            return __('lang.tenant_invoice_overdue_tooltip', [
+                'days' => $this->getOverdueDays(),
+                'invoice' => $this->invoice_number,
+            ]);
+        }
+
+        $remainingDays = $this->remaining_days;
+
+        if ($remainingDays === null) {
+            return __('lang.tenant_invoice_due_today_tooltip', [
+                'invoice' => $this->invoice_number,
+            ]);
+        }
+
+        return __('lang.tenant_invoice_warning_tooltip', [
+            'days' => $remainingDays,
+            'invoice' => $this->invoice_number,
+        ]);
     }
 
     /**

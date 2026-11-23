@@ -58,6 +58,7 @@ use App\Filament\Resources\UserTypeResource;
 use App\Filament\Resources\VisitLogResource;
 use App\Http\Middleware\CheckUserActive;
 use App\Models\CustomTenantModel;
+use App\Models\TenantInvoice;
 // use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Coolsam\Modules\ModulesPlugin;
 use Filament\Enums\ThemeMode;
@@ -349,6 +350,28 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn(): string =>
                 view('filament.partials.warning-notify')->render()
+            )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_LOGO_AFTER,
+                function (): string {
+                    if (! auth()->check() || ! app(IsTenant::class)::checkCurrent()) {
+                        return '';
+                    }
+
+                    $tenant = app(IsTenant::class)::current();
+                    if (! $tenant) {
+                        return '';
+                    }
+
+                    $invoice = TenantInvoice::getMostUrgentWarningForTenant((int) $tenant->getKey());
+                    if (! $invoice) {
+                        return '';
+                    }
+
+                    return view('filament.partials.tenant-invoice-reminder', [
+                        'invoice' => $invoice,
+                    ])->render();
+                }
             )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,

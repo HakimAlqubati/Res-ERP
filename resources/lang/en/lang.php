@@ -1237,4 +1237,7 @@ return [
     'one_role_not_valid' => 'One of the selected roles is not valid for the current user type.',
     'roles_list_invalid' => 'The roles list format is invalid.',
     'role_required' => 'Please select at least one role.',
+    'tenant_invoice_warning_tooltip' => 'Invoice :invoice due in :days day(s). Please pay.',
+    'tenant_invoice_due_today_tooltip' => 'Invoice :invoice is due today. Please pay.',
+    'tenant_invoice_overdue_tooltip' => 'Invoice :invoice is :days day(s) overdue. Please pay.',
 ];
