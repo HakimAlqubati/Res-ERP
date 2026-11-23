@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Throwable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,11 @@ class CustomTenantModel extends Tenant
     public function hasModule(string $module): bool
     {
         return is_array($this->modules) && in_array($module, $this->modules, true);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(TenantInvoice::class, 'tenant_id');
     }
 
     public function scopeForDailyBackup($query)

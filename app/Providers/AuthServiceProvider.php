@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\CustomTenantModel;
 use App\Models\Task;
+use App\Models\TenantInvoice;
 use App\Policies\TaskPolicy;
+use App\Policies\TenantInvoicePolicy;
 use App\Policies\TenantPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -22,6 +24,7 @@ class AuthServiceProvider extends ServiceProvider
         Task::class => TaskPolicy::class,
         CustomTenantModel::class => TenantPolicy::class,
         Tenant::class => TenantPolicy::class,
+        TenantInvoice::class => TenantInvoicePolicy::class,
     ];
 
     /**
