@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\CustomTenantModel;
 use App\Models\Task;
 use App\Policies\TaskPolicy;
+use App\Policies\TenantPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Spatie\Multitenancy\Models\Tenant;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -17,6 +20,8 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
         Task::class => TaskPolicy::class,
+        CustomTenantModel::class => TenantPolicy::class,
+        Tenant::class => TenantPolicy::class,
     ];
 
     /**

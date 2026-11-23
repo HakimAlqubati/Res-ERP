@@ -7,20 +7,20 @@
 if (!function_exists('isAttendance')) {
     function isAttendance()
     {
-        return auth()->user()->isAttendance();
+        return auth()->check() ? auth()->user()->isAttendance() : false;
     }
 }
 
 if (!function_exists('isOwner')) {
     function isOwner()
     {
-        return auth()->user()->isOwner();
+        return auth()->check() ? auth()->user()->isOwner() : false;
     }
 }
 if (!function_exists('isSuperAdmin')) {
     function isSuperAdmin()
     {
-        return auth()->user()->isSuperAdmin();
+        return auth()->check() ? auth()->user()->isSuperAdmin() : false;
     }
 }
 if (!function_exists('isBranchManager')) {
@@ -116,7 +116,7 @@ if (!function_exists('isSystemManager')) {
 if (!function_exists('isStoreManager')) {
     function isStoreManager()
     {
-        return auth()->user()->isStoreManager();
+        return auth()->check() ? auth()->user()->isStoreManager() : false;
     }
 }
 
@@ -133,7 +133,7 @@ if (!function_exists('isDefaultStoreManager')) {
 if (!function_exists('isMaintenanceManager')) {
     function isMaintenanceManager()
     {
-        return auth()->user()->isMaintenanceManager();
+        return auth()->check() ? auth()->user()->isMaintenanceManager() : false;
     }
 }
 

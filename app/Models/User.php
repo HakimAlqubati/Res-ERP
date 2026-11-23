@@ -120,7 +120,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function canAccessPanel(Panel $panel): bool
     {
-        if (!$this->active) {
+        if (! $this->active) {
             return false;
         }
 
@@ -128,7 +128,42 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return false;
         }
 
-        return true;
+        return match ($panel->getId()) {
+            'central' => $this->canAccessCentralPanel(),
+            'dev' => $this->isDeveloper()
+                || $this->canAccessCentralPanel()
+                || (app()->isLocal() && $this->isSuperAdmin()),
+            default => true,
+        };
+    }
+
+    public function canAccessCentralPanel(): bool
+    {
+        if (app(\Spatie\Multitenancy\Contracts\IsTenant::class)::checkCurrent()) {
+            return false;
+        }
+
+        if (! CustomTenantModel::isCentralHost()) {
+            return false;
+        }
+
+        if (! $this->active) {
+            return false;
+        }
+
+        if ($this->employee && $this->employee->pendingTerminationRequest()->exists()) {
+            return false;
+        }
+
+        return $this->isSuperAdmin();
+    }
+
+    public function isDeveloper(): bool
+    {
+        return in_array($this->email, [
+            'hakimahmed123321@gmail.com',
+            'adelalqubati12@gmail.com',
+        ], true);
     }
 
     public function manageBranches()
