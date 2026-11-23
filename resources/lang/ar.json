@@ -11,5 +11,15 @@
     "Total Additions": "إجمالي الإضافات",
     "Total Deductions": "إجمالي الخصومات",
     "Final Net Result": "صافي النتيجة النهائية",
-    "Date Format": "صيغة التاريخ"
+    "Date Format": "صيغة التاريخ",
+    "Users": "المستخدمون",
+    "User": "مستخدم",
+    "User Information": "بيانات المستخدم",
+    "Manage the user name, email address, and password.": "إدارة اسم المستخدم والبريد الإلكتروني وكلمة المرور.",
+    "Name": "الاسم",
+    "Email": "البريد الإلكتروني",
+    "Password": "كلمة المرور",
+    "Leave blank to keep the current password.": "اتركه فارغاً للإبقاء على كلمة المرور الحالية.",
+    "Created At": "تاريخ الإنشاء",
+    "You cannot delete your own account.": "لا يمكنك حذف حسابك الحالي."
 }

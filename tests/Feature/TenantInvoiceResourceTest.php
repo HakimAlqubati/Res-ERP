@@ -189,6 +189,7 @@ class TenantInvoiceResourceTest extends TestCase
             'Dashboard',
             __('Tenant Invoices'),
             'Tenants',
+            __('Users'),
         ], $labels);
     }
 
