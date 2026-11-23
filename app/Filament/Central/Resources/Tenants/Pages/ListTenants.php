@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\TenantResource\Pages;
+namespace App\Filament\Central\Resources\Tenants\Pages;
 
-use Filament\Actions\CreateAction;
-use App\Filament\Resources\TenantResource;
-use Filament\Actions;
+use App\Filament\Central\Resources\Tenants\TenantResource;
 use Filament\Resources\Pages\ListRecords;
 
 class ListTenants extends ListRecords

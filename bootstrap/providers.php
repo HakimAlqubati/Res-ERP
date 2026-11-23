@@ -9,6 +9,7 @@ return [
     App\Providers\AppServiceProvider::class,
     App\Providers\AuthServiceProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
+    App\Providers\Filament\CentralPanelProvider::class,
     App\Providers\Filament\DevPanelProvider::class,
     App\Providers\InventoryServiceProvider::class,
     App\Providers\RepositoryServiceProvider::class,

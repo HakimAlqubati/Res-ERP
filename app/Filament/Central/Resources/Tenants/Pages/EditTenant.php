@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\TenantResource\Pages;
+namespace App\Filament\Central\Resources\Tenants\Pages;
 
+use App\Filament\Central\Resources\Tenants\TenantResource;
 use Filament\Actions\DeleteAction;
-use App\Filament\Resources\TenantResource;
-use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTenant extends EditRecord

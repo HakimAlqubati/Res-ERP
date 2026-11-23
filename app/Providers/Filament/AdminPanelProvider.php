@@ -53,7 +53,6 @@ use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
 // use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
-use App\Filament\Resources\TenantResource;
 use App\Filament\Resources\UserResource;
 use App\Filament\Resources\UserTypeResource;
 use App\Filament\Resources\VisitLogResource;
@@ -101,7 +100,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 // app(IsTenant::class)::checkCurrent() && app(IsTenant::class)::current()->id
                 $currentTenant = app(IsTenant::class)::current();
-                if ($currentTenant) {
+                if ($currentTenant && ! $currentTenant instanceof CustomTenantModel) {
                     $currentTenant = CustomTenantModel::find($currentTenant->id);
                 }
 
@@ -225,15 +224,6 @@ class AdminPanelProvider extends PanelProvider
                         //     ->items(array_merge(
                         //         (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems() : [],
                         //     )),
-                        NavigationGroup::make('Tenants')
-                            ->items(array_merge(
-                                (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
-                                    || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
-
-                                )
-                                    || env('APP_ENV') == 'local' && env('APP_URL') == 'https://workbench.test/' && isSuperAdmin())
-                                    ? TenantResource::getNavigationItems() : [],
-                            )),
                         NavigationGroup::make('AppLogs')
                             ->items(array_merge(
                                 (isHakimOrAdel()) ? AppLogResource::getNavigationItems() : [],
@@ -315,8 +305,6 @@ class AdminPanelProvider extends PanelProvider
                 CheckUserActive::class,
             ])
             ->sidebarCollapsibleOnDesktop()
-            // ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->plugins([
                 // FilamentShieldPlugin::make()
