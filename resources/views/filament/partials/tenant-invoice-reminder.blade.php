@@ -1,59 +1,118 @@
 @php
     /** @var \App\Models\TenantInvoice $invoice */
     $badgeDays = $invoice->getWarningBadgeDays();
+    $isUrgent = $invoice->isUrgentWarning();
     $tooltip = $invoice->getWarningTooltip();
 @endphp
 
-<div class="ms-2 flex items-center gap-1" style="padding-right: 20px; padding-left: 20px;">
-    <div>
-        <div class="invoice-warn-badge inline-block" data-days="{{ $badgeDays }}">
-            <x-filament::icon-button
-                icon="heroicon-o-document-currency-dollar"
-                :tooltip="$tooltip"
-                size="lg"
-                color="danger"
-                label=""
-            />
-        </div>
-    </div>
+<div class="ms-2 flex items-center" style="padding-right: 10px; padding-left: 10px;">
+    <button
+        type="button"
+        class="invoice-warn-badge {{ $isUrgent ? 'invoice-warn-badge--danger' : 'invoice-warn-badge--warning' }}"
+        data-days="{{ $badgeDays }}"
+        aria-label="{{ $tooltip }}"
+        x-tooltip="{
+            content: @js($tooltip),
+            theme: $store.theme,
+        }"
+    >
+        <span class="invoice-warn-badge__content">
+            <span class="invoice-warn-badge__number">{{ $badgeDays }}</span>
+            <span class="invoice-warn-badge__label">Days Left</span>
+        </span>
+    </button>
 </div>
 
 <style>
     .invoice-warn-badge {
-        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 14px;
+        border-width: 2px;
+        border-style: solid;
+        border-radius: 0;
+        border-top-right-radius: 10px;
+        border-bottom-left-radius: 10px;
+        background: transparent;
+        cursor: pointer;
+        font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
+        transition: box-shadow 0.25s ease-in-out, transform 0.16s ease;
     }
 
-    @keyframes invoice-badge-glow {
-        0%,
-        100% {
-            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.0);
-        }
-
-        50% {
-            box-shadow:
-                0 0 10px 4px rgba(220, 38, 38, 0.7),
-                0 0 20px 8px rgba(220, 38, 38, 0.4);
-        }
+    .invoice-warn-badge:hover {
+        transform: translateY(-1px);
     }
 
-    .invoice-warn-badge::after {
-        content: attr(data-days);
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        min-width: 20px;
-        height: 20px;
-        padding: 0 6px;
-        display: grid;
-        place-items: center;
-        border-radius: 999px;
-        font-weight: 700;
-        font-size: 11px;
+    .invoice-warn-badge__content {
+        display: inline-flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 5px;
+        white-space: nowrap;
+        direction: ltr;
+    }
+
+    .invoice-warn-badge__number {
+        font-size: 18px;
+        font-weight: 800;
         line-height: 1;
-        color: #fff;
-        background: linear-gradient(180deg, #ef4444, #dc2626);
-        border: 2px solid #fff;
-        animation: invoice-badge-glow 1.2s ease-in-out infinite;
-        pointer-events: none;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .invoice-warn-badge__label {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    /* Warning tone (> 3 days remaining) */
+    .invoice-warn-badge--warning {
+        border-color: #d97706;
+        box-shadow:
+            0 0 4px rgba(217, 119, 6, 0.55),
+            0 0 8px rgba(217, 119, 6, 0.35);
+    }
+
+    .invoice-warn-badge--warning .invoice-warn-badge__number {
+        color: #b45309;
+    }
+
+    .invoice-warn-badge--warning .invoice-warn-badge__label {
+        color: #b45309;
+    }
+
+    /* Danger tone (<= 3 days, due today, or overdue) */
+    .invoice-warn-badge--danger {
+        border-color: #dc2626;
+        box-shadow:
+            0 0 4px rgba(220, 38, 38, 0.55),
+            0 0 8px rgba(220, 38, 38, 0.35);
+    }
+
+    .invoice-warn-badge--danger .invoice-warn-badge__number {
+        color: #dc2626;
+    }
+
+    .invoice-warn-badge--danger .invoice-warn-badge__label {
+        color: #dc2626;
+    }
+
+    /* Dark mode */
+    .dark .invoice-warn-badge--warning {
+        border-color: #f59e0b;
+    }
+
+    .dark .invoice-warn-badge--warning .invoice-warn-badge__number,
+    .dark .invoice-warn-badge--warning .invoice-warn-badge__label {
+        color: #fbbf24;
+    }
+
+    .dark .invoice-warn-badge--danger {
+        border-color: #ef4444;
+    }
+
+    .dark .invoice-warn-badge--danger .invoice-warn-badge__number,
+    .dark .invoice-warn-badge--danger .invoice-warn-badge__label {
+        color: #f87171;
     }
 </style>

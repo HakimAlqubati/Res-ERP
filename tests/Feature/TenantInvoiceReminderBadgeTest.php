@@ -177,9 +177,11 @@ class TenantInvoiceReminderBadgeTest extends TestCase
 
         $html = $this->renderTopbarHook();
 
-        $this->assertStringContainsString('invoice-warn-badge', $html);
+        $this->assertStringContainsString('invoice-warn-badge--warning', $html);
         $this->assertStringContainsString('data-days="6"', $html);
+        $this->assertStringContainsString('Days Left', $html);
         $this->assertStringContainsString($selected->invoice_number, $html);
+        $this->assertStringNotContainsString('invoice-badge-glow', $html);
 
         // Immediately disappears once paid
         $urgentInvoice->markAsPaid();
@@ -230,8 +232,9 @@ class TenantInvoiceReminderBadgeTest extends TestCase
 
         $html = $this->renderTopbarHook();
 
-        $this->assertStringContainsString('invoice-warn-badge', $html);
+        $this->assertStringContainsString('invoice-warn-badge--danger', $html);
         $this->assertStringContainsString('data-days="0"', $html);
+        $this->assertStringContainsString('Days Left', $html);
         $this->assertStringContainsString($overdue->invoice_number, $html);
     }
 }
