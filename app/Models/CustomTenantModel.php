@@ -13,14 +13,71 @@ use Spatie\Multitenancy\Models\Tenant;
 class CustomTenantModel extends Tenant
 {
     use SoftDeletes;
-    // use UsesLandlordConnection;
+    use UsesLandlordConnection;
+
     protected $table = 'tenants';
     protected $fillable = ['name', 'domain', 'database', 'active', 'daily_backup_enabled', 'database_created', 'modules'];
     protected $casts = [
         'modules' => 'array',
         'active' => 'boolean',
         'daily_backup_enabled' => 'boolean',
+        'database_created' => 'boolean',
     ];
+
+    public static function current(): ?static
+    {
+        $containerKey = config('multitenancy.current_tenant_container_key');
+
+        if (! app()->has($containerKey)) {
+            return null;
+        }
+
+        $tenant = app($containerKey);
+
+        if ($tenant instanceof static) {
+            return $tenant;
+        }
+
+        // Safely upgrade base Spatie Tenant instances set by legacy jobs/commands
+        if ($tenant instanceof Tenant) {
+            $resolved = $tenant->exists
+                ? static::find($tenant->getKey())
+                : null;
+
+            if (! $resolved) {
+                $resolved = new static();
+                $resolved->setRawAttributes($tenant->getAttributes(), true);
+                $resolved->exists = $tenant->exists;
+            }
+
+            app()->instance($containerKey, $resolved);
+
+            return $resolved;
+        }
+
+        return null;
+    }
+
+    public static function isCentralHost(?string $host = null): bool
+    {
+        $host = strtolower(trim((string) ($host ?? request()?->getHost() ?? '')));
+
+        if ($host === '') {
+            return false;
+        }
+
+        $centralDomains = array_map(
+            fn ($domain) => strtolower(trim((string) $domain)),
+            config('multitenancy.central_domains', [])
+        );
+
+        return in_array($host, $centralDomains, true);
+    }
+
+    public function hasModule(string $module): bool
+    {
+        return is_array($this->modules) && in_array($module, $this->modules, true);
+    }
 
     public function scopeForDailyBackup($query)
     {

@@ -1,14 +1,38 @@
 <?php
 
+use App\Models\CustomTenantModel;
 use App\Tasks\Tenant\SwitchTenantDatabaseTask;
 use App\TenantFinders\CustomTenantFinder;
 use Spatie\Multitenancy\Actions\ForgetCurrentTenantAction;
 use Spatie\Multitenancy\Actions\MakeQueueTenantAwareAction;
 use Spatie\Multitenancy\Actions\MakeTenantCurrentAction;
 use Spatie\Multitenancy\Actions\MigrateTenantAction;
-use Spatie\Multitenancy\Models\Tenant;
+use Spatie\Multitenancy\Tasks\PrefixCacheTask;
 
 return [
+    /*
+     * The canonical central (landlord) domain and allowed central hostnames.
+     * Always read via config('multitenancy.central_domain') / config('multitenancy.central_domains')
+     * so `php artisan config:cache` works reliably in production.
+     */
+    'central_domain' => env('CENTRAL_DOMAIN', 'localhost'),
+
+    'central_domains' => array_values(array_unique(array_filter(array_map(
+        'trim',
+        explode(',', env('CENTRAL_DOMAINS', implode(',', array_filter([
+            env('CENTRAL_DOMAIN', 'localhost'),
+            env('APP_ENV', 'production') !== 'production' ? 'localhost' : null,
+            env('APP_ENV', 'production') !== 'production' ? '127.0.0.1' : null,
+            env('APP_ENV', 'production') === 'local' ? 'workbench.test' : null,
+        ]))))
+    )))),
+
+    /*
+     * Optional secret token to inspect inactive tenants during maintenance.
+     * Disabled (null) by default — never hardcode a literal bypass string in source code.
+     */
+    'dev_bypass_secret' => env('TENANT_DEV_BYPASS_SECRET'),
+
     /*
      * This class is responsible for determining which tenant should be current
      * for the given request.
@@ -32,7 +56,7 @@ return [
      * A valid task is any class that implements Spatie\Multitenancy\Tasks\SwitchTenantTask
      */
     'switch_tenant_tasks' => [
-        // \Spatie\Multitenancy\Tasks\PrefixCacheTask::class,
+        PrefixCacheTask::class,
         // \Spatie\Multitenancy\Tasks\SwitchTenantDatabaseTask::class,
         // \Spatie\Multitenancy\Tasks\SwitchRouteCacheTask::class,
         SwitchTenantDatabaseTask::class,
@@ -41,11 +65,10 @@ return [
     /*
      * This class is the model used for storing configuration on tenants.
      *
-     * It must  extend `Spatie\Multitenancy\Models\Tenant::class` or
+     * It must extend `Spatie\Multitenancy\Models\Tenant::class` or
      * implement `Spatie\Multitenancy\Contracts\IsTenant::class` interface
      */
-    // 'tenant_model' => \App\Models\CustomTenantModel::class,
-    'tenant_model' => Tenant::class,
+    'tenant_model' => CustomTenantModel::class,
 
     /*
      * If there is a current tenant when dispatching a job, the id of the current tenant

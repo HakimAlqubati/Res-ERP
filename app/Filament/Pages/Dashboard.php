@@ -26,15 +26,14 @@ class Dashboard extends \Filament\Pages\Dashboard
             return [];
         }
         $currentTenant = app(IsTenant::class)::current();
-        ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
-        ||
-        is_null($currentTenant);
 
         $widgets = [];
         // $widgets[] = BranchConsumptionChart::class;
         $widgets[] = QuickLinksWidget::class;
         // $widgets[] = TopProductsChart::class;
-        $modules = json_decode($currentTenant?->modules, true);
+        $modules = is_array($currentTenant?->modules)
+            ? $currentTenant->modules
+            : (is_string($currentTenant?->modules) ? json_decode($currentTenant->modules, true) : null);
         if (
             is_null($currentTenant) ||
             (is_array($modules) &&

@@ -55,8 +55,10 @@ class SettingController extends Controller
             ]);
         }
 
-        // Ensure we load the custom tenant model to access the 'modules' cast/attribute
-        $customTenant = CustomTenantModel::find($tenant->id);
+        // Ensure we have CustomTenantModel to access the 'modules' cast/attribute
+        $customTenant = $tenant instanceof CustomTenantModel
+            ? $tenant
+            : CustomTenantModel::find($tenant->id);
 
         return response()->json([
             'success' => true,

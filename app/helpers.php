@@ -633,10 +633,7 @@ if (!function_exists('showWarningNotifiMessage')) {
 if (!function_exists('isLocal')) {
     function isLocal(): bool
     {
-        if (env('APP_ENV') == 'local') {
-            return true;
-        }
-        return false;
+        return app()->isLocal();
     }
 }
 
@@ -647,7 +644,7 @@ if (!function_exists('hideHrForTenant')) {
             return false;
         }
         $currentTenant = app(IsTenant::class)::current();
-        if ($currentTenant) {
+        if ($currentTenant && ! $currentTenant instanceof CustomTenantModel) {
             $currentTenant = CustomTenantModel::find($currentTenant->id);
         }
 

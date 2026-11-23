@@ -3,8 +3,8 @@ use Spatie\Multitenancy\Contracts\IsTenant;
 use App\Models\CustomTenantModel;
 
 $currentTenant = app(IsTenant::class)::current();
-if ($currentTenant) {
-$currentTenant = CustomTenantModel::find($currentTenant->id);
+if ($currentTenant && ! $currentTenant instanceof CustomTenantModel) {
+    $currentTenant = CustomTenantModel::find($currentTenant->id);
 }
 @endphp
 

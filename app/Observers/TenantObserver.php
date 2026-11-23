@@ -88,10 +88,16 @@ class TenantObserver
 
     public static function createDatabase($tenant)
     {
+        $dbName = (string) $tenant->database;
+
+        if (! preg_match('/^[a-zA-Z][a-zA-Z0-9_]{1,62}$/', $dbName)) {
+            throw new \InvalidArgumentException("Invalid database name: {$dbName}");
+        }
+
         // DB::beginTransaction();
         try {
             // Create the database
-            DB::statement("CREATE DATABASE `$tenant->database`");
+            DB::statement("CREATE DATABASE `{$dbName}`");
             // Step 2: Import all SQL files from the needed_tables folder
             $sqlFilesPath = database_path('migrations/needed_tables');
             $sqlFiles = File::files($sqlFilesPath);
@@ -116,7 +122,7 @@ class TenantObserver
             // DB::commit();
         } catch (Exception $e) {
             $tenant->update(['database_created' => false]);
-            DB::statement("DROP DATABASE IF EXISTS `$tenant->database`");
+            DB::statement("DROP DATABASE IF EXISTS `{$dbName}`");
             throw $e;
         }
     }

@@ -2,6 +2,7 @@
 
 namespace App\TenantFinders;
 
+use App\Models\CustomTenantModel;
 use Illuminate\Http\Request;
 use Spatie\Multitenancy\Contracts\IsTenant;
 use Spatie\Multitenancy\TenantFinder\TenantFinder;
@@ -10,36 +11,35 @@ class CustomTenantFinder extends TenantFinder
 {
     public function findForRequest(Request $request): ?IsTenant
     {
-        $host = $request->getHost();
-        $subdomain = $host;
-        $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
+        $host = strtolower($request->getHost());
 
-        // dd($host, $centralDomain, $request->all(),$subdomain);
-        if (
-            $host === $centralDomain || $host === '127.0.0.1'
-            || $host === 'workbench.test'
-            || $host === '192.168.8.149'
-        ) {
+        if (CustomTenantModel::isCentralHost($host)) {
             return null;
         }
 
-        // Developer bypass: use ?dev=hakim once, then cookie persists for Livewire requests
-        $isDev = $request->query('dev') === 'hakim' || $request->cookie('dev_bypass') === 'hakim';
+        $tenant = app(IsTenant::class)::where('domain', $host)->first();
 
-        $query = app(IsTenant::class)::where('domain', $subdomain);
-
-        if (!$isDev) {
-            $query->where('active', 1);
-        }
-
-        $tenant = $query->first();
-
-        if ($tenant) {
-            return $tenant;
-        }
-        if (!$tenant) {
+        if (! $tenant) {
             abort(503, 'This tenant is not found.');
         }
-        abort(403, 'This tenant is inactive.');
+
+        if (! $tenant->active && ! $this->hasValidDevBypass($request)) {
+            abort(403, 'This tenant is inactive.');
+        }
+
+        return $tenant;
+    }
+
+    protected function hasValidDevBypass(Request $request): bool
+    {
+        $secret = config('multitenancy.dev_bypass_secret');
+
+        if (! is_string($secret) || $secret === '') {
+            return false;
+        }
+
+        $candidate = (string) ($request->query('dev') ?? $request->cookie('dev_bypass') ?? '');
+
+        return $candidate !== '' && hash_equals($secret, $candidate);
     }
 }
