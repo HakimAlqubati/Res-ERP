@@ -161,7 +161,7 @@ class SupplierResource extends Resource
     }
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
