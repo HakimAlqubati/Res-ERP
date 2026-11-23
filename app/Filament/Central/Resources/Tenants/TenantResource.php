@@ -215,6 +215,7 @@ class TenantResource extends Resource
 
                 Action::make('download_backup')
                     ->label('Backup to Drive')
+                    ->hidden()
                     ->requiresConfirmation()
                     ->modalHeading(fn (CustomTenantModel $record) => "Backup {$record->name}")
                     ->button()
