@@ -190,10 +190,11 @@ class TenantInvoiceResourceTest extends TestCase
             __('Tenant Invoices'),
             'Tenants',
             __('Users'),
+            'Settings',
         ], $labels);
     }
 
-    public function test_create_form_hides_invoice_number_validates_inputs_and_creates_invoice(): void
+    public function test_create_form_requires_manual_unique_invoice_number_validates_inputs_and_creates_invoice(): void
     {
         $admin = $this->getCentralSuperAdmin();
         $tenant = CustomTenantModel::firstOrFail();
@@ -201,10 +202,12 @@ class TenantInvoiceResourceTest extends TestCase
         $this->actingAs($admin, 'web');
         filament()->setCurrentPanel(filament()->getPanel('central'));
 
-        // invoice_number must be hidden on create, and validation must reject amount <= 0 and due_date < invoice_date
+        // invoice_number must be visible, enabled, and required; validation must also reject amount <= 0 and due_date < invoice_date
         Livewire::test(CreateTenantInvoice::class)
-            ->assertFormFieldIsHidden('invoice_number')
+            ->assertFormFieldIsVisible('invoice_number')
+            ->assertFormFieldIsEnabled('invoice_number')
             ->fillForm([
+                'invoice_number' => '',
                 'tenant_id' => $tenant->id,
                 'amount' => 0,
                 'invoice_date' => '2026-11-20',
@@ -212,11 +215,12 @@ class TenantInvoiceResourceTest extends TestCase
                 'warning_days' => 10,
             ])
             ->call('create')
-            ->assertHasFormErrors(['amount', 'due_date']);
+            ->assertHasFormErrors(['invoice_number', 'amount', 'due_date']);
 
-        // Valid creation
+        // Valid creation with manual invoice_number
         Livewire::test(CreateTenantInvoice::class)
             ->fillForm([
+                'invoice_number' => 'MAN-2026-0001',
                 'tenant_id' => $tenant->id,
                 'amount' => 1200.75,
                 'invoice_date' => '2026-11-23',
@@ -230,15 +234,29 @@ class TenantInvoiceResourceTest extends TestCase
         $created = TenantInvoice::latest('id')->firstOrFail();
 
         $this->assertSame($tenant->id, $created->tenant_id);
+        $this->assertSame('MAN-2026-0001', $created->invoice_number);
         $this->assertSame('1200.75', (string) $created->amount);
         $this->assertSame(TenantInvoice::STATUS_UNPAID, $created->status);
         $this->assertNull($created->paid_at);
         $this->assertSame($admin->id, $created->created_by);
-        $this->assertMatchesRegularExpression('/^INV-2026-\d{4,}$/', $created->invoice_number);
+
+        // Duplicate invoice_number is rejected
+        Livewire::test(CreateTenantInvoice::class)
+            ->fillForm([
+                'invoice_number' => 'MAN-2026-0001',
+                'tenant_id' => $tenant->id,
+                'amount' => 200.00,
+                'invoice_date' => '2026-11-23',
+                'due_date' => '2026-12-23',
+                'warning_days' => 10,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['invoice_number']);
 
         // Creating an already-paid invoice directly from Create form
         Livewire::test(CreateTenantInvoice::class)
             ->fillForm([
+                'invoice_number' => 'MAN-2026-0002',
                 'tenant_id' => $tenant->id,
                 'amount' => 950.00,
                 'invoice_date' => '2026-11-23',
@@ -252,12 +270,13 @@ class TenantInvoiceResourceTest extends TestCase
             ->assertHasNoFormErrors();
 
         $paidCreated = TenantInvoice::latest('id')->firstOrFail();
+        $this->assertSame('MAN-2026-0002', $paidCreated->invoice_number);
         $this->assertSame(TenantInvoice::STATUS_PAID, $paidCreated->status);
         $this->assertSame('2026-11-23', $paidCreated->paid_at?->toDateString());
         $this->assertNull($paidCreated->remaining_days);
     }
 
-    public function test_edit_form_displays_disabled_invoice_number(): void
+    public function test_edit_form_allows_editing_invoice_number_and_ignores_current_record_for_uniqueness(): void
     {
         $admin = $this->getCentralSuperAdmin();
         $tenant = CustomTenantModel::firstOrFail();
@@ -266,6 +285,7 @@ class TenantInvoiceResourceTest extends TestCase
         filament()->setCurrentPanel(filament()->getPanel('central'));
 
         $invoice = TenantInvoice::create([
+            'invoice_number' => 'MAN-2026-EDIT-1',
             'tenant_id' => $tenant->id,
             'amount' => 300,
             'invoice_date' => today(),
@@ -275,7 +295,20 @@ class TenantInvoiceResourceTest extends TestCase
         Livewire::test(EditTenantInvoice::class, ['record' => $invoice->getRouteKey()])
             ->assertOk()
             ->assertFormFieldIsVisible('invoice_number')
-            ->assertFormFieldIsDisabled('invoice_number');
+            ->assertFormFieldIsEnabled('invoice_number')
+            ->fillForm([
+                'invoice_number' => 'MAN-2026-EDIT-1',
+                'amount' => 325,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->fillForm([
+                'invoice_number' => 'MAN-2026-EDIT-2',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('MAN-2026-EDIT-2', $invoice->fresh()->invoice_number);
     }
 
     public function test_table_search_filters_and_mark_as_paid_row_action_work(): void
