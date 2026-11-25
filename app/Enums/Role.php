@@ -20,6 +20,7 @@ enum Role: int
     case ATTENDANCE = 17;
     case OWNER = 18;
     case HR = 19;
+    case ADVANCE_HR = 20;
 
     public function label(): string
     {
@@ -40,6 +41,7 @@ enum Role: int
             self::ATTENDANCE => 'Attendance',
             self::OWNER => 'Owner',
             self::HR => 'HR',
+            self::ADVANCE_HR => 'Advance HR',
         };
     }
 
