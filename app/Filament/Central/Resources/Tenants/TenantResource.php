@@ -138,12 +138,12 @@ class TenantResource extends Resource
                     ->boolean()
                     ->alignCenter(),
                 ToggleColumn::make('active')
-                    ->authorize('update')
+                    // ->authorize('update')
                     ->sortable()
                     ->toggleable(),
                 ToggleColumn::make('daily_backup_enabled')
                     ->label('Daily Backup')
-                    ->authorize('update')
+                    // ->authorize('update')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('updated_at')->sortable()->toggleable(isToggledHiddenByDefault: true),
@@ -161,7 +161,7 @@ class TenantResource extends Resource
                     ->label('Create Database')
                     ->button()
                     ->requiresConfirmation()
-                    ->authorize('update')
+                    // ->authorize('update')
                     ->action(function (CustomTenantModel $record) {
                         try {
                             TenantObserver::createDatabase($record);
@@ -177,7 +177,7 @@ class TenantResource extends Resource
                 Action::make('setModules')
                     ->label('Set Modules')
                     ->button()
-                    ->authorize('update')
+                    // ->authorize('update')
                     ->schema([
                         Select::make('modules')
                             ->default(fn (CustomTenantModel $record) => $record->modules)
@@ -201,7 +201,7 @@ class TenantResource extends Resource
 
                 Action::make('importDatabase')
                     ->button()
-                    ->authorize('update')
+                    // ->authorize('update')
                     ->action(function (CustomTenantModel $record) {
                         try {
                             (new CustomTenantModel())->importDatabase($record);
@@ -219,7 +219,7 @@ class TenantResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading(fn (CustomTenantModel $record) => "Backup {$record->name}")
                     ->button()
-                    ->authorize('update')
+                    // ->authorize('update')
                     ->action(function (CustomTenantModel $record, TenantBackupService $backupService) {
                         try {
                             $backupService->backupToGoogleDrive($record);
