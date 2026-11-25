@@ -28,16 +28,15 @@ class TenantInvoiceForm
                     ->icon(Heroicon::OutlinedDocumentText)
                     ->columnSpanFull()
                     ->schema([
-                        TextInput::make('invoice_number')
-                            ->label(__('Invoice Number'))
-                            ->prefixIcon(Heroicon::OutlinedHashtag)
-                            ->trim()
-                            ->required()
-                            ->maxLength(255)
-                            ->unique(table: TenantInvoice::class, column: 'invoice_number', ignoreRecord: true)
-                            ->columnSpanFull(),
+                        Grid::make(['default' => 1, 'md' => 3])->schema([
+                            TextInput::make('invoice_number')
+                                ->label(__('Invoice Number'))
+                                ->prefixIcon(Heroicon::OutlinedHashtag)
+                                ->trim()
+                                ->required()
+                                ->maxLength(255)
+                                ->unique(table: TenantInvoice::class, column: 'invoice_number', ignoreRecord: true),
 
-                        Grid::make(['default' => 1, 'md' => 2])->schema([
                             Select::make('tenant_id')
                                 ->label(__('Tenant'))
                                 ->relationship('tenant', 'name')
@@ -56,9 +55,7 @@ class TenantInvoiceForm
                                 ->step('0.01')
                                 ->rule('gt:0')
                                 ->required(),
-                        ]),
 
-                        Grid::make(['default' => 1, 'md' => 3])->schema([
                             DatePicker::make('invoice_date')
                                 ->label(__('Invoice Date'))
                                 ->prefixIcon(Heroicon::OutlinedCalendar)
@@ -81,13 +78,7 @@ class TenantInvoiceForm
                                 ->default(fn (): int => TenantInvoice::getDefaultWarningDays())
                                 ->required(),
                         ]),
-                    ]),
 
-                Section::make(__('Payment Status & Notes'))
-                    ->description(__('Set the payment status and record any billing or transfer notes.'))
-                    ->icon(Heroicon::OutlinedCreditCard)
-                    ->columnSpanFull()
-                    ->schema([
                         Grid::make(['default' => 1, 'md' => 2])->schema([
                             ToggleButtons::make('status')
                                 ->label(__('Status'))
@@ -122,14 +113,14 @@ class TenantInvoiceForm
                                 ->visible(fn (Get $get): bool => $get('status') === TenantInvoice::STATUS_PAID)
                                 ->required(fn (Get $get): bool => $get('status') === TenantInvoice::STATUS_PAID)
                                 ->nullable(),
-                        ]),
 
-                        Textarea::make('notes')
-                            ->label(__('Notes'))
-                            ->placeholder(__('Optional payment reference, bank transfer details, or internal remarks...'))
-                            ->rows(3)
-                            ->nullable()
-                            ->columnSpanFull(),
+                            Textarea::make('notes')
+                                ->label(__('Notes'))
+                                ->placeholder(__('Optional payment reference, bank transfer details, or internal remarks...'))
+                                ->rows(2)
+                                ->nullable()
+                                ->columnSpanFull(),
+                        ]),
                     ]),
             ]);
     }

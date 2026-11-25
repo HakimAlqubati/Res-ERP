@@ -107,7 +107,7 @@ class TenantInvoiceResourceTest extends TestCase
         );
         $this->assertNotSame($overdueInvoice->invoice_number, $upcomingInvoice->invoice_number);
         $this->assertSame(TenantInvoice::STATUS_UNPAID, $overdueInvoice->status);
-        $this->assertSame(TenantInvoice::DEFAULT_WARNING_DAYS, $overdueInvoice->warning_days);
+        $this->assertSame(TenantInvoice::getDefaultWarningDays(), $overdueInvoice->warning_days);
         $this->assertSame($admin->id, $overdueInvoice->created_by);
         $this->assertTrue($overdueInvoice->isOverdue());
         $this->assertFalse($upcomingInvoice->isOverdue());
