@@ -44,7 +44,6 @@ class TenantInvoice extends Model
 
     protected $attributes = [
         'status' => self::STATUS_UNPAID,
-        'warning_days' => self::DEFAULT_WARNING_DAYS,
     ];
 
     protected function casts(): array
@@ -68,7 +67,7 @@ class TenantInvoice extends Model
             }
 
             if ($invoice->warning_days === null) {
-                $invoice->warning_days = self::DEFAULT_WARNING_DAYS;
+                $invoice->warning_days = self::getDefaultWarningDays();
             }
 
             if ($invoice->created_by === null && auth()->check()) {
@@ -99,6 +98,11 @@ class TenantInvoice extends Model
                 ])->saveQuietly();
             }
         });
+    }
+
+    public static function getDefaultWarningDays(): int
+    {
+        return CentralSetting::getDefaultInvoiceWarningDays();
     }
 
     /**

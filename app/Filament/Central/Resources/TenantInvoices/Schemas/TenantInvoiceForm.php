@@ -31,9 +31,10 @@ class TenantInvoiceForm
                         TextInput::make('invoice_number')
                             ->label(__('Invoice Number'))
                             ->prefixIcon(Heroicon::OutlinedHashtag)
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->hiddenOn('create')
+                            ->trim()
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(table: TenantInvoice::class, column: 'invoice_number', ignoreRecord: true)
                             ->columnSpanFull(),
 
                         Grid::make(['default' => 1, 'md' => 2])->schema([
@@ -77,7 +78,7 @@ class TenantInvoiceForm
                                 ->integer()
                                 ->minValue(0)
                                 ->maxValue(365)
-                                ->default(TenantInvoice::DEFAULT_WARNING_DAYS)
+                                ->default(fn (): int => TenantInvoice::getDefaultWarningDays())
                                 ->required(),
                         ]),
                     ]),
