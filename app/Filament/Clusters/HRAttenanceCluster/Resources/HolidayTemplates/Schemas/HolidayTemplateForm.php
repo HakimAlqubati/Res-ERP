@@ -6,6 +6,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayTemplates\Sc
 
 use App\Models\Branch;
 use App\Models\HolidayTemplate;
+use App\Modules\HR\Holidays\Rules\ValidHolidayTemplateDayRule;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -38,10 +39,9 @@ class HolidayTemplateForm
                         ->default(HolidayTemplate::TYPE_FIXED)
                         ->required()
                         ->live()
-                        ->afterStateUpdated(function (?string $state, Get $get, Set $set): void {
-                            if ($state === HolidayTemplate::TYPE_HIJRI && (int) $get('day') > 30) {
-                                $set('day', 30);
-                            }
+                        ->afterStateUpdated(function (Set $set): void {
+                            $set('month', null);
+                            $set('day', null);
                         }),
 
                     TextInput::make('count_days')
@@ -58,14 +58,46 @@ class HolidayTemplateForm
                 ->columns(2)
                 ->schema([
                     Select::make('month')
+                        ->key(fn (Get $get): string => 'holiday_month_' . ((string) ($get('type') ?: HolidayTemplate::TYPE_FIXED)))
                         ->label(fn (Get $get): string => $get('type') === HolidayTemplate::TYPE_HIJRI ? 'Hijri Month' : 'Gregorian Month')
                         ->options(fn (Get $get): array => HolidayTemplate::monthOptions((string) $get('type')))
                         ->searchable()
-                        ->required(),
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (mixed $state, Get $get, Set $set): void {
+                            $day = $get('day');
+
+                            if (blank($day)) {
+                                return;
+                            }
+
+                            $type = (string) ($get('type') ?: HolidayTemplate::TYPE_FIXED);
+                            $month = filled($state) ? (int) $state : null;
+
+                            if (! HolidayTemplate::isValidDayForMonth($type, $month, (int) $day)) {
+                                $set('day', null);
+                            }
+                        }),
 
                     Select::make('day')
-                        ->label(fn (Get $get): string => $get('type') === HolidayTemplate::TYPE_HIJRI ? 'Hijri Day (1 - 30)' : 'Gregorian Day (1 - 31)')
-                        ->options(fn (Get $get): array => HolidayTemplate::dayOptions((string) $get('type')))
+                        ->label(function (Get $get): string {
+                            $type = (string) ($get('type') ?: HolidayTemplate::TYPE_FIXED);
+                            $month = filled($get('month')) ? (int) $get('month') : null;
+                            $maxDay = HolidayTemplate::maxDayForMonth($type, $month);
+                            $prefix = $type === HolidayTemplate::TYPE_HIJRI ? 'Hijri Day' : 'Gregorian Day';
+
+                            return "{$prefix} (1 - {$maxDay})";
+                        })
+                        ->options(function (Get $get): array {
+                            $type = (string) ($get('type') ?: HolidayTemplate::TYPE_FIXED);
+                            $month = filled($get('month')) ? (int) $get('month') : null;
+
+                            return HolidayTemplate::dayOptions($type, $month);
+                        })
+                        ->rule(fn (Get $get): ValidHolidayTemplateDayRule => new ValidHolidayTemplateDayRule(
+                            type: (string) ($get('type') ?: HolidayTemplate::TYPE_FIXED),
+                            month: filled($get('month')) ? (int) $get('month') : null,
+                        ))
                         ->searchable()
                         ->required(),
                 ]),

@@ -31,6 +31,28 @@ class HolidayTemplate extends Model implements Auditable
         self::TYPE_HIJRI,
     ];
 
+    public const HIJRI_MAX_DAY = 30;
+
+    /**
+     * Maximum valid calendar day per Gregorian month (supports leap day Feb 29).
+     *
+     * @var array<int, int>
+     */
+    public const GREGORIAN_MONTH_MAX_DAYS = [
+        1  => 31,
+        2  => 29,
+        3  => 31,
+        4  => 30,
+        5  => 31,
+        6  => 30,
+        7  => 31,
+        8  => 31,
+        9  => 30,
+        10 => 31,
+        11 => 30,
+        12 => 31,
+    ];
+
     protected $fillable = [
         'name',
         'type',
@@ -191,12 +213,34 @@ class HolidayTemplate extends Model implements Auditable
             : self::gregorianMonthOptions();
     }
 
+    public static function maxDayForMonth(?string $type = null, ?int $month = null): int
+    {
+        if ($type === self::TYPE_HIJRI) {
+            return self::HIJRI_MAX_DAY;
+        }
+
+        if ($month !== null && isset(self::GREGORIAN_MONTH_MAX_DAYS[$month])) {
+            return self::GREGORIAN_MONTH_MAX_DAYS[$month];
+        }
+
+        return 31;
+    }
+
+    public static function isValidDayForMonth(?string $type, ?int $month, ?int $day): bool
+    {
+        if ($month === null || $day === null || $month < 1 || $month > 12) {
+            return false;
+        }
+
+        return $day >= 1 && $day <= self::maxDayForMonth($type, $month);
+    }
+
     /**
      * @return array<int, int>
      */
-    public static function dayOptions(?string $type = null): array
+    public static function dayOptions(?string $type = null, ?int $month = null): array
     {
-        $maxDay = $type === self::TYPE_HIJRI ? 30 : 31;
+        $maxDay = self::maxDayForMonth($type, $month);
 
         return array_combine(range(1, $maxDay), range(1, $maxDay));
     }
