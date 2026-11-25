@@ -42,7 +42,7 @@ class SettingForm
 
                                         Toggle::make(CentralSetting::KEY_SUSPEND_TENANT_ON_OVERDUE_INVOICE)
                                             ->label('Suspend Tenant on Overdue Invoice')
-                                            ->helperText('Suspend tenant access once an unpaid invoice passes its due date (setting only; not enforced yet).')
+                                            ->helperText('Automatically deactivate active tenants with unpaid overdue invoices daily at midnight.')
                                             ->inline(false)
                                             ->default(CentralSetting::DEFAULT_SUSPEND_TENANT_ON_OVERDUE_INVOICE),
                                     ]),

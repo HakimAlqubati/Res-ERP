@@ -163,7 +163,7 @@ class TenantInvoice extends Model
     {
         return $query
             ->where('status', self::STATUS_UNPAID)
-            ->whereDate('due_date', '<', today());
+            ->where('due_date', '<', today()->toDateString());
     }
 
     public function scopeInWarningWindow(Builder $query): Builder

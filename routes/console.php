@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\SuspendOverdueTenantsCommand;
 use App\Jobs\TestJob;
 use App\Mail\GeneralNotificationMail;
 use App\Models\CustomTenantModel;
@@ -33,3 +34,7 @@ Schedule::command('notifications:warning')->everyFourHours();
 Schedule::command('hr:overtime:auto-process')->everyThirtyMinutes();
 Schedule::command('hr:notify-pending-applications')->dailyAt('12:00')->timezone('Asia/Kuala_Lumpur');
 Schedule::command('hr:auto-approve-terminations')->dailyAt('00:05')->timezone('Asia/Kuala_Lumpur');
+Schedule::command(SuspendOverdueTenantsCommand::class)
+    ->daily()
+    ->timezone(config('app.schedule_timezone', config('app.timezone')))
+    ->withoutOverlapping();
