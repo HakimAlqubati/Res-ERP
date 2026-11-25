@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\CentralSetting;
 use App\Models\CustomTenantModel;
 use App\Models\Task;
 use App\Models\TenantInvoice;
+use App\Policies\CentralSettingPolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TenantInvoicePolicy;
 use App\Policies\TenantPolicy;
@@ -25,6 +27,7 @@ class AuthServiceProvider extends ServiceProvider
         CustomTenantModel::class => TenantPolicy::class,
         Tenant::class => TenantPolicy::class,
         TenantInvoice::class => TenantInvoicePolicy::class,
+        CentralSetting::class => CentralSettingPolicy::class,
     ];
 
     /**
