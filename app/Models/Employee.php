@@ -21,6 +21,19 @@ class Employee extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
     use EmployeeRelationships, EmployeeAccessorsTrait, EmployeeAttendanceTrait;
 
+    /**
+     * Transient flags used to coordinate salary log recording with EmployeeObserver
+     * without silencing OwenIt\Auditing or other model events.
+     */
+    public bool $skipSalaryLogObserver = false;
+
+    public ?string $salaryEffectiveDate = null;
+
+    /**
+     * @var array{old_salary: float, new_salary: float, effective_date: string}|null
+     */
+    public ?array $pendingSalaryLogChange = null;
+
     public function serviceTerminations()
     {
         return $this->hasMany(EmployeeServiceTermination::class);
@@ -240,15 +253,22 @@ class Employee extends Model implements Auditable
      * Scope to find employees eligible for payroll in a specific period.
      * Eligible if:
      * 1. Joined before or during the period.
-     * 2. Has salary > 0.
+     * 2. Has effective salary > 0 for the period (from hr_employee_salary_logs).
      * 3. Either Active OR was terminated during/after the period.
      */
     public function scopeEligibleForPayroll($query, $year, $month)
     {
-        $periodStart = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+        $yearInt = (int) $year;
+        $monthInt = (int) $month;
+        $periodStart = \Carbon\Carbon::create($yearInt, $monthInt, 1)->startOfMonth();
         $periodEnd = $periodStart->copy()->endOfMonth();
 
-        return $query->where('salary', '>', 0)
+        $effectiveSalarySql = \App\Modules\HR\Payroll\Services\EmployeeSalaryResolver::effectiveSalarySubquery(
+            'hr_employees.id',
+            sprintf("'%04d-%02d-01'", $yearInt, $monthInt)
+        );
+
+        return $query->whereRaw("({$effectiveSalarySql}) > 0")
             ->where('join_date', '<=', $periodEnd->toDateString())
             ->where(function ($q) use ($periodStart) {
                 $q->active()

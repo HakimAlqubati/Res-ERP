@@ -297,6 +297,11 @@ trait EmployeeRelationships
         return $this->hasMany(\App\Models\SalaryIncreaseRequest::class, 'employee_id');
     }
 
+    public function salaryLogs()
+    {
+        return $this->hasMany(\App\Models\EmployeeSalaryLog::class, 'employee_id');
+    }
+
     /**
      * Scope to filter employees by their associated user's role.
      * Supports role ID (numeric) or role Name (string).

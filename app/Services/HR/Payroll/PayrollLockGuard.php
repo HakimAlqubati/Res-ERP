@@ -86,6 +86,59 @@ final class PayrollLockGuard
         return $this->hasExistingPayroll($employeeId, $year, $month);
     }
 
+    /**
+     * Find the earliest active (non-cancelled) payroll record for an employee
+     * starting from the specified period (year, month) onwards.
+     *
+     * Used for cumulative/forward-propagating changes such as salary changes:
+     * if month M+1 already has a payroll, changing salary effective from M
+     * would retroactively alter M+1.
+     */
+    public function firstBlockingPayrollFromPeriod(int $employeeId, int $year, int $month): ?Payroll
+    {
+        return Payroll::query()
+            ->where('employee_id', $employeeId)
+            ->withTrashed()
+            ->whereNotIn('status', [Payroll::STATUS_CANCELLED])
+            ->where(function ($query) use ($year, $month): void {
+                $query->where('year', '>', $year)
+                    ->orWhere(function ($sub) use ($year, $month): void {
+                        $sub->where('year', $year)
+                            ->where('month', '>=', $month);
+                    });
+            })
+            ->orderBy('year')
+            ->orderBy('month')
+            ->first();
+    }
+
+    /**
+     * Check whether any non-cancelled payroll exists in or after (year, month).
+     */
+    public function isLockedFromPeriod(int $employeeId, int $year, int $month): bool
+    {
+        return $this->firstBlockingPayrollFromPeriod($employeeId, $year, $month) !== null;
+    }
+
+    /**
+     * Assert that no non-cancelled payroll exists in or after (year, month).
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function checkLockFromPeriod(int $employeeId, int $year, int $month, string $errorField = 'effective_date'): void
+    {
+        $blocking = $this->firstBlockingPayrollFromPeriod($employeeId, $year, $month);
+
+        if ($blocking !== null) {
+            $targetPeriod = $this->monthLabel($year, $month);
+            $blockingPeriod = $this->monthLabel((int) $blocking->year, (int) $blocking->month);
+
+            throw ValidationException::withMessages([
+                $errorField => "Locked: Cannot apply a salary change effective from {$targetPeriod} because payroll for {$blockingPeriod} already exists.",
+            ]);
+        }
+    }
+
     // -------------------------------------------------------------------------
     //  Private helpers
     // -------------------------------------------------------------------------
