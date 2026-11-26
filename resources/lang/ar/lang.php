@@ -1218,7 +1218,7 @@ return [
     'one_role_not_valid' => 'أحد الأدوار المحددة غير صالح لنوع المستخدم الحالي.',
     'roles_list_invalid' => 'صيغة قائمة الأدوار غير صالحة.',
     'role_required' => 'يرجى تحديد دور واحد على الأقل.',
-    'tenant_invoice_warning_tooltip' => 'متبقي :days يوم على استحقاق فاتورة الاشتراك (:invoice)، يرجى دفع فاتورتك.',
+    'tenant_invoice_warning_tooltip' => 'الفاتورة :invoice تستحق خلال :days أيام. سدد الآن لتجنب انقطاع الخدمة!',
     'tenant_invoice_due_today_tooltip' => 'فاتورة الاشتراك (:invoice) مستحقة اليوم، يرجى دفع فاتورتك.',
     'tenant_invoice_overdue_tooltip' => 'تأخر سداد فاتورة الاشتراك (:invoice) بمقدار :days يوم، يرجى دفع فاتورتك فوراً.',
 ];
