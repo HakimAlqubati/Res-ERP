@@ -297,16 +297,18 @@ class PayrollForm
             ->toArray();
 
         $logEmployeeIds = [];
+        $targetYear = now()->year;
+        $targetMonth = now()->month;
         try {
             $monthValue = $get('name');
             if ($monthValue) {
                 $parts = explode(' ', $monthValue);
                 if (count($parts) === 2) {
                     [$monthName, $year] = $parts;
-                    $monthNumber = \Carbon\Carbon::parse("1 $monthValue")->month;
-                    $year = (int) $year;
+                    $targetMonth = (int) \Carbon\Carbon::parse("1 $monthValue")->month;
+                    $targetYear = (int) $year;
 
-                    $date = Carbon::create((int) $year, (int) $monthNumber, 1);
+                    $date = Carbon::create($targetYear, $targetMonth, 1);
                     $startDate = $date->copy()->startOfMonth();
                     $endDate = $date->copy()->endOfMonth();
                     $logEmployeeIds = EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $startDate, $endDate);
@@ -321,12 +323,20 @@ class PayrollForm
             return [];
         }
 
+        $salaryMap = app(\App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface::class)
+            ->resolveMapForPeriod($allIds, $targetYear, $targetMonth);
+
+        $zeroSalaryIds = array_values(array_filter(
+            $allIds,
+            static fn ($id): bool => ((float) ($salaryMap[(int) $id] ?? 0.0)) <= 0.0
+        ));
+
+        if (empty($zeroSalaryIds)) {
+            return [];
+        }
+
         return Employee::query()
-            ->whereIn('id', $allIds)
-            ->where(function ($query) {
-                $query->whereNull('salary')
-                    ->orWhere('salary', 0);
-            })
+            ->whereIn('id', $zeroSalaryIds)
             ->active()
             ->pluck('name')
             ->toArray();

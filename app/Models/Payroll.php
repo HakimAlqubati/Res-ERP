@@ -212,4 +212,24 @@ class Payroll extends Model
             return $this->branch ?? $this->employee?->branch;
         });
     }
+
+    /**
+     * Accessor for the employee's contracted monthly salary effective for this payroll's (year, month).
+     * Reuses SQL-selected `period_salary` attribute when present to avoid N+1 queries.
+     */
+    protected function periodSalary(): Attribute
+    {
+        return Attribute::get(function (): float {
+            if (array_key_exists('period_salary', $this->attributes) && $this->attributes['period_salary'] !== null) {
+                return round((float) $this->attributes['period_salary'], 2);
+            }
+
+            if ($this->employee_id && $this->year && $this->month) {
+                return app(\App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface::class)
+                    ->resolveForPeriod((int) $this->employee_id, (int) $this->year, (int) $this->month);
+            }
+
+            return round((float) ($this->employee?->salary ?? 0), 2);
+        });
+    }
 }

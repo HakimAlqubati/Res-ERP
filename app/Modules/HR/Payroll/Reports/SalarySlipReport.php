@@ -26,7 +26,7 @@ class SalarySlipReport
      */
     public function getData($payrollId)
     {
-        auth()->user()->load('roles');
+        auth()->user()?->load('roles');
         /** @var \App\Models\Payroll $payroll */
         $payroll = Payroll::with([
             'employee',
@@ -227,6 +227,7 @@ class SalarySlipReport
 
         return [
             'payroll'              => $payroll,
+            'contracted_salary'    => $payroll->period_salary,
             'transactions'         => $transactions,
             'earnings'             => $earnings->values(),
             'deductions'           => $deductions->values(),

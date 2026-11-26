@@ -190,14 +190,32 @@ class PayrollsExport implements FromView
 
     private function groupPayrollsByEmployee(Collection $payrolls): Collection
     {
+        $periodEmployeeMap = [];
+        foreach ($payrolls as $item) {
+            if ($item->employee_id && $item->year && $item->month) {
+                $periodKey = sprintf('%04d-%02d', (int) $item->year, (int) $item->month);
+                $periodEmployeeMap[$periodKey][] = (int) $item->employee_id;
+            }
+        }
+
+        $salaryByPeriod = app(\App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface::class)
+            ->resolveMapForPeriods($periodEmployeeMap);
+
         return $payrolls
             ->groupBy(fn($payroll) => implode('|', [$payroll->payroll_run_id, $payroll->employee_id]))
-            ->map(function (Collection $group) {
+            ->map(function (Collection $group) use ($salaryByPeriod) {
                 $payroll = $group->first();
+                $periodKey = ($payroll->year && $payroll->month)
+                    ? sprintf('%04d-%02d', (int) $payroll->year, (int) $payroll->month)
+                    : null;
+
+                $baseSalary = ($periodKey !== null && isset($salaryByPeriod[$periodKey][(int) $payroll->employee_id]))
+                    ? round((float) $salaryByPeriod[$periodKey][(int) $payroll->employee_id], 2)
+                    : round((float) ($payroll->employee?->salary ?? 0), 2);
 
                 return [
                     'payroll'         => $payroll,
-                    'base_salary'     => round((float) ($payroll->employee?->salary ?? 0), 2),
+                    'base_salary'     => $baseSalary,
                     'due_base_salary' => round((float) $group->sum('base_salary'), 2),
                     'net_salary'      => round((float) $group->sum(fn($item) => (float) $item->getRawOriginal('net_salary')), 2),
                     'transactions'    => $this->mergeSimilarTransactions(

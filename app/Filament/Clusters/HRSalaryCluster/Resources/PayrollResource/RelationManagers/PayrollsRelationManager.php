@@ -49,13 +49,16 @@ class PayrollsRelationManager extends RelationManager
                 $query->with(['employee.branch', 'branch'])
                       ->leftJoin('hr_employee_service_terminations', 'hr_employee_service_terminations.employee_id', '=', 'hr_payrolls.employee_id');
 
+                $periodSalaryExpr = \App\Modules\HR\Payroll\Services\EmployeeSalaryResolver::payrollPeriodSalarySubquery();
+
                 if ($this->isShowingBranchSplits()) {
-                    return $query->select('hr_payrolls.*', 'hr_employee_service_terminations.termination_reason');
+                    return $query
+                        ->select('hr_payrolls.*', 'hr_employee_service_terminations.termination_reason')
+                        ->selectRaw("({$periodSalaryExpr}) as period_salary");
                 }
 
                 return $query
-                 
-                    ->selectRaw('
+                    ->selectRaw("
                         MIN(hr_payrolls.id) as id,
                         hr_payrolls.payroll_run_id,
                         hr_payrolls.employee_id,
@@ -88,8 +91,9 @@ class PayrollsRelationManager extends RelationManager
                         MAX(hr_payrolls.updated_at) as updated_at,
                         MAX(hr_employee_service_terminations.termination_reason) as termination_reason,
                         MAX(hr_employee_service_terminations.notes) as termination_notes,
+                        ({$periodSalaryExpr}) as period_salary,
                         1 as is_grouped_row
-                    ')
+                    ")
                     ->groupBy('hr_payrolls.payroll_run_id', 'hr_payrolls.employee_id', 'hr_payrolls.year', 'hr_payrolls.month');
             })
             ->columns([
@@ -127,16 +131,13 @@ class PayrollsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
-                    ->getStateUsing(fn(Payroll $record) => (float) ($record->employee?->salary ?? 0))
+                    ->getStateUsing(fn (Payroll $record) => (float) ($record->getAttribute('period_salary') ?? $record->period_salary))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query->orderBy(
-                            \App\Models\Employee::withoutGlobalScopes()
-                                ->select('salary')
-                                ->whereColumn('hr_employees.id', 'hr_payrolls.employee_id')
-                                ->limit(1),
-                            $direction
-                        );
+                        $safeDir = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+                        $periodSalaryExpr = \App\Modules\HR\Payroll\Services\EmployeeSalaryResolver::payrollPeriodSalarySubquery();
+
+                        return $query->orderByRaw("({$periodSalaryExpr}) {$safeDir}");
                     }),
 
 

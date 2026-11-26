@@ -49,6 +49,29 @@ class PenaltyDeductionResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
+        $recalculatePercentageAmount = static function ($get, $set): void {
+            if ($get('deduction_type') != PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE) {
+                return;
+            }
+
+            $employeeId = $get('employee_id');
+            $percentage = (float) ($get('percentage') ?? 0);
+
+            if (! $employeeId || $percentage <= 0) {
+                return;
+            }
+
+            try {
+                $date = Carbon::parse($get('date') ?: now());
+            } catch (\Throwable) {
+                return;
+            }
+            $effectiveSalary = app(\App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface::class)
+                ->resolveForPeriod((int) $employeeId, $date->year, $date->month);
+
+            $set('penalty_amount', round(($effectiveSalary * $percentage) / 100, 2));
+        };
+
         return $schema->components([
             Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
                 DatePicker::make('date')
@@ -57,12 +80,13 @@ class PenaltyDeductionResource extends Resource
                     ->maxDate(now()->toDateString())
                     ->required()
                     ->live()
-                    ->afterStateUpdated(function ($set, $state) {
+                    ->afterStateUpdated(function ($get, $set, $state) use ($recalculatePercentageAmount) {
                         if ($state) {
                             $date = Carbon::parse($state);
                             $set('year', $date->year);
                             $set('month', $date->month);
                         }
+                        $recalculatePercentageAmount($get, $set);
                     }),
 
                 Select::make('employee_id')
@@ -102,6 +126,9 @@ class PenaltyDeductionResource extends Resource
                     })
                     ->searchable()
                     ->preload()->live()
+                    ->afterStateUpdated(function ($get, $set) use ($recalculatePercentageAmount) {
+                        $recalculatePercentageAmount($get, $set);
+                    })
                     ->required(),
                 Select::make('deduction_id')->label('Deduction')
                     ->live()->afterStateUpdated(function ($get, $set, $state) {
@@ -125,23 +152,19 @@ class PenaltyDeductionResource extends Resource
                     ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT)
                     ->required()
                     ->live()
-                    ->afterStateUpdated(function ($set, $get, $state) {
+                    ->afterStateUpdated(function ($set, $get, $state) use ($recalculatePercentageAmount) {
                         if (in_array($state, [PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT, PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE])) {
                             $set('penalty_amount', 0);
                         }
+                        $recalculatePercentageAmount($get, $set);
                     }),
 
                 TextInput::make('percentage')->label('Specify percentage')
                     ->helperText('Percentage of employee basic salary')
                     ->visible(fn ($get): bool => $get('deduction_type') == PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE)
                     ->numeric()->minValue(0.5)
-                    ->maxValue(100)->required()->live()->afterStateUpdated(function ($get, $set, $state) {
-                        $employee = Employee::find($get('employee_id'));
-                        if ($employee) {
-                            $salary = $employee->salary;
-                            $percentageAmount = ($salary * $state) / 100;
-                            $set('penalty_amount', $percentageAmount);
-                        }
+                    ->maxValue(100)->required()->live()->afterStateUpdated(function ($get, $set, $state) use ($recalculatePercentageAmount) {
+                        $recalculatePercentageAmount($get, $set);
                     }),
                 TextInput::make('penalty_amount')
 

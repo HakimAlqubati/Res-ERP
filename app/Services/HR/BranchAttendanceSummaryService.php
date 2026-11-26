@@ -5,6 +5,7 @@ namespace App\Services\HR;
 use App\Models\Employee;
 use App\Models\EmployeeServiceTermination;
 use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
 use Carbon\Carbon;
 
 /**
@@ -22,9 +23,14 @@ class BranchAttendanceSummaryService
 
     protected AttendanceReportInterface $reportManager;
 
-    public function __construct(AttendanceReportInterface $reportManager)
-    {
+    protected EmployeeSalaryResolverInterface $salaryResolver;
+
+    public function __construct(
+        AttendanceReportInterface $reportManager,
+        ?EmployeeSalaryResolverInterface $salaryResolver = null
+    ) {
         $this->reportManager = $reportManager;
+        $this->salaryResolver = $salaryResolver ?? app(EmployeeSalaryResolverInterface::class);
     }
 
     /**
@@ -45,6 +51,7 @@ class BranchAttendanceSummaryService
         $monthDays = $periodStart->daysInMonth;
 
         $employeeIdsInBranch = \App\Models\EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $periodStart, $periodEnd);
+        $salaryMap = $this->salaryResolver->resolveMapForPeriod($employeeIdsInBranch, $year, $month);
 
         // Terminated records this month
         $terminatedRecords = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_APPROVED)
@@ -82,7 +89,7 @@ class BranchAttendanceSummaryService
                             });
                     });
             }])
-            ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId) {
+            ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId, $salaryMap) {
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
 
                 // Optimized: Fetch all attendance data for the entire chunk in one bulk request
@@ -90,7 +97,8 @@ class BranchAttendanceSummaryService
 
                 foreach ($filtered as $employee) {
                     $employeeReport = $chunkReportMap->get($employee->id) ?? collect();
-                    $row = $this->processEmployee($employee, $employeeReport, $periodStart, $periodEnd, $year, $month, $monthDays, $branchId);
+                    $periodSalary = $salaryMap[$employee->id] ?? (float) ($employee->salary ?? 0);
+                    $row = $this->processEmployee($employee, $employeeReport, $periodStart, $periodEnd, $year, $month, $monthDays, $branchId, $periodSalary);
 
                     // Classify: new staff if joined this month
                     $isNew = $employee->join_date
@@ -116,7 +124,8 @@ class BranchAttendanceSummaryService
                 if (!$emp) continue;
 
                 $empReport = $terminatedReportMap->get($emp->id) ?? collect();
-                $row = $this->processEmployee($emp, $empReport, $periodStart, $periodEnd, $year, $month, $monthDays, $branchId);
+                $periodSalary = $salaryMap[$emp->id] ?? (float) ($emp->salary ?? 0);
+                $row = $this->processEmployee($emp, $empReport, $periodStart, $periodEnd, $year, $month, $monthDays, $branchId, $periodSalary);
                 $row['termination_date'] = Carbon::parse($record->termination_date)->format('Y-m-d');
                 $terminatedStaff[] = $row;
             }
@@ -170,8 +179,11 @@ class BranchAttendanceSummaryService
         int $year,
         int $month,
         int $monthDays,
-        int $branchId
+        int $branchId,
+        ?float $periodSalary = null
     ): array {
+        $resolvedSalary = $periodSalary ?? (float) ($employee->salary ?? 0);
+
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
             $attendanceArray = $attendanceData->toArray();
@@ -220,7 +232,7 @@ class BranchAttendanceSummaryService
                 'employee_id'  => $employee->id,
                 'employee_no'  => $employee->employee_no,
                 'name'         => $employee->name,
-                'salary'       => $employee->salary,
+                'salary'       => $resolvedSalary,
                 'overtime'     => [
                     'days'  => $overtimeDays + ($employee->manual_overtime_days ?? 0),
                     'hours' => $approvedOvertimeHours,
@@ -241,7 +253,7 @@ class BranchAttendanceSummaryService
                 'employee_id'  => $employee->id,
                 'employee_no'  => $employee->employee_no,
                 'name'         => $employee->name,
-                'salary'       => $employee->salary,
+                'salary'       => $resolvedSalary,
                 'overtime'     => ['days' => 0, 'hours' => 0],
                 'deductions'   => ['days' => 0, 'hours' => 0],
                 'attendance'   => [],

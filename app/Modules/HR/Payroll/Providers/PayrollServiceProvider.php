@@ -5,6 +5,7 @@ namespace App\Modules\HR\Payroll\Providers;
 use Illuminate\Support\ServiceProvider;
 
 // Services
+use App\Modules\HR\Payroll\Services\EmployeeSalaryResolver;
 use App\Modules\HR\Payroll\Services\PayrollRunService;
 use App\Modules\HR\Payroll\Services\PayrollCalculationService;
 use App\Modules\HR\Payroll\Services\PayrollSimulationService;
@@ -16,6 +17,7 @@ use App\Modules\HR\Payroll\Repositories\PayrollRepository;
 use App\Modules\HR\Payroll\Repositories\SalaryTransactionRepository;
 
 // Contracts
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
 use App\Modules\HR\Payroll\Contracts\SalaryCalculatorInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollRunnerInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
@@ -70,6 +72,12 @@ class PayrollServiceProvider extends ServiceProvider
         $this->app->singleton(PayrollRepository::class);
         $this->app->singleton(SalaryTransactionRepository::class);
 
+        // ===== Salary Resolver =====
+        $this->app->singleton(EmployeeSalaryResolver::class);
+        $this->app->singleton(EmployeeSalaryResolverInterface::class, function ($app) {
+            return $app->make(EmployeeSalaryResolver::class);
+        });
+
         // ===== Services =====
         $this->app->singleton(SalaryCalculatorInterface::class, function ($app) {
             return new SalaryCalculatorService(
@@ -97,6 +105,7 @@ class PayrollServiceProvider extends ServiceProvider
                 $app->make(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class),
                 $app->make(SalaryCalculatorInterface::class),
                 $app->make(WeeklyLeaveSegmentAllocator::class),
+                $app->make(EmployeeSalaryResolverInterface::class),
             );
         });
         $this->app->singleton(PayrollSimulationService::class, function ($app) {

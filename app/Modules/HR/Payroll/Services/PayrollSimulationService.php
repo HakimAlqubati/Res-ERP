@@ -8,6 +8,7 @@ use App\Models\EmployeeBranchLog;
 use App\Models\PayrollRun;
 use App\Models\Setting;
 use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -18,7 +19,10 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         protected AttendanceReportInterface $reportManager,
         protected SalaryCalculatorService $salaryCalculatorService,
         protected WeeklyLeaveSegmentAllocator $weeklyLeaveAllocator,
-    ) {}
+        protected ?EmployeeSalaryResolverInterface $salaryResolver = null,
+    ) {
+        $this->salaryResolver ??= app(EmployeeSalaryResolverInterface::class);
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Public API
@@ -142,12 +146,16 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
 
-        foreach ($segments->groupBy(fn($s) => $s['employee']->id) as $employeeSegments) {
+        $groupedSegments = $segments->groupBy(fn($s) => $s['employee']->id);
+        $employeeIds = $groupedSegments->keys()->map(fn ($id) => (int) $id)->values()->all();
+        $salaryMap = $this->salaryResolver->resolveMapForPeriod($employeeIds, $year, $month);
+
+        foreach ($groupedSegments as $employeeSegments) {
             /** @var Employee $employee */
             $employee       = $employeeSegments->first()['employee'];
             $isMultiSegment = $forceMultiSegment || $employeeSegments->count() > 1;
 
-            $monthlySalary = (float) ($employee->salary ?? 0);
+            $monthlySalary = (float) ($salaryMap[$employee->id] ?? 0.0);
             if ($monthlySalary <= 0) {
                 $results[] = $this->failedResult($employee, 'Salary not set or zero.');
                 continue;
