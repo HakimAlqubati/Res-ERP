@@ -74,7 +74,7 @@ class TestController4 extends Controller
         // ✅ Role-based filters
         $user = auth()->user();
 
-       if (isBranchUser() && !isDriver() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen()) {
+       if (isBranchUser() && !isDriver() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen() && !$user->isAdditionalBranchManager()) {
             $where[] = 'o.customer_id = ' . (int) $user->owner?->id;
         }
 
@@ -96,7 +96,7 @@ class TestController4 extends Controller
                     ->pluck('id')->toArray();
 
                 if (count($branchIds)) {
-                    $otherBranchesCategories = Branch::centralKitchens()
+                    $otherBranchesCategories = Branch::withoutGlobalScopes()->whereNull('branches.deleted_at')->centralKitchens()
                         ->where('id', '!=', $kitchenBranch->id)
                         ->with('categories:id')
                         ->get()
@@ -106,7 +106,7 @@ class TestController4 extends Controller
                         ->unique()
                         ->toArray();
                     $branchIdsStr = implode(',', $branchIds);
-                    $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$kitchenBranch->id})";
+                    $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$kitchenBranch->id} OR o.customer_id = {$user->id})";
                     $categoryExclusion = count($otherBranchesCategories)
                         ? 'AND c.id NOT IN (' . implode(',', $otherBranchesCategories) . ')'
                         : '';
@@ -116,16 +116,24 @@ class TestController4 extends Controller
                         JOIN products p ON od.product_id = p.id
                         JOIN categories c ON p.category_id = c.id
                         WHERE od.order_id = o.id AND c.is_manafacturing = 1 $categoryExclusion
-                    ) OR o.customer_id = {$user->id})";
+                    ) OR o.branch_id = {$kitchenBranch->id} OR o.customer_id = {$user->id})";
                 } else {
-                    $where[] = "o.branch_id = {$kitchenBranch->id}";
+                    $where[] = "(o.branch_id = {$kitchenBranch->id} OR o.customer_id = {$user->id})";
                 }
             } else {
-                $where[] = "o.branch_id = {$kitchenBranch->id}";
+                $where[] = "(o.branch_id = {$kitchenBranch->id} OR o.customer_id = {$user->id})";
             }
         } elseif (isBranchManager() && !$kitchenBranch) {
             // مدير فرع عادي (ليس تصنيعي) → يرى طلبات فرعه فقط
             $where[] = "o.branch_id = {$user->branch->id}";
+        } elseif ($user->isAdditionalBranchManager() && !$kitchenBranch) {
+            // مدير فرع إضافي (ليس تصنيعي) → يرى طلبات الفرع الذي يديره + طلباته الخاصة
+            $managedBranch = $user->getManagedAdditionalBranch();
+            if ($managedBranch) {
+                $where[] = "(o.branch_id = {$managedBranch->id} OR o.customer_id = {$user->id})";
+            } else {
+                $where[] = "o.customer_id = {$user->id}";
+            }
         }
 
         if (isStoreManager()) {
@@ -143,7 +151,7 @@ class TestController4 extends Controller
                     WHERE od.order_id = o.id AND c.id IN ($categoryIds)
                 ) OR o.customer_id = {$user->id})";
             } else {
-                $allCustomizedCategories = Branch::centralKitchens()
+                $allCustomizedCategories = Branch::withoutGlobalScopes()->whereNull('branches.deleted_at')->centralKitchens()
                     ->with('categories:id')
                     ->get()
                     ->pluck('categories')
@@ -281,7 +289,7 @@ class TestController4 extends Controller
         // ✅ يدعم الفرع الأساسي والإضافي
         $kitchenBranch = $user->getCentralKitchenBranch();
 
-        $otherBranchesCategories = Branch::centralKitchens()
+        $otherBranchesCategories = Branch::withoutGlobalScopes()->whereNull('branches.deleted_at')->centralKitchens()
             ->where('id', '!=', $kitchenBranch?->id)
             ->with('categories:id')
             ->get()
@@ -317,14 +325,16 @@ class TestController4 extends Controller
             AND (
                 (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
                 OR
-                (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+                o.branch_id = {$kitchenBranch->id}
+                OR
+                o.customer_id = {$user->id}
             )
             ";
 
 
                 if (count($otherBranchesCategories)) {
                     $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
-                    $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
+                    $query .= " and (o.customer_id = {$user->id} OR o.branch_id = {$kitchenBranch->id} OR c.id NOT IN ($otherBranchesCategoriesStr)) ";
                 }
             } else {
                 $customCategories = $user->getCentralKitchenCategories();
@@ -365,7 +375,7 @@ class TestController4 extends Controller
             }
         }
         if (isStoreManager() && !$kitchenBranch) {
-            $allCustomizedCategories = Branch::centralKitchens()
+            $allCustomizedCategories = Branch::withoutGlobalScopes()->whereNull('branches.deleted_at')->centralKitchens()
                 ->with('categories:id')
                 ->get()
                 ->pluck('categories')
