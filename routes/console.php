@@ -34,4 +34,5 @@ Schedule::command('notifications:warning')->everyFourHours();
 Schedule::command('hr:overtime:auto-process')->everyThirtyMinutes();
 Schedule::command('hr:notify-pending-applications')->dailyAt('12:00')->timezone('Asia/Kuala_Lumpur');
 Schedule::command('hr:auto-approve-terminations')->dailyAt('00:05')->timezone('Asia/Kuala_Lumpur');
+Schedule::command('hr:sync-effective-salaries')->dailyAt('00:05')->timezone('Asia/Kuala_Lumpur')->withoutOverlapping();
 Schedule::command('hr:notify-expiring-documents')->dailyAt('08:00')->timezone('Asia/Kuala_Lumpur')->withoutOverlapping();
