@@ -170,6 +170,15 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                 // تحديث رقم الموظف ليكون نفس ال id
                 $employee->update(['employee_no' => $employee->id]);
 
+                // تسجيل الراتب الأولي في السجل التاريخي (لأن الإنشاء تم داخل withoutEvents)
+                app(\App\Modules\HR\SalaryIncrease\Contracts\EmployeeSalaryLogServiceInterface::class)
+                    ->recordInitialSalary(
+                        employee: $employee,
+                        effectiveDate: $joinDate,
+                        source: \App\Models\EmployeeSalaryLog::SOURCE_IMPORT,
+                        actorId: auth()->id(),
+                    );
+
                 // إنشاء حساب مستخدم مرتبط للموظف
                 $employee->createLinkedUser();
  

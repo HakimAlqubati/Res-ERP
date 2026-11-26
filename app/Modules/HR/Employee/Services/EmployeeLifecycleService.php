@@ -4,9 +4,13 @@ namespace App\Modules\HR\Employee\Services;
 
 use App\Models\AppLog;
 use App\Models\Employee;
+use App\Models\EmployeeSalaryLog;
 use App\Models\EmployeeServiceTermination;
 use App\Models\User;
 use App\Modules\HR\Employee\Events\EmployeeAccessRevoked;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
+use App\Modules\HR\SalaryIncrease\Contracts\EmployeeSalaryLogServiceInterface;
+use Carbon\Carbon;
 use App\Rules\HR\Employee\CanRequestTerminationRule;
 use App\Rules\HR\Employee\EmployeeFinancialClearanceRule;
 use Illuminate\Support\Facades\DB;
@@ -163,6 +167,28 @@ class EmployeeLifecycleService
                 'employment_cycle' => $nextCycle,
                 'join_date'        => $data['join_date'],
             ]);
+
+            // 1b. If an explicit salary was provided on rehire, record it via EmployeeSalaryLogService
+            if (array_key_exists('salary', $data) && $data['salary'] !== null && $data['salary'] !== '') {
+                $newSalary = round((float) $data['salary'], 2);
+                $rehireDate = Carbon::parse($data['join_date']);
+                $currentEffective = round(
+                    app(EmployeeSalaryResolverInterface::class)
+                        ->resolveForPeriod($lockedEmployee, $rehireDate->year, $rehireDate->month),
+                    2
+                );
+
+                if ($newSalary !== $currentEffective) {
+                    app(EmployeeSalaryLogServiceInterface::class)->recordSalaryChange(
+                        employee: $lockedEmployee,
+                        newSalary: $newSalary,
+                        effectiveDate: $rehireDate->toDateString(),
+                        source: EmployeeSalaryLog::SOURCE_REHIRE,
+                        notes: $data['notes'] ?? 'Rehire salary adjustment',
+                        actorId: auth()->id(),
+                    );
+                }
+            }
 
             // 2. Reactivate/Restore linked user if exists
             if ($lockedEmployee->user_id) {

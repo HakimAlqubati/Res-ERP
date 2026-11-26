@@ -166,35 +166,7 @@ class RecordActions
                         Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
                     }
                 }),
-            Action::make('rehire')
-                ->label(__('lang.rehire'))
-                ->icon('heroicon-o-arrow-path')
-                ->color('success')
-                ->visible(fn (Employee $record) => ! $record->active)
-                ->schema([
-                    DatePicker::make('join_date')
-                        ->label(__('lang.join_date'))
-                        ->required()
-                        ->default(now()),
-                    Textarea::make('notes')
-                        ->label(__('lang.notes')),
-                ])
-                ->action(function (Employee $record, array $data) {
-                    try {
-                        app(EmployeeLifecycleService::class)->rehire($record, $data);
-
-                        Notification::make()
-                            ->title(__('lang.employee_rehired_successfully'))
-                            ->success()
-                            ->send();
-                    } catch (\Exception $e) {
-                        Notification::make()
-                            ->title(__('lang.error_occurred'))
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
+            EmployeeActions::rehire(),
 
             Action::make('createUser')
                 ->label(__('lang.create_user'))
@@ -410,8 +382,9 @@ class RecordActions
                         'periods' => $periods,
                     ]);
                 })->hidden(),
-            // Add the Change Branch action
+            // Add the Change Branch and Change Salary actions
             EmployeeActions::changeBranch(),
+            EmployeeActions::changeSalary(),
             EditAction::make(),
             ViewAction::make(),
             DeleteAction::make(),

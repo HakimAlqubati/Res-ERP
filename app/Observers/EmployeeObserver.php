@@ -8,13 +8,15 @@ use App\Models\EmployeeBranchLog;
 use App\Models\User;
 use App\Modules\HR\Leaves\InitEmployeeLeaves\Init;
 use App\Modules\HR\Employee\Services\PassportValidationService;
+use App\Modules\HR\SalaryIncrease\Support\EmployeeSalaryObserverHandler;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 
 class EmployeeObserver
 {
     public function __construct(
-        private readonly PassportValidationService $passportValidationService
+        private readonly PassportValidationService $passportValidationService,
+        private readonly EmployeeSalaryObserverHandler $salaryObserverHandler,
     ) {}
 
     /**
@@ -39,6 +41,14 @@ class EmployeeObserver
                 }
             }
         }
+    }
+
+    /**
+     * Handle the Employee "updating" event.
+     */
+    public function updating(Employee $employee): void
+    {
+        $this->salaryObserverHandler->handleUpdating($employee);
     }
 
     /**
@@ -105,6 +115,8 @@ class EmployeeObserver
                 'created_by' => auth()->id(),
             ]);
         }
+
+        $this->salaryObserverHandler->handleCreated($employee);
     }
 
     /**
@@ -112,6 +124,12 @@ class EmployeeObserver
      */
     public function updated(Employee $employee)
     {
+        $this->salaryObserverHandler->handleUpdated($employee);
+
+        if ($this->salaryObserverHandler->shouldSkipUserSync($employee)) {
+            return;
+        }
+
         // Access the related user model
         $user = $employee->user;
         if ($user) {

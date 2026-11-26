@@ -492,10 +492,11 @@ class EmployeeForm
                                                 ->label(__('lang.salary'))
                                                 ->numeric()
                                                 ->inputMode('decimal')
-                                                ->disabled(
-                                                    fn (): bool => isBranchManager() && ! (isSuperAdmin()
-                                                        || isSystemManager())
-                                                )
+                                                ->disabledOn('edit')
+                                                ->dehydrated(fn (string $operation): bool => $operation === 'create')
+                                                ->helperText(fn (string $operation): ?string => $operation === 'edit'
+                                                    ? __('To modify salary, use the "Change Salary" action or submit a Salary Increase Request.')
+                                                    : null)
                                                 ->hidden(fn (string $operation) => isHR() && $operation !== 'create'),
 
                                             Select::make('salary_allocation_rule')

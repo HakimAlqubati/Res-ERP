@@ -3,18 +3,26 @@ namespace App\Filament\Resources\EmployeeResource;
 
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\EmployeeSalaryLog;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
+use App\Modules\HR\SalaryIncrease\Contracts\EmployeeSalaryLogServiceInterface;
 use App\Services\HR\EmployeeBranchTransferService;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Notifications\Notification;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class EmployeeActions
 {
@@ -166,6 +174,149 @@ class EmployeeActions
             });
     }
 
+    public static function changeSalary(): Action
+    {
+        return Action::make('changeSalary')
+            ->icon('heroicon-o-banknotes')
+            ->color('warning')
+            ->label(__('Change Salary'))
+            ->visible(fn (): bool => isSuperAdmin() || isSystemManager() || isFinanceManager())
+            ->modalHeading(__('Change Employee Salary'))
+            ->modalSubmitActionLabel(__('Save'))
+            ->fillForm(function (Employee $record): array {
+                $now = now();
+                $effectiveSalary = app(EmployeeSalaryResolverInterface::class)
+                    ->resolveForPeriod($record, $now->year, $now->month);
+
+                return [
+                    'current_salary' => round($effectiveSalary, 2),
+                    'new_salary'     => null,
+                    'effective_date' => $now->toDateString(),
+                    'notes'          => null,
+                    'salary_history' => $record->salaryLogs()
+                        ->orderByDesc('effective_from')
+                        ->orderByDesc('id')
+                        ->get()
+                        ->map(fn (EmployeeSalaryLog $log): array => [
+                            'effective_from' => $log->effective_from?->format('Y-m-d') ?? '-',
+                            'old_salary'     => $log->old_salary !== null ? formatMoneyWithCurrency($log->old_salary) : '-',
+                            'new_salary'     => formatMoneyWithCurrency($log->new_salary),
+                            'source'         => EmployeeSalaryLog::getSourceLabel($log->source),
+                            'notes'          => $log->notes ?? '-',
+                        ])
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->schema([
+                Tabs::make('SalaryTabs')
+                    ->columnSpanFull()
+                    ->tabs([
+                        Tab::make(__('Change Salary'))
+                            ->icon('heroicon-o-banknotes')
+                            ->schema([
+                                Grid::make(3)
+                                    ->schema([
+                                        TextInput::make('current_salary')
+                                            ->label(__('Current Effective Salary'))
+                                            ->numeric()
+                                            ->disabled()
+                                            ->dehydrated(false),
+
+                                        TextInput::make('new_salary')
+                                            ->label(__('New Salary'))
+                                            ->numeric()
+                                            ->inputMode('decimal')
+                                            ->minValue(0)
+                                            ->required(),
+
+                                        DatePicker::make('effective_date')
+                                            ->label(__('Effective Date'))
+                                            ->default(now()->toDateString())
+                                            ->required()
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, Set $set, Employee $record): void {
+                                                try {
+                                                    $date = $state ? Carbon::parse($state) : now();
+                                                } catch (Throwable) {
+                                                    return;
+                                                }
+
+                                                $effectiveSalary = app(EmployeeSalaryResolverInterface::class)
+                                                    ->resolveForPeriod($record, $date->year, $date->month);
+                                                $set('current_salary', round($effectiveSalary, 2));
+                                            }),
+                                    ]),
+
+                                Textarea::make('notes')
+                                    ->label(__('lang.notes'))
+                                    ->rows(3)
+                                    ->columnSpanFull(),
+                            ]),
+
+                        Tab::make(__('Salary History'))
+                            ->icon('heroicon-o-clock')
+                            ->schema([
+                                Repeater::make('salary_history')
+                                    ->label('')
+                                    ->table([
+                                        TableColumn::make(__('Effective Month'))->width('20%'),
+                                        TableColumn::make(__('Old Salary'))->width('20%'),
+                                        TableColumn::make(__('New Salary'))->width('20%'),
+                                        TableColumn::make(__('Source'))->width('20%'),
+                                        TableColumn::make(__('lang.notes'))->width('20%'),
+                                    ])
+                                    ->schema([
+                                        TextInput::make('effective_from')->disabled(),
+                                        TextInput::make('old_salary')->disabled(),
+                                        TextInput::make('new_salary')->disabled(),
+                                        TextInput::make('source')->disabled(),
+                                        TextInput::make('notes')->disabled(),
+                                    ])
+                                    ->addable(false)
+                                    ->deletable(false)
+                                    ->reorderable(false)
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+                            ]),
+                    ]),
+            ])
+            ->action(function (array $data, Employee $record, Action $action): void {
+                try {
+                    app(EmployeeSalaryLogServiceInterface::class)->recordSalaryChange(
+                        employee: $record,
+                        newSalary: (float) $data['new_salary'],
+                        effectiveDate: (string) $data['effective_date'],
+                        source: EmployeeSalaryLog::SOURCE_DIRECT_EDIT,
+                        notes: $data['notes'] ?? null,
+                        actorId: auth()->id(),
+                    );
+
+                    Notification::make()
+                        ->title(__('lang.success'))
+                        ->body(__('Employee salary updated successfully.'))
+                        ->success()
+                        ->send();
+                } catch (ValidationException $e) {
+                    Notification::make()
+                        ->title(__('Validation Error'))
+                        ->body(collect($e->errors())->flatten()->implode("\n"))
+                        ->danger()
+                        ->send();
+
+                    $action->halt();
+                } catch (Throwable $e) {
+                    Notification::make()
+                        ->title(__('lang.error'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+
+                    $action->halt();
+                }
+            });
+    }
+
     public static function active(): Action
     {
         return Action::make('active')
@@ -237,5 +388,50 @@ class EmployeeActions
           'tableFilters[date_range][end_date]' => now()->endOfMonth()->toDateString(),
         ]))
         ->openUrlInNewTab();
+    }
+
+    /**
+     * Reusable Rehire Action shared across Employee table, Edit page, and View page.
+     */
+    public static function rehire(?\Closure $visibleUsing = null): Action
+    {
+        return Action::make('rehire')
+            ->label(__('lang.rehire'))
+            ->icon('heroicon-o-arrow-path')
+            ->color('success')
+            ->visible($visibleUsing ?? fn (Employee $record): bool => ! $record->active)
+            ->schema(fn (Employee $record): array => [
+                DatePicker::make('join_date')
+                    ->label(__('lang.join_date'))
+                    ->default(now())
+                    ->required(),
+                TextInput::make('salary')
+                    ->label(__('lang.salary'))
+                    ->numeric()
+                    ->inputMode('decimal')
+                    ->minValue(0)
+                    ->default($record->salary)
+                    ->nullable(),
+                Textarea::make('notes')
+                    ->label(__('lang.notes')),
+            ])
+            ->action(function (Employee $record, array $data, Action $action): void {
+                try {
+                    app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->rehire($record, $data);
+
+                    Notification::make()
+                        ->title(__('lang.employee_rehired_successfully'))
+                        ->success()
+                        ->send();
+                } catch (Throwable $e) {
+                    Notification::make()
+                        ->title(__('lang.error_occurred'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+
+                    $action->halt();
+                }
+            });
     }
 }

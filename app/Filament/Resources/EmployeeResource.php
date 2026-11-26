@@ -10,6 +10,7 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\LeaveBalancesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\SalaryLogRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
 use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
@@ -95,8 +96,9 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
+            SalaryLogRelationManager::class,
             LeaveBalancesRelationManager::class,
-            // AdvanceWagesRelationM        anager::class,
+            // AdvanceWagesRelationManager::class,
             // EmployeeFaceDataRelationManager::class,
         ];
     }
@@ -180,7 +182,7 @@ class EmployeeResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager() || isHR()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isFinanceManager() || isHR()) {
             return true;
         }
 

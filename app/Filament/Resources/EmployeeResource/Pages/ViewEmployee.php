@@ -10,10 +10,6 @@ use App\Models\EmployeeServiceTermination;
 use App\Modules\HR\Employee\Services\EmployeeLifecycleService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewEmployee extends ViewRecord
@@ -45,38 +41,13 @@ class ViewEmployee extends ViewRecord
                       && EmployeeResource::canDelete($this->record)
                 ),
             EmployeeActions::changeBranch(),
+            EmployeeActions::changeSalary(),
             EmployeeActions::active(),
             EmployeeActions::inactive(),
 
-            Action::make('rehire')
-                ->label(__('lang.rehire'))
-                ->color('success')
-                ->icon('heroicon-o-arrow-path')
-                ->visible(fn ($record) => ! $record->active && $record->serviceTermination?->status === EmployeeServiceTermination::STATUS_APPROVED)
-                ->schema([
-                    DatePicker::make('join_date')
-                        ->label(__('lang.join_date'))
-                        ->default(now())
-                        ->required(),
-                    Textarea::make('notes')
-                        ->label(__('lang.notes')),
-                ])
-                ->action(function (Employee $record, array $data) {
-                    try {
-                        app(EmployeeLifecycleService::class)->rehire($record, $data);
-
-                        Notification::make()
-                            ->title(__('lang.employee_rehired_successfully'))
-                            ->success()
-                            ->send();
-                    } catch (\Exception $e) {
-                        Notification::make()
-                            ->title(__('lang.error_occurred'))
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
+            EmployeeActions::rehire(
+                fn (Employee $record): bool => ! $record->active && $record->serviceTermination?->status === EmployeeServiceTermination::STATUS_APPROVED
+            ),
             EmployeeActions::attendance(),
 
             
