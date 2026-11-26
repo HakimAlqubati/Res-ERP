@@ -33,7 +33,9 @@ class MonthlyPendingApplicationChecker
             || $this->queryBuilder->getOvertimeQuery($filterDto)->exists()
             || $this->queryBuilder->getEmployeeRewardQuery($filterDto)->exists()
             || $this->queryBuilder->getPenaltyDeductionQuery($filterDto)->exists()
-            || $this->queryBuilder->getUnpaidPreviousPayrollQuery($filterDto)->exists();
+            || $this->queryBuilder->getUnpaidPreviousPayrollQuery($filterDto)->exists()
+            || ($this->queryBuilder->hasSalaryIncreaseTable()
+                && $this->queryBuilder->getSalaryIncreaseRequestQuery($filterDto)->exists());
     }
 
     /**
@@ -51,7 +53,10 @@ class MonthlyPendingApplicationChecker
             + $this->queryBuilder->getOvertimeQuery($filterDto)->count()
             + $this->queryBuilder->getEmployeeRewardQuery($filterDto)->count()
             + $this->queryBuilder->getPenaltyDeductionQuery($filterDto)->count()
-            + $this->queryBuilder->getUnpaidPreviousPayrollQuery($filterDto)->count();
+            + $this->queryBuilder->getUnpaidPreviousPayrollQuery($filterDto)->count()
+            + ($this->queryBuilder->hasSalaryIncreaseTable()
+                ? $this->queryBuilder->getSalaryIncreaseRequestQuery($filterDto)->count()
+                : 0);
     }
 
     /**
@@ -114,6 +119,14 @@ class MonthlyPendingApplicationChecker
             $breakdown[] = ['type' => 'Unpaid Previous Payroll', 'count' => (int) $unpaidPayrollCount];
         }
 
+        // 8. Add Pending Salary Increase Requests
+        if ($this->queryBuilder->hasSalaryIncreaseTable()) {
+            $salaryIncreaseCount = $this->queryBuilder->getSalaryIncreaseRequestQuery($filterDto)->count();
+            if ($salaryIncreaseCount > 0) {
+                $breakdown[] = ['type' => 'Salary Increase Request', 'count' => (int) $salaryIncreaseCount];
+            }
+        }
+
         $totalCount = (int) array_sum(array_column($breakdown, 'count'));
 
         $result = [
@@ -123,7 +136,7 @@ class MonthlyPendingApplicationChecker
             'period'      => "{$filterDto->year}-" . str_pad($filterDto->month, 2, '0', STR_PAD_LEFT),
         ];
 
-        // 8. Branch-wise breakdown (Aggregated from all sources)
+        // 9. Branch-wise breakdown (Aggregated from all sources)
         if (!$filterDto->branchId) {
             $result['by_branch'] = $this->getAggregatedBranchBreakdown($filterDto);
         }
@@ -147,6 +160,10 @@ class MonthlyPendingApplicationChecker
             $this->queryBuilder->getPenaltyDeductionQuery($filterDto),
             $this->queryBuilder->getUnpaidPreviousPayrollQuery($filterDto),
         ];
+
+        if ($this->queryBuilder->hasSalaryIncreaseTable()) {
+            $sources[] = $this->queryBuilder->getSalaryIncreaseRequestQuery($filterDto);
+        }
 
         foreach ($sources as $query) {
             $counts = (clone $query)

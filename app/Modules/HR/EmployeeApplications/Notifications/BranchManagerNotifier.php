@@ -22,7 +22,13 @@ class BranchManagerNotifier
     public function notifyIfPending(Branch $branch): int
     {
         $summary = $this->checker->getDashboardSummary(['branch_id' => $branch->id]);
-        $count = $summary['total_count'] ?? 0;
+
+        // Exclude Salary Increase Requests — branch managers cannot decide on them (covered by SalaryIncreaseNotifier).
+        $breakdown = array_values(array_filter(
+            $summary['breakdown'] ?? [],
+            static fn (array $item): bool => ($item['type'] ?? null) !== 'Salary Increase Request'
+        ));
+        $count = (int) array_sum(array_column($breakdown, 'count'));
 
         if ($count === 0) {
             return 0;
@@ -33,8 +39,6 @@ class BranchManagerNotifier
         if (! $manager) {
             return $count;
         }
-
-        $breakdown = $summary['breakdown'] ?? [];
 
         $this->sendFcmNotification($manager, $branch, $count, $breakdown);
         $this->sendEmailNotification($manager, $branch, $count, $breakdown);
