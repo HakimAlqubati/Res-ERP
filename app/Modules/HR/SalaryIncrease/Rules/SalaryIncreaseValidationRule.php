@@ -13,6 +13,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class SalaryIncreaseValidationRule
 {
+    public function __construct(
+        private readonly SalaryChangeGuard $salaryChangeGuard,
+    ) {}
+
     /**
      * @throws ValidationException
      */
@@ -31,7 +35,7 @@ final class SalaryIncreaseValidationRule
 
         if (($calculatedAmounts['increase_amount'] ?? 0) <= 0) {
             throw ValidationException::withMessages([
-                'new_salary' => ['The new salary must be greater than the employee\'s current salary.'],
+                'new_salary' => ['The new salary must be greater than the employee\'s effective salary for this period.'],
             ]);
         }
 
@@ -39,6 +43,15 @@ final class SalaryIncreaseValidationRule
             throw ValidationException::withMessages([
                 'employee_id' => ['This employee already has a pending salary increase request.'],
             ]);
+        }
+
+        $effectiveDate = $calculatedAmounts['effective_date'] ?? null;
+        if ($effectiveDate) {
+            $this->salaryChangeGuard->assertAllowedForPeriod(
+                (int) $employee->id,
+                (string) $effectiveDate,
+                'effective_date'
+            );
         }
     }
 

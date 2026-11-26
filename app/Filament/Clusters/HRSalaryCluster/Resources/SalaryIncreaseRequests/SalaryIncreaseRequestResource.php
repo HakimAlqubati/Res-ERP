@@ -19,6 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SalaryIncreaseRequestResource extends Resource
@@ -103,6 +104,34 @@ class SalaryIncreaseRequestResource extends Resource
     public static function canViewAny(): bool
     {
         return isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR() || isOwner();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return $record instanceof SalaryIncreaseRequest
+            && $record->isPending()
+            && static::canViewAny();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return $record instanceof SalaryIncreaseRequest
+            && $record->isPending()
+            && static::canViewAny();
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return $record instanceof SalaryIncreaseRequest
+            && $record->isPending()
+            && static::canViewAny();
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return $record instanceof SalaryIncreaseRequest
+            && $record->isPending()
+            && static::canViewAny();
     }
 
     public static function shouldRegisterNavigation(): bool

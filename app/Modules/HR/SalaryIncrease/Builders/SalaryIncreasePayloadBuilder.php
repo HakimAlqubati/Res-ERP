@@ -6,7 +6,9 @@ namespace App\Modules\HR\SalaryIncrease\Builders;
 
 use App\Models\Employee;
 use App\Models\SalaryIncreaseRequest;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
 use App\Modules\HR\SalaryIncrease\DTOs\SalaryIncreaseDataDTO;
+use Carbon\Carbon;
 use InvalidArgumentException;
 
 /**
@@ -17,6 +19,7 @@ final class SalaryIncreasePayloadBuilder
 {
     private ?Employee $employee = null;
     private ?float $oldSalary = null;
+    private bool $hasExplicitBaseSalary = false;
     private string $increaseType = SalaryIncreaseRequest::INCREASE_TYPE_FIXED;
     private float $increaseAmount = 0.0;
     private ?float $increasePercentage = null;
@@ -35,28 +38,50 @@ final class SalaryIncreasePayloadBuilder
         $clone = clone $this;
         $clone->employee = $employee;
         $clone->oldSalary = round((float) ($employee->salary ?? 0), 2);
+        $clone->hasExplicitBaseSalary = false;
 
         return $clone;
     }
 
-    public function withData(SalaryIncreaseDataDTO $dto): self
+    public function withBaseSalary(float $salary): self
+    {
+        $clone = clone $this;
+        $clone->oldSalary = round(max(0, $salary), 2);
+        $clone->hasExplicitBaseSalary = true;
+
+        return $clone;
+    }
+
+    public function withData(SalaryIncreaseDataDTO $dto, ?EmployeeSalaryResolverInterface $resolver = null): self
     {
         if (! $this->employee) {
             throw new InvalidArgumentException('Employee must be set before applying DTO data.');
         }
 
+        $effectiveDate = $dto->effectiveDate ?: now()->toDateString();
+        $parsedDate = Carbon::parse($effectiveDate);
+
+        $baseSalary = $this->hasExplicitBaseSalary
+            ? ($this->oldSalary ?? 0.0)
+            : round(
+                ($resolver ?? app(EmployeeSalaryResolverInterface::class))
+                    ->resolveForPeriod($this->employee, $parsedDate->year, $parsedDate->month),
+                2
+            );
+
         $calculated = self::calculateAmounts(
-            oldSalary: $this->oldSalary ?? (float) ($this->employee->salary ?? 0),
+            oldSalary: $baseSalary,
             increaseType: $dto->increaseType,
             value: $dto->value
         );
 
         $clone = clone $this;
+        $clone->oldSalary = $calculated['old_salary'];
         $clone->increaseType = $dto->increaseType;
         $clone->increaseAmount = $calculated['increase_amount'];
         $clone->increasePercentage = $calculated['increase_percentage'];
         $clone->newSalary = $calculated['new_salary'];
-        $clone->effectiveDate = $dto->effectiveDate ?? now()->toDateString();
+        $clone->effectiveDate = $parsedDate->toDateString();
         $clone->notes = $dto->notes;
         $clone->actorId = $dto->actorId ?? auth()->id();
 
@@ -138,25 +163,39 @@ final class SalaryIncreasePayloadBuilder
     }
 
     /**
-     * Recompute snapshot against the current employee salary at approval time
-     * so `old_salary` always matches the exact salary immediately before updating.
+     * Recompute snapshot against the employee's effective salary for the request's
+     * target effective month at approval time so `old_salary` always matches the exact
+     * effective salary immediately before applying the increase.
      */
-    public function buildApprovalPayload(SalaryIncreaseRequest $request, Employee $lockedEmployee, ?int $approverId = null): array
-    {
-        $currentSalary = round((float) ($lockedEmployee->salary ?? 0), 2);
+    public function buildApprovalPayload(
+        SalaryIncreaseRequest $request,
+        Employee $lockedEmployee,
+        ?int $approverId = null,
+        ?EmployeeSalaryResolverInterface $resolver = null
+    ): array {
+        $parsedDate = $request->effective_date
+            ? Carbon::parse($request->effective_date)
+            : now();
+
+        $effectiveSalary = round(
+            ($resolver ?? app(EmployeeSalaryResolverInterface::class))
+                ->resolveForPeriod($lockedEmployee, $parsedDate->year, $parsedDate->month),
+            2
+        );
+
         $recalculated = match ($request->increase_type) {
             SalaryIncreaseRequest::INCREASE_TYPE_PERCENTAGE => self::calculateAmounts(
-                $currentSalary,
+                $effectiveSalary,
                 SalaryIncreaseRequest::INCREASE_TYPE_PERCENTAGE,
                 (float) ($request->increase_percentage ?? 0)
             ),
             SalaryIncreaseRequest::INCREASE_TYPE_NEW_SALARY => self::calculateAmounts(
-                $currentSalary,
+                $effectiveSalary,
                 SalaryIncreaseRequest::INCREASE_TYPE_NEW_SALARY,
                 (float) $request->new_salary
             ),
             default => self::calculateAmounts(
-                $currentSalary,
+                $effectiveSalary,
                 SalaryIncreaseRequest::INCREASE_TYPE_FIXED,
                 (float) $request->increase_amount
             ),
@@ -165,10 +204,11 @@ final class SalaryIncreasePayloadBuilder
         $actor = $approverId ?? auth()->id();
 
         return [
-            'old_salary'          => $currentSalary,
+            'old_salary'          => $effectiveSalary,
             'increase_amount'     => $recalculated['increase_amount'],
             'increase_percentage' => $recalculated['increase_percentage'],
             'new_salary'          => $recalculated['new_salary'],
+            'effective_date'      => $parsedDate->toDateString(),
             'status'              => SalaryIncreaseRequest::STATUS_APPROVED,
             'approved_by'         => $actor,
             'approved_at'         => now(),

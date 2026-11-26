@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\SalaryIncreaseRequests\Pages;
 
 use App\Filament\Clusters\HRSalaryCluster\Resources\SalaryIncreaseRequests\SalaryIncreaseRequestResource;
+use App\Filament\Support\FilamentValidationExceptionHandler;
 use App\Modules\HR\SalaryIncrease\Contracts\SalaryIncreaseServiceInterface;
 use App\Modules\HR\SalaryIncrease\DTOs\SalaryIncreaseDataDTO;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class EditSalaryIncreaseRequest extends EditRecord
 {
@@ -27,10 +29,14 @@ class EditSalaryIncreaseRequest extends EditRecord
     {
         $data['employee_id'] = $record->employee_id;
 
-        return app(SalaryIncreaseServiceInterface::class)->update(
-            $record->id,
-            SalaryIncreaseDataDTO::fromArray($data, auth()->id())
-        );
+        try {
+            return app(SalaryIncreaseServiceInterface::class)->update(
+                $record->id,
+                SalaryIncreaseDataDTO::fromArray($data, auth()->id())
+            );
+        } catch (ValidationException $e) {
+            FilamentValidationExceptionHandler::notifyAndRethrow($e);
+        }
     }
 
     protected function getRedirectUrl(): string

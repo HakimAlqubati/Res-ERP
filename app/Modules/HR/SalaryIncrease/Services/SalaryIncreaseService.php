@@ -6,14 +6,18 @@ namespace App\Modules\HR\SalaryIncrease\Services;
 
 use App\Models\AppLog;
 use App\Models\Employee;
+use App\Models\EmployeeSalaryLog;
 use App\Models\SalaryIncreaseRequest;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
 use App\Modules\HR\SalaryIncrease\Builders\SalaryIncreasePayloadBuilder;
+use App\Modules\HR\SalaryIncrease\Contracts\EmployeeSalaryLogServiceInterface;
 use App\Modules\HR\SalaryIncrease\Contracts\SalaryIncreaseRepositoryInterface;
 use App\Modules\HR\SalaryIncrease\Contracts\SalaryIncreaseServiceInterface;
 use App\Modules\HR\SalaryIncrease\DTOs\SalaryIncreaseDataDTO;
 use App\Modules\HR\SalaryIncrease\DTOs\SalaryIncreaseFilterDTO;
 use App\Modules\HR\SalaryIncrease\Notifications\SalaryIncreaseNotifier;
 use App\Modules\HR\SalaryIncrease\Rules\SalaryIncreaseValidationRule;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +27,8 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
         private readonly SalaryIncreaseRepositoryInterface $repository,
         private readonly SalaryIncreaseValidationRule $validator,
         private readonly SalaryIncreaseNotifier $notifier,
+        private readonly EmployeeSalaryLogServiceInterface $salaryLogService,
+        private readonly EmployeeSalaryResolverInterface $salaryResolver,
     ) {}
 
     public function list(SalaryIncreaseFilterDTO $filter, int $perPage = 15): LengthAwarePaginator
@@ -42,7 +48,7 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
 
             $builder = SalaryIncreasePayloadBuilder::make()
                 ->forEmployee($employee)
-                ->withData($data);
+                ->withData($data, $this->salaryResolver);
 
             $payload = $builder->buildCreatePayload();
 
@@ -59,10 +65,11 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
                 level: AppLog::LEVEL_INFO,
                 context: 'HR_SALARY_INCREASE_CREATED',
                 extra: [
-                    'request_id' => $created->id,
-                    'employee_id' => $employee->id,
-                    'old_salary' => $created->old_salary,
-                    'new_salary' => $created->new_salary,
+                    'request_id'     => $created->id,
+                    'employee_id'    => $employee->id,
+                    'old_salary'     => $created->old_salary,
+                    'new_salary'     => $created->new_salary,
+                    'effective_date' => $created->effective_date?->toDateString(),
                 ]
             );
 
@@ -82,7 +89,7 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
 
             $builder = SalaryIncreasePayloadBuilder::make()
                 ->forEmployee($employee)
-                ->withData($data);
+                ->withData($data, $this->salaryResolver);
 
             $payload = $builder->buildUpdatePayload();
 
@@ -108,7 +115,7 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
             $lockedEmployee = Employee::lockForUpdate()->findOrFail($lockedRequest->employee_id);
 
             $approvalPayload = SalaryIncreasePayloadBuilder::make()
-                ->buildApprovalPayload($lockedRequest, $lockedEmployee, $approverId);
+                ->buildApprovalPayload($lockedRequest, $lockedEmployee, $approverId, $this->salaryResolver);
 
             $this->validator->assertCanCreateOrUpdate(
                 employee: $lockedEmployee,
@@ -119,21 +126,30 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
             // 1. Persist final old_salary snapshot & approval metadata
             $approvedRequest = $this->repository->update($lockedRequest, $approvalPayload);
 
-            // 2. Apply the new salary onto hr_employees (triggers OwenIt\Auditing trail)
-            $lockedEmployee->update([
-                'salary' => $approvedRequest->new_salary,
-            ]);
+            // 2. Record into hr_employee_salary_logs (and sync hr_employees.salary only if effective_from <= current month)
+            $effectiveDateStr = Carbon::parse($approvedRequest->effective_date ?? now())->toDateString();
+
+            $this->salaryLogService->recordSalaryChange(
+                employee: $lockedEmployee,
+                newSalary: (float) $approvedRequest->new_salary,
+                effectiveDate: $effectiveDateStr,
+                source: EmployeeSalaryLog::SOURCE_SALARY_INCREASE_REQUEST,
+                requestId: (int) $approvedRequest->id,
+                notes: $approvedRequest->notes,
+                actorId: $approverId ?? auth()->id(),
+            );
 
             AppLog::write(
                 message: "Salary increase request #{$approvedRequest->id} approved for Employee {$lockedEmployee->name} (#{$lockedEmployee->id}): {$approvedRequest->old_salary} -> {$approvedRequest->new_salary}",
                 level: AppLog::LEVEL_INFO,
                 context: 'HR_SALARY_INCREASE_APPROVED',
                 extra: [
-                    'request_id' => $approvedRequest->id,
-                    'employee_id' => $lockedEmployee->id,
-                    'old_salary' => $approvedRequest->old_salary,
-                    'new_salary' => $approvedRequest->new_salary,
-                    'approved_by' => $approvedRequest->approved_by,
+                    'request_id'     => $approvedRequest->id,
+                    'employee_id'    => $lockedEmployee->id,
+                    'old_salary'     => $approvedRequest->old_salary,
+                    'new_salary'     => $approvedRequest->new_salary,
+                    'effective_date' => $effectiveDateStr,
+                    'approved_by'    => $approvedRequest->approved_by,
                 ]
             );
 
@@ -159,8 +175,8 @@ final class SalaryIncreaseService implements SalaryIncreaseServiceInterface
                 level: AppLog::LEVEL_INFO,
                 context: 'HR_SALARY_INCREASE_REJECTED',
                 extra: [
-                    'request_id' => $rejectedRequest->id,
-                    'employee_id' => $rejectedRequest->employee_id,
+                    'request_id'       => $rejectedRequest->id,
+                    'employee_id'      => $rejectedRequest->employee_id,
                     'rejection_reason' => $rejectionReason,
                 ]
             );

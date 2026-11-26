@@ -6,7 +6,9 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\SalaryIncreaseRequests
 
 use App\Models\Employee;
 use App\Models\SalaryIncreaseRequest;
+use App\Modules\HR\Payroll\Contracts\EmployeeSalaryResolverInterface;
 use App\Modules\HR\SalaryIncrease\Builders\SalaryIncreasePayloadBuilder;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -38,6 +40,29 @@ class SalaryIncreaseRequestForm
             $set('new_salary', $amounts['new_salary']);
         };
 
+        $refreshOldSalaryAndRecalculate = static function (Get $get, Set $set) use ($recalculate): void {
+            $employeeId = $get('employee_id');
+            if (! $employeeId) {
+                $set('old_salary', 0);
+                $recalculate($get, $set);
+
+                return;
+            }
+
+            $effectiveDate = $get('effective_date') ?: now()->toDateString();
+            try {
+                $parsedDate = Carbon::parse($effectiveDate);
+            } catch (\Throwable) {
+                return;
+            }
+
+            $effectiveSalary = app(EmployeeSalaryResolverInterface::class)
+                ->resolveForPeriod((int) $employeeId, $parsedDate->year, $parsedDate->month);
+
+            $set('old_salary', round($effectiveSalary, 2));
+            $recalculate($get, $set);
+        };
+
         return $schema->components([
             Fieldset::make(__('Employee & Salary'))
                 ->columnSpanFull()
@@ -56,10 +81,8 @@ class SalaryIncreaseRequestForm
                         ->disabledOn('edit')
                         ->required()
                         ->live()
-                        ->afterStateUpdated(function ($state, Set $set, Get $get) use ($recalculate): void {
-                            $employee = $state ? Employee::find($state) : null;
-                            $set('old_salary', round((float) ($employee?->salary ?? 0), 2));
-                            $recalculate($get, $set);
+                        ->afterStateUpdated(function ($state, Set $set, Get $get) use ($refreshOldSalaryAndRecalculate): void {
+                            $refreshOldSalaryAndRecalculate($get, $set);
                         }),
 
                     TextInput::make('old_salary')
@@ -71,7 +94,11 @@ class SalaryIncreaseRequestForm
                     DatePicker::make('effective_date')
                         ->label(__('Effective Date'))
                         ->default(now()->toDateString())
-                        ->required(),
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, Set $set, Get $get) use ($refreshOldSalaryAndRecalculate): void {
+                            $refreshOldSalaryAndRecalculate($get, $set);
+                        }),
                 ]),
 
             Fieldset::make(__('Increase Details'))

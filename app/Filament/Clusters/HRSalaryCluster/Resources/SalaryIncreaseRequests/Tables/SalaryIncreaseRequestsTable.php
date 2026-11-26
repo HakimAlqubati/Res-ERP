@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Throwable;
 
 class SalaryIncreaseRequestsTable
@@ -157,11 +158,63 @@ class SalaryIncreaseRequestsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->action(fn (Collection $records) => static::runPendingOnlyBulkAction(
+                            $records,
+                            fn (SalaryIncreaseRequest $r) => $r->delete(),
+                            'Deleted',
+                            __('Partial Delete'),
+                            __('lang.deleted_successfully')
+                        )),
+                    ForceDeleteBulkAction::make()
+                        ->action(fn (Collection $records) => static::runPendingOnlyBulkAction(
+                            $records,
+                            fn (SalaryIncreaseRequest $r) => $r->forceDelete(),
+                            'Permanently deleted',
+                            __('Partial Force Delete'),
+                            __('lang.deleted_successfully')
+                        )),
+                    RestoreBulkAction::make()
+                        ->action(fn (Collection $records) => static::runPendingOnlyBulkAction(
+                            $records,
+                            fn (SalaryIncreaseRequest $r) => $r->restore(),
+                            'Restored',
+                            __('Partial Restore'),
+                            __('Restored successfully')
+                        )),
                 ]),
             ]);
+    }
+
+    /**
+     * Execute a bulk operation only against pending requests, notifying if non-pending records were skipped.
+     */
+    private static function runPendingOnlyBulkAction(
+        Collection $records,
+        \Closure $operation,
+        string $verb,
+        string $partialTitle,
+        string $successTitle
+    ): void {
+        $pending = $records->filter(fn (SalaryIncreaseRequest $record): bool => $record->isPending());
+        $skipped = $records->count() - $pending->count();
+
+        $pending->each($operation);
+
+        if ($skipped > 0) {
+            Notification::make()
+                ->title($partialTitle)
+                ->body("{$verb} {$pending->count()} pending request(s). Skipped {$skipped} non-pending request(s).")
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->title($successTitle)
+            ->success()
+            ->send();
     }
 
     private static function canDecide(): bool

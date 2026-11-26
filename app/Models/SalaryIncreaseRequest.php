@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Observers\SalaryIncreaseRequestObserver;
 use App\Traits\Scopes\BranchScope;
 use App\Traits\Scopes\StatusScope;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
+#[ObservedBy([SalaryIncreaseRequestObserver::class])]
 class SalaryIncreaseRequest extends Model implements Auditable
 {
     use HasFactory,
@@ -234,5 +238,10 @@ class SalaryIncreaseRequest extends Model implements Auditable
     public function rejectedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function salaryLog(): HasOne
+    {
+        return $this->hasOne(EmployeeSalaryLog::class, 'salary_increase_request_id');
     }
 }
